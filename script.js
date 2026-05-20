@@ -5,7 +5,7 @@ let DATA = null;
 let specialsTimer = null;
 const FRONTEND_BASE = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
 let File_Json_DB = `${FRONTEND_BASE}db.json`;
-let File_SW = `${FRONTEND_BASE}sw/sw.js`;
+let File_SW = `${FRONTEND_BASE}sw.js`;
 
 const FORMATS = ['webp', 'jpg', 'png', 'jpeg'];
 
