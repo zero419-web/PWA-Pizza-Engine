@@ -1,4 +1,4 @@
-# PIZZA ENGINE - PWA Resiliente (Motore Panzer v7)
+# 🍕 PIZZA ENGINE - PWA Resiliente (Motore Panzer v7)
 
 Un'architettura per Progressive Web App (PWA) progettata per la massima resilienza e conformità alle linee guida tecniche AgID per la Pubblica Amministrazione.
 
@@ -20,4 +20,12 @@ Il cuore del sistema è un Service Worker ad alta specializzazione che include:
 Professionista specializzato nello sviluppo di soluzioni software per la PA, con focus particolare su architetture PWA, gestione database (SQLite/MySQL) e sistemi resilienti.
 
 ## ⚖️ Licenza
-Questo progetto è rilasciato sotto licenza **EUPL 1.2 (European Union Public Licence)**. Consulta il file [`LICENSE`](LICENSE) per maggiori dettagli.
+Questo progetto è rilasciato sotto licenza **EUPL 1.2 (European Union Public Licence)**.Consulta il file [`LICENSE`](LICENSE) per maggiori dettagli.
+Conforme alle linee guida **AgID** per il riuso (Art. 69 CAD)  
+ Zero Framework, Zero Dipendenze, 100% Codice Nativo 
+ 
+## 📚 Documentazione Ufficiale
+Per l'architettura tecnica dettagliata, i diagrammi di flusso ASCII e gli esempi di utilizzo sul campo per Comuni e ASP, consulta la nostra [🌐 Wiki Ufficiale](../../wiki).
+
+
+
