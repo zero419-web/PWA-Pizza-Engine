@@ -1,0 +1,310 @@
+{
+ "config": {
+    "urlParamMenu": "menu",
+    "showSpecialsPopup": true,
+    "enablespecialsPop-up": false,
+    "name": "PIZZA ENGINE",
+    "tel": "+390000000000",
+    "tel_fisso": "+390000000000",
+    "mail": "info@PizzaEngine.it",
+    "piva": "00000000000",
+    "AdE_link": "https://telematici.agenziaentrate.gov.it/VerificaPIVA/VerificaPiva.do",
+    "address": "Italia",
+	"map_embed": "",
+	"map_link": "https://maps.app.goo.gl/",
+"localFB": "https://www.facebook.com/",
+"localIG": "https://www.instagram.com/",
+"localTT": "https://www.tiktok.com/",
+"localTA": "https://www.tripadvisor.it/",
+    "architectLT": "https://linktr.ee/valentinoagliano",
+    "paths": {
+		"base": "dir_img/",
+		"gallery": "dir_img/gallery/",
+		"specials": "dir_img/specials/",
+		"docs": {
+			"base": "dir_img/pdf/",
+			"it": {
+				"dir": "ita/"
+			},
+			"en": {
+				"dir": "eng/"
+			}
+		}
+    },
+    "specials_map": {
+    "pizze": "pz_",
+    "piatti": "pi_"
+    },
+	"pdf": {
+		"it": {
+			"pdfMenu": "menu.pdf",
+			"pdfPrivacy": "privacy.pdf",
+			"pdfCookie": "cookie.pdf",
+			"pdfPWA": "pwa_help.pdf"
+		},
+		"en": {
+			"pdfMenu": "menu.pdf",
+			"pdfPrivacy": "privacy.pdf",
+			"pdfCookie": "cookie.pdf",
+			"pdfPWA": "pwa_help.pdf"
+		}
+	},
+    "heroImg": "hero.webp",
+    "heroLow": "hero-low.webp",
+    "bookingTimes": [
+        "17:00", "17:30",
+        "18:00", "18:30",
+        "19:00", "19:30",
+        "20:00", "20:30",
+        "22:00", "21:30",
+		"23:00", "23:30"
+    ],
+ "it": {
+    "days": [
+        "Lunedì", "Martedì", "Mercoledì",
+        "Giovedì", "Venerdì", "Sabato",
+        "Domenica"
+    ],
+    "hours": [
+		"17:00 - 00:00",
+        "17:00 - 00:00",
+        "17:00 - 00:00",
+        "17:00 - 00:00",
+        "17:00 - 00:00",
+		"17:00 - 00:00",
+        "17:00 - 00:00"
+    ]
+  },
+  "en": {
+    "days": [
+        "Monday", "Tuesday", "Wednesday",
+        "Thursday", "Friday", "Saturday",
+        "Sunday"
+    ],
+    "hours": [
+       "Closed",
+        "5:00 PM - 00:00 AM",
+        "5:00 PM - 00:00 AM",
+        "5:00 PM - 00:00 AM",
+        "5:00 PM - 00:00 AM",
+		"5:00 PM - 00:00 AM",
+        "5:00 PM - 00:00 AM"
+    ]
+  }
+ },
+  "gallery": [
+  {
+      "img": "1.jpg",
+      "it": "I Piatti del Giorno!",
+      "en": "Dishes of the Day!"
+  },
+  {
+      "img": "2.jpg",
+      "it": "Le nostre Pietanze...",
+      "en": "Our Dishes..."
+  },
+  {
+      "img": "3.jpg",
+      "it": "Il nostro salone interno.",
+      "en": "Our indoor dining room."
+  },
+  {
+      "img": "4.jpg",
+      "it": "Il Bancone caratteristico.",
+      "en": "The characteristic counter."
+  },
+  {
+      "img": "5.jpg",
+      "it": "La nostra cucina all'avanguardia.",
+      "en": "Our cutting-edge kitchen."
+  }
+],
+  "specials": {
+    "pizze": [
+      {
+          "id": 1,
+          "it_t": "Pizza Regina",
+          "en_t": "Queen Pizza",
+          "it_d": "Pomodoro San Marzano, mozzarella di bufala e basilico fresco.",
+          "en_d": "San Marzano tomato, buffalo mozzarella and fresh basil."
+      },
+      {
+          "id": 2,
+          "it_t": "Oro di Bronte",
+          "en_t": "Bronte Gold",
+          "it_d": "Pesto di pistacchio di Bronte, mortadella e burrata.",
+          "en_d": "Bronte pistachio pesto, mortadella and burrata cheese."
+      }
+    ],
+    "piatti": [
+      {
+          "id": 1,
+          "it_t": "Paccheri alla Norma",
+          "en_t": "Norma Pasta",
+          "it_d": "Melanzane fritte, pomodoro e scaglie di ricotta salata.",
+          "en_d": "Fried eggplant, tomato and salted ricotta shavings."
+      },
+      {
+          "id": 2,
+          "it_t": "Hamburger Di Caponata siciliana",
+          "en_t": "Sicilian Caponata Burger",
+          "it_d": "Melanzane fritte, pomodoro, olive, peperoni",
+          "en_d": "Fried aubergines, tomatoes, olives, peppers."
+      }
+    ]
+  },
+  "chef": {
+    "nome": "Chef: ???",
+    "img": "chef.webp",
+    "it_bio": "??? non è solo il proprietario; è l'architetto del gusto che ha fuso il rigore delle sue radici orientali con l’onore della tradizione siciliana. Giunto da terre lontane dove le spezie sono legge e il rispetto è sacro, ha conquistato il trono della cucina locale elevando ogni piatto a un comando indiscutibile. Custode di una miscela segreta di aromi rari, Amir governa il fuoco e la materia prima con la precisione di chi non ammette repliche. Chi siede alla sua tavola non consuma un pasto, ma stringe un patto di fedeltà con l’eccellenza. 'Nel mio locale, la qualità è l'unica legge a cui sottostare.'",
+    "en_bio": "??? isn't just the owner; he's the architect of taste, blending the rigor of his Eastern roots with the honor of Sicilian tradition. Hailing from distant lands where spices are law and respect is sacred, he has conquered the throne of local cuisine, elevating each dish to an unquestionable command. Guardian of a secret blend of rare aromas, Amir masters fire and raw materials with the precision of one who brooks no contradiction. Those who sit at his table don't consume a meal, but rather enter into a pact of loyalty with excellence. 'In my restaurant, quality is the only law we abide by.'"
+  },
+  "it": {
+"site_title": "{name}",
+"brand_btn_text": "SALVA IN RUBRICA",
+"brand_btn_PWA_text": "INSTALLA APP {name}",
+    "nav": [
+        "Specials",
+        "IL {name}",
+        "Prenota",
+        "Menù",
+        "Galleria",
+        "FAQ",
+        "Sicurezza",
+        "Orari di\n{name}",
+        "Contatti",
+        "LEGAL",
+        "EN",
+        "THEME {istheme}"
+    ],
+    "storia_title": "La Nostra Essenza",
+    "storia_p": "Nel cuore pulsante della Sicilia, {name} si erge come un santuario del gusto dove l'Antica Nobile Tradizione siciliana incontra un carattere audace e contemporaneo. Tra i fregi del barocco locale e un'identità visiva di fiera eleganza, la nostra cucina celebra la sovranità della materia prima: un'esperienza sensoriale in cui l'autorità dei sapori autentici e la maestria della tradizione si fondono per onorare l'eccellenza gastronomica del territorio.",
+    "book_labels": [
+        "Nome o Cognome",
+        "Giorno",
+        "Orario",
+        "Ospiti"
+    ],
+    "book_btn": "RICHIEDI UN TAVOLO A {name}",
+    "book_note": "La prenotazione sarà effettiva solo dopo nostra conferma formale.",
+    "modal_note_confirm": "La conferma della prenotazione\ndeve essere confermata da\n{name}.",
+    "modal_note_isOpen": "Gentile ospite, al momento il locale è Chiuso.\nSaremo lieti di prendere in carico la tua richiesta\ne risponderti non appena saremo nuovamente operativi.",
+    "menu_btn": "SFOGLIA IL MENÙ DIGITALE",
+    "allergeni_title": "Trasparenza & Salute",
+    "allergeni_p": "I nostri piatti sono preparati con cura artigianale. Consultate lo staff per la lista degli allergeni (Reg. UE 1169/11).",
+    "hours_title": "I Nostri Orari",
+    "orari_note": "Orari indicativi.\nSoggetti a variazioni in caso di imprevisti o festività nazionali e locali.\nPer conferma, consigliamo sempre il contatto telefonico.",
+    "contact_title": "Contatti & Social",
+    "map_btn": "Raggiungi {name}",
+    "faq_title": "Domande Frequenti",
+    "faqs": [
+      {
+          "q": "Accettate animali?",
+          "a": "Sì, i vostri piccoli amici sono i benvenuti nel nostro dehors esterno."
+      },
+      {
+          "q": "C'è un parcheggio?",
+          "a": "È possibile parcheggiare nelle immediate vicinanze di {name} lungo le vie principali."
+      },
+      {
+          "q": "Fate cucina senza glutine?",
+          "a": "Disponiamo di opzioni dedicate; si prega di segnalarlo in fase di prenotazione."
+      }
+    ],
+    "specials_pizze_title": "Le Pizze Speciali",
+    "specials_piatti_title": "I Piatti dello Chef",
+    "modal_t": "AVVISO IMPORTANTE",
+    "modal_m_book": "Sei sicuro di voler Procedere con la richiesta di Prenotazione tramite WhatsApp?",
+    "modal_m_info": "Sei sicuro di voler avviare una chat WhatsApp per ricevere Informazioni generiche?",
+     "wa_msg_info": "Salve, {name}\nvorrei maggiori informazioni.",
+    "wa_msg_book_title": "PRENOTAZIONE",
+    "wa_msg_book": "Sono: {nome} Per il: {data}  Ore: {ora} Tavolo per: {ospiti}",
+    "modal_yes": "PROCEDI",
+    "modal_no": "ANNULLA",
+    "copy_msg": "Copiato!",
+    "info_privacy_txt": "Rispettiamo la tua privacy:\nquesto Sito non utilizza Cookie di Profilazione o Tracciamento.\nUtilizziamo solo Cookie Tecnici\nper la Lingua e la Sicurezza.",
+    "sync_running": "Sincronizzazione...",
+    "sync_complete": "Disponibile Offline",
+    "sync_offline": "Modalità Cache (Offline)",
+    "sync_update": "Aggiornamento in corso...",
+"sync_SW_off": "Sistema Di Resilienza: Spento",
+"pwa_incognito_alert": "⚠️ SISTEMA DI RESILIENZA 🛡️\n\n● 🕵️ STATUS: Privato (Incognito) 🕵️\n● 📡 RETE: Connessione Limitata 🚫\n● 🚀 SPEED: Prestazioni Ridotte 🐢\n● 🌐 WEB: No Resiliente (No Cache) 💾\n● 📜 MODO: Filtro Seppia Attivo (Old-Tech) 🎨\n\n✅ AZIONE NECESSARIA:\n\n● 📑 SCHEDA: Apri in modalità Normale... 🚫🕵️\n● ⚡ POWER: Attiva la Cache-First 📦🔥\n\n🐢 Vuoi continuare comunque in modalità lenta e sbiadita?",
+"pwa_incognito_trash": "🔗 URL copiato!\n\n 🚫 Chiudi questa scheda 📑\nIncolla (🔗 URL) in una Scheda Normale !\nPer la Massima Velocità. 🚀",
+"ErrMsgBox_warning": "⚠️ Attenzione: Rilevato problema di archiviazione. Se sei in Incognito, le funzioni Offline non saranno disponibili.",
+"ErrMsgBox_msg1": "🛡 Modalità Privata Rilevata. 🕵 \n\nAbbiamo notato che stai navigando in Incognito. In questa modalità:\n• 🧹 La cache verrà eliminata alla chiusura.\n• 🚫 Il sito NON sarà disponibile offline.\n• 📲 L'installazione PWA potrebbe fallire."
+  },
+  "en": {
+    "site_title": "{name}",
+    "brand_btn_text": "SAVE TO ADDRESS BOOK",
+    "brand_btn_PWA_text": "INSTALL APP {name}",
+    "nav": [
+        "Specials",
+        "The {name}",
+        "Book",
+        "Menu",
+        "Gallery",
+        "FAQ",
+        "Safety",
+        "Times of\n{name}",
+        "Contacts",
+        "LEGAL",
+        "IT",
+        "THEME {istheme}"
+    ],
+    "storia_title": "Our Essence",
+    "storia_p": "In the heart of Sicily, {name} stands as a sanctuary of taste where ancient Sicilian tradition meets a bold, contemporary character. Amidst the friezes of the local baroque and a visual identity of proud elegance, our cuisine celebrates the sovereignty of raw ingredients: a sensory experience where the authority of authentic flavors and the mastery of tradition merge to honor the gastronomic excellence of the region.",
+    "book_labels": [
+        "Name Or Surname",
+        "Date",
+        "Time",
+        "Guests"
+    ],
+    "book_btn": "REQUEST A TABLE OF {name}",
+    "book_note": "The reservation is effective only after our formal confirmation.",
+    "modal_note_confirm": "Booking confirmation\n must be confirmed by\n{name}.",
+    "modal_note_isOpen": "Dear Guest, we are currently closed.\nWe will process your request and get\nback to you as soon as we reopen.",
+    "menu_btn": "BROWSE DIGITAL MENU",
+    "allergeni_title": "Transparency & Health",
+    "allergeni_p": "Our dishes are prepared with artisanal care. Please ask our staff for the allergen list (EU Reg. 1169/11).",
+    "hours_title": "Opening Hours",
+    "orari_note": "Indicative times.\nSubject to change due to unforeseen circumstances or national and local holidays.\nFor confirmation, we always recommend contacting us by telephone.",
+    "contact_title": "Contacts & Socials",
+    "map_btn": "{name} - Get Directions",
+    "faq_title": "Frequent Questions",
+    "faqs": [
+      {
+          "q": "Do you accept pets?",
+          "a": "Yes, small pets are welcome in our outdoor area."
+      },
+      {
+          "q": "Is there parking?",
+          "a": "Parking is available in the immediate vicinity of the {name} along the main streets."
+      },
+      {
+          "q": "Do you offer gluten-free?",
+          "a": "We have dedicated options; please mention it during the reservation."
+      }
+    ],
+    "specials_pizze_title": "Special Pizzas",
+    "specials_piatti_title": "Chef's Specials",
+    "modal_t": "IMPORTANT NOTICE",
+    "modal_m_book": "Are you sure you want to proceed with the reservation request via WhatsApp?",
+    "modal_m_info": "Are you sure you want to start a WhatsApp chat for general information?",
+    "wa_msg_info": "Hello, {name}\nI'd like more information.",
+    "wa_msg_book_title": "BOOKING",
+    "wa_msg_book": "I am: {name} For: {date}  Time: {time} Table for: {guests}",
+    "modal_yes": "PROCEED",
+    "modal_no": "CANCEL",
+    "copy_msg": "Copied!",
+     "info_privacy_txt": "We respect your Privacy:\nthis Site does not use Profiling or Tracking Cookies.\nWe only use Technical Cookies for Language and Security.",
+    "sync_running": "Synchronizing...",
+    "sync_complete": "Available Offline",
+    "sync_offline": "Cache Mode (Offline)",
+    "sync_update": "Updating resources...",
+"sync_SW_off": "Resilience System: Down",
+"pwa_incognito_alert": "⚠️ RESILIENCE SYSTEM 🛡️\n\n● 🕵️ STATUS: Private (Incognite) 🕵️\n● 📡 NETWORK: Limited Connection 🚫\n● 🚀 SPEED: Reduced Performance 🐢\n● 🌐 WEB: Not Resilient (No Cache) 💾\n● 📜 MODE: Sepia Filter Active (Old-Tech) 🎨\n\n✅ REQUIRED ACTION:\n\n● 📑 TAB: Open in Standard Mode... 🚫🕵️\n● ⚡ POWER: Enable Cache-First 📦🔥\n\n🐢 Do you want to continue in slow and faded mode anyway?",
+"pwa_incognito_trash": "🔗 URL copied!\n\n 🚫 Close this tab 📑\nPaste (🔗 URL) into a Standard Tab !\nFor Maximum Speed. 🚀",
+"ErrMsgBox_warning": "⚠️ Warning: Storage issue detected. If you are in Incognito mode, Offline features will not be available.",
+"ErrMsgBox_msg1": "🛡️ Private Mode Detected. 🕵 \n\nWe noticed you are browsing in Incognito mode. In this mode:\n• 🧹 Cache will be cleared upon closing.\n• 🚫 The site will NOT be available offline.\n• 📲 PWA installation may fail."
+  }
+}

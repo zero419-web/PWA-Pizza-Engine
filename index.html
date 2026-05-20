@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<!-- Black Box Error Universal_v2.8 -->
+<script>!(function(){var a=window.onerror,b="&#9888; CRITICAL ERROR &#9888;",c=window.setTimeout,d=window.setInterval,e=Node.prototype.appendChild,f=Element.prototype.removeChild,g=function(){};function h(i,j,k,l,m){try{if(navigator.serviceWorker&&j&&j.indexOf('sw.js')!==-1)try{navigator.serviceWorker.getRegistrations().then(function(t){if(t)for(var u=0;u<t.length;u++)t[u].unregister()})}catch(n){}var o=document.documentElement;o&&(o.innerHTML="<head><style>*{background:#000!important;color:#fff!important;font-family:sans-serif!important;user-select:none!important;-webkit-user-select:none!important;}body{margin:0!important;padding:0!important;overflow:hidden!important;height:100vh!important;}#_err{position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:#000!important;z-index:2147483647!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;padding:20px!important;box-sizing:border-box!important;text-align:center;}#_box{width:600px;max-width:100%;font-family:monospace!important;text-align:left!important;white-space:pre-wrap!important;word-break:break-all!important;line-height:1.8!important;user-select:text!important;-webkit-user-select:text!important;}</style></head><body><div id='_err'><div id='_box'><h1 style='color:#ff3333!important;font-size:28px!important;margin:0 0 20px 0!important;text-transform:uppercase!important;text-align:center!important;user-select:none!important;-webkit-user-select:none!important;'>"+b+"</h1><span style='color:#ff3333;font-weight:bold;'>&#10060; DESC:</span> "+i+"<br><span style='color:#ffff33;font-weight:bold;'>&#128204; LINE:</span> "+(k||"N/A")+(l?" (Col: "+l+")":"")+"<br><span style='color:#33ff33;font-weight:bold;'>&#128196; FILE:</span> "+(j||"Inline")+"<br><span style='color:#33ffff;font-weight:bold;'>&#128336; TIME:</span> "+new Date().toLocaleTimeString()+"<br><span style='color:#ff33ff;font-weight:bold;'>&#9889; TYPE:</span> "+(m||"Crash")+"</div></div></body>");d(function(){var t=document.getElementById("_err");if(!t||document.body.firstChild!==t){try{h(i,j,k,l,m)}catch(v){}}},1);window.setTimeout=g;window.setInterval=g;window.requestAnimationFrame=g;window.fetch=g;window.XMLHttpRequest=g;Node.prototype.appendChild=g;Node.prototype.insertBefore=g;Element.prototype.removeChild=g;Element.prototype.remove=g;HTMLElement.prototype.insertAdjacentHTML=g;if(navigator.serviceWorker&&j&&j.indexOf('sw.js')!==-1)navigator.serviceWorker.register=function(){return new Promise(g)};Object.freeze(window);Object.freeze(Node.prototype);Object.freeze(Element.prototype)}catch(p){}}window.Worker=function(){return{postMessage:g,terminate:g,addEventListener:g,removeEventListener:g,onmessage:g,onerror:g}};window.onerror=function(i,j,k,l,m){var n=!1;return"function"==typeof a&&(n=a(i,j,k,l,m)),n===!0||(h(i,j,k,l,"Engine Crash"),!1)},window.addEventListener("unhandledrejection",function(i){var j=i.reason,k=j instanceof Error?j.message:"string"==typeof j?j:JSON.stringify(j),l=j instanceof Error&&j.stack?j.stack.split("\n")[0]:"Promise Context";i.defaultPrevented||h(k,l,0,0,"Promise Rejection")}),window.addEventListener("error",function(i){var j=i.target;j&&"SCRIPT"===j.tagName&&j.src&&h("Failed to load script: "+j.getAttribute("src"),"Network",0,0,"CORS/404 Error")},!0)})();</script>
+<!-- End -->
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIZZA ENGINE</title>
+<link rel="preload" href="./dir_img/hero-low.webp" as="image" fetchpriority="high">
+<link rel="manifest" href="./PWA.webmanifest" onerror="this.onerror=null; this.setAttribute('crossorigin', 'use-credentials'); this.href=this.href;">
+<link rel="icon" type="image/png" href="./sw/icon/hicon.png">
+<link rel="apple-touch-icon" href="./sw/icon/hicon.png">
+<meta name="mobile-web-app-capable" content="yes">
+</script>
+<script>
+    window.APP_CONFIG = {
+    name: "PIZZA ENGINE",
+    tel:  "390000000000",
+	tel2: "390000000000",
+svg_logo: "",
+ltree_dev: "https://linktr.ee/valentinoagliano",
+ver_site: "3.0.0.0",
+copyrite: "Design & Code © 2026",
+svg_loading: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid meet' width='100%25' height='100%25'%3E%3Ccircle cx='50' cy='50' fill='none' stroke='%23d4af37' stroke-width='2' r='40' stroke-dasharray='160 60'%3E%3CanimateTransform attributeName='transform' type='rotate' repeatCount='indefinite' dur='1s' values='0 50 50;360 50 50' keyTimes='0;1'/%3E%3C/circle%3E%3C/svg%3E`
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const load_Img = document.getElementById('loading-spinner');
+  if (load_Img) {
+    load_Img.src = window.APP_CONFIG.svg_loading;
+  }
+});
+</script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Raleway:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <style>
+    :root {
+/* --- TEMA DARK (Default) --- */
+        --nav-h: 120px;
+    --bronzo: #734A26;
+    --rame: #D35400;
+    --oro: #d4af37;
+    --argento: #A9A9A9;
+    --oroC: #f1d592;
+    --nero: #0a0a0a;
+    --neroP: #050505;
+    --card: #141414;
+    --bianco: #f5f5f5;
+    --wa: #25d366;
+    --fb: #1877f2;
+    --ta: #34e0a1;
+    --bg-gradient: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+    --nav-bg: rgba(10,10,10,0.95);
+    --text-main: var(--bianco);
+    --footer-bg: #050505;
+    --text-p: #e0e0e0;
+    --text-muted: #ccc;
+    --glass-bg: rgba(20,20,20,0.7);
+    --glass-border: rgba(255,255,255,0.1);
+    --border-oro: var(--oro);
+    --Sshadow: rgba(255, 255, 255, 0.06);
+    --shadow-sm: 0 2px 8px var(--Sshadow);
+    --shadow-md: 0 8px 24px var(--Sshadow);
+    --shadow-lg: 0 12px 40px rgba(255, 255, 255, 0.08);
+    /* colori per il Dot status ! */
+    --dotCOM: #2ecc71;
+    --dotOFF: #e74c3c;
+    --dotSYC: #f1c40f;
+}
+/* --- END TEMA Dark --- */
+    max-width: 100%;
+     /* overflow-x: hidden; */
+    margin: 0;
+    padding: 0;
+}
+img {
+    max-width: 100%;
+    height: auto;
+}
+body {
+    background: var(--neroP);
+}
+.critical-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: var(--neroP) !important;
+    z-index: 1000000 !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+#critical-failure > div {
+    border: 1px solid var(--oro) !important;
+    background: var(--neroP) !important;
+    padding: 35px 20px !important;
+    width: 90% !important;
+    max-width: 450px !important;
+    max-height: calc(100vh - 30px) !important;
+    margin: 15px auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    overflow-y: auto !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--oro) transparent;
+}
+#critical-failure > div img {
+    max-width: 100% !important;
+    max-height: 250px !important;
+    height: auto !important;
+    display: block !important;
+    margin: auto !important;
+}
+#critical-failure > div::-webkit-scrollbar { width: 5px; }
+#critical-failure > div::-webkit-scrollbar-thumb { background: var(--oro); }
+@media (max-width: 480px) {
+    #critical-failure > div {
+        padding: 25px 15px !important;
+    max-height: calc(100dvh - 30px) !important;
+    }
+}
+body.error-locked {
+    overflow: hidden !important;
+}
+    </style>
+</head>
+
+<body>
+<div id="loading-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--neroP); z-index:999999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: opacity 0.5s ease, visibility 0.5s ease;">
+    <img id="loading-spinner" src="" style="width:auto; height:20vh; max-width:80vw; object-fit:contain;">
+    <h2 style="color:var(--oro); font-family:'Cinzel', serif; margin-top:20px; letter-spacing:3px; font-size:1rem;">Loading...</h2>
+</div>
+<script>
+    (function() {
+// Funzione di emergenza interna per il RESTART
+        window._emergencyReset = function() {
+            const cleanPath = window.location.origin + window.location.pathname;
+            const cacheBuster = "refresh=" + new Date().getTime();
+            window.location.replace(cleanPath + "?" + cacheBuster);
+        };
+
+// Funzione di emergenza (WhatsApp)
+window._emergencyFeedback = function() {
+const tel = window.APP_CONFIG.tel;
+const msg = "* ERROR 404 *\n(Sistem Offline).\n\n"+window.APP_CONFIG.name+" thanks for the tip!";
+const waUrl = "https://wa.me/"+tel+"?text="+ encodeURIComponent(msg);
+    window.open(waUrl, '_blank');
+document.body.classList.remove('error-locked');
+};
+
+// Funzione di emergenza Erorr Box + il suo WatchDog
+function _initErrorBox() {
+    const conf = window.APP_CONFIG;
+    if (!conf) return;
+    const safeSet = (id, text, isLink = false) => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (isLink) {
+                el.href = text;
+            } else {
+                el.textContent = (id.includes('tel') ? '+' : '') + text;
+            }
+        }
+    };
+    // Popolamento variabili del conf
+    safeSet('err-copyrite', conf.copyrite);
+    safeSet('err-version', conf.ver_site);
+    safeSet('err-tel-1', conf.tel);
+    safeSet('err-tel-2', conf.tel2);
+    safeSet('err-linktree', conf.ltree_dev, true);
+    // Gestione Logo
+    const imgLogo = document.getElementById('err-logo-client');
+    if (imgLogo) {
+        imgLogo.src = conf.svg_logo;
+        imgLogo.style.display = 'block';
+    }
+}
+// ------------
+window._scriptLoaded = false;
+window._watchdog = setTimeout(function() {
+	if ( window._scriptLoaded ) {
+		return 0;
+	}
+	if (typeof DATA === 'undefined' || DATA === null) {
+		var loader = document.getElementById('loading-screen');
+		if (loader) {
+			loader.style.display = 'none';
+		}
+		var criticalDiv = document.getElementById('critical-failure');
+		if (criticalDiv) {
+			criticalDiv.style.display = 'flex';
+			var restartBtn = criticalDiv.querySelector('button[onclick*="resetSystem"]');
+			if (restartBtn) {
+				restartBtn.setAttribute('onclick', '_emergencyReset()');
+			}
+			var sendSuportBtn = criticalDiv.querySelector('button[onclick*="sendErrorFeedback"]');
+			if (sendSuportBtn) {
+				sendSuportBtn.setAttribute('onclick', '_emergencyFeedback()');
+			}
+			document.body.classList.add('error-locked');
+		}
+	}
+}, 12000);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initErrorBox);
+} else {
+    _initErrorBox();
+}
+})();
+</script>
+
+<div id="specials-popup" onmousemove="resetSpecialsTimer()" onclick="resetSpecialsTimer()" style="display:none;">
+  <div>
+    <button onclick="closeSpecials()" aria-label="Exit">X</button>
+    <div id="specials-container"></div>
+  </div>
+</div>
+
+<div id="legal-popup" style="display:none;">
+  <div>
+    <button onclick="closeLegal()" aria-label="Exit">X</button>
+    <iframe id="legal-iframe" src=""></iframe>
+  </div>
+</div>
+
+<div id="modal-overlay" style="display:none;">
+    <div>
+        <div style="margin-bottom:20px;">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--oro)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3 id="modal-title"></h3>
+        <p id="modal-text"></p>
+        <p id="modal-note-highlight"></p>
+        <div>
+            <button id="modal-btn-no" aria-label="Anull"></button>
+            <button id="modal-btn-yes" aria-label="OK"></button>
+        </div>
+    </div>
+</div>
+
+<nav id="nav-hook"></nav>
+
+ <div class="header-box">
+<div class="glass-card" style="
+    padding-top: 5px !important;
+    padding-bottom: 30px !important;
+    padding-left: 3%;
+    padding-right: 3%;
+    width: 100%;
+    height: auto;
+    max-width: 1200px;
+    margin: 0 auto;
+    line-height: 0;">
+<header id="logo-header">
+<!-- imagine del cliente SVG/JPG/PNG -->
+<img id="main-logo-img" class="main-logo-img" alt="Logo" src="" loading="lazy">
+</header>
+<div id="brand-btn"></div>
+<div id="brand-btn-pwa"></div>
+</div></div>
+
+<main id="view-root"></main>
+
+<footer id="footer-root"></footer>
+
+<div id="wa-fixed-container"></div>
+
+<script src="./script.js" onload="clearTimeout(window._watchdog);"></script>
+
+<!-- Box's Error - Low -->
+<div id="error-monitor" style="display: none;">
+    <span onclick="this.parentElement.style.display='none'"
+onmouseover="this.style.opacity='1'"
+onmouseout="this.style.opacity='0.7'">
+          &times;
+    </span>
+    <h4>DIAGNOSTICA / Diagnostics</h4>
+    <p id="error-msg"></p>
+    <button onclick="sendErrorFeedback('low');" aria-label="Send-Report">Invia Report Tecnico
+Send Technical Report
+    </button>
+</div>
+
+<!-- Box's Error - High -->
+<div id="critical-failure" class="critical-overlay">
+    <div>
+        <div style="margin: 0 auto 25px auto; width: fit-content; filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--rame)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <h2 style="color: var(--oro); font-family: 'Cinzel'; margin-bottom: 5px; letter-spacing: 2px;">SISTEMA OFFLINE<br>System Offline</h2>
+        <div>
+            <img id="err-logo-client" src="" alt="Logo - client" style="max-width:140px; display:none;">
+        </div>
+        <p style="color: var(--argento); font-size: 1.5rem; margin-bottom: 10px; font-family: 'Raleway'; white-space: pre-line;">
+            Siamo spiacenti, il sistema è momentaneamente offline.
+            Per prenotazioni immediate contatta il nostro staff al numero:
+
+            We are sorry, the system is currently offline. For immediate reservations, please contact our staff at:
+        </p>
+        <div>
+            <a href="javascript:void(0)" id="err-tel-1" onclick="this.href='tel:'+window.APP_CONFIG.tel" style="display:inline-block; font-family:'Cinzel'; font-size:2.2rem; color:var(--oroC); text-decoration:none; margin:10px 0; font-weight:700; letter-spacing:3px; border-bottom: 2px solid var(--oro); padding-bottom:10px;"></a>
+            <br>
+            <a href="javascript:void(0)" id="err-tel-2" onclick="this.href='tel:'+window.APP_CONFIG.tel2" style="display:inline-block; font-family:'Cinzel'; font-size:2.2rem; color:var(--oroC); text-decoration:none; margin:10px 0; font-weight:700; letter-spacing:3px; border-bottom: 2px solid var(--oro); padding-bottom:10px;"></a>
+        </div>
+        <br>
+        <button aria-label="Refresh-Page" onclick="resetSystem();" style="background: transparent; border: 1px solid var(--oro); color: var(--oroC); padding: 12px 30px; cursor: pointer; font-family: 'Cinzel'; font-size: 0.8rem; letter-spacing: 2px; transition: all 0.3s; white-space: pre-line;">RIPRISTINA SESSIONE
+        RESTORE SESSION
+        </button>
+        <br><br>
+        <button aria-label="Send-Report-Error" onclick="sendErrorFeedback('high');" style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-main); padding: 10px 20px; cursor: pointer; font-family: 'Raleway'; font-size: 0.7rem; letter-spacing: 1px; border-radius: 4px;">Contact Support</button>
+        <br><br>
+        <span style="font-size:0.75rem; color:var(--text-muted); letter-spacing:4px; text-transform:uppercase;">Digital Architecture by</span> <br>
+        <a id="err-linktree" href="#" target="_blank" style="color: var(--oro); font-family: 'Cinzel'; letter-spacing: 2px;">
+		VALENTINO AGLIANÒ
+			<div>
+				<svg viewBox="0 0 24 24" style="fill:currentColor; width:64px; height:64px;">
+					<path d="m13.511 5.832 3.323-2.673 2.134 2.122-2.66 3.338h4.692v3.001h-4.692l2.66 3.338-2.134 2.122-3.323-2.673v4.614h-3.022v-4.614l-3.323 2.673-2.134-2.122 2.66-3.338H3v-3.001h4.692l-2.66-3.338 2.134-2.122 3.323 2.673V1.219h3.022v4.613Z"/><path d="M10.489 18.168h3.022v4.613h-3.022v-4.613Z"/>
+				</svg>
+			</div>
+		</a>
+        <br>
+        <span style="font-size:0.75rem; color:var(--text-muted); letter-spacing:4px; text-transform:uppercase;">
+            <span id="err-copyrite"></span><br>All rights reserved.<br>
+            Site Version: <span id="err-version" style="color: var(--oroC);"></span>
+        </span>
+    </div>
+</div>
+
+</body>
+</html>

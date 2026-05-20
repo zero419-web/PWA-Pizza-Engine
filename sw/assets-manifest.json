@@ -1,0 +1,47 @@
+[
+  {
+    "dir": "dir_img/",
+    "files": [
+        "chef.webp",
+        "hero.webp",
+		"hero-low.webp"
+	]
+  },
+  {
+    "dir": "dir_img/gallery/",
+    "files": [
+        "1.jpeg",
+        "2.jpeg",
+        "3.jpeg",
+        "4.jpeg",
+        "5.jpg"
+	]
+  },
+  {
+    "dir": "dir_img/specials/",
+    "files": [
+        "pz_1.jpeg",
+        "pz_2.webp",
+        "pi_1.jpeg",
+        "pi_2.jpg"
+	]
+  },
+  {
+    "dir": "dir_img/pdf/ita/",
+    "files": [
+        "menu.pdf",
+        "pwa_help.pdf",
+        "cookie.pdf",
+        "privacy.pdf"
+	]
+  },
+  {
+    "dir": "dir_img/pdf/eng/",
+    "files": [
+        "menu.pdf",
+        "pwa_help.pdf",
+        "cookie.pdf",
+        "privacy.pdf"
+	]
+  }
+]

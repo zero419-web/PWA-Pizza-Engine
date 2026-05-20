@@ -1,0 +1,46 @@
+# File publiccode.yml per il censimento AgID / Developers Italia
+publiccodeYmlVersion: "0.2"
+name: "PWA-Pizza-Engine"
+softwareVersion: "3.0.0.0" # Allineato alla versione dell'applicativo (HTML)
+releaseDate: "2026-05-20"
+platforms:
+  - web
+categories:
+  - communication
+  - food-and-beverage
+developmentStatus: "stable"
+softwareType: "standalone/web"
+description:
+  it:
+    shortDescription: "PWA ad alta resilienza per la gestione digitale di attività di ristorazione."
+    longDescription: |
+      Architettura Progressive Web App (PWA) progettata secondo la filosofia Zero-Trust.
+      Il sistema utilizza il core engine Panzer v7 per la gestione avanzata del Service Worker,
+      mentre l'interfaccia utente e la logica applicativa sono aggiornate alla versione 3.0.0.0.
+      Implementa algoritmi di Network Resiliency adattiva e validazione binaria dei dati (Magic Numbers)
+      per garantire l'integrità delle risorse anche in condizioni di connettività degradata.
+    features:
+      - "Applicativo UI versione 3.0.0.0 con ottimizzazione mobile."
+      - "Motore Service Worker Panzer v7 con logica adattiva brida, Network-First/Cache-First."
+      - "Validazione binaria dei file tramite Magic Numbers."
+      - "Manifest PWA configurato per l'installazione nativa."
+      - "Resilienza di rete basata su 5 profili di velocità (Ultrafast to Verylow)."
+legal:
+  license: "EUPL-1.2"
+  mainCopyrightOwner: "Valentino Aglianò"
+  repoOwner: "Valentino Aglianò"
+maintenance:
+  type: "internal"
+  contacts:
+    - name: "Valentino Aglianò"
+      affiliation: "Istruttore Informatico - Idoneo Concorso Nazionale ASMEL 2025"
+localization:
+  localizationReady: true
+  availableLanguages:
+    - it
+it:
+  conformance:
+    agid:
+      - "linee-guida-design"
+      - "misure-minime-sicurezza"
+      - "linee-guida-acquisizione-riuso"
