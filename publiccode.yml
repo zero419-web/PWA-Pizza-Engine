@@ -14,14 +14,10 @@ description:
   it:
     shortDescription: "PWA ad alta resilienza per la gestione digitale di attività di ristorazione."
     longDescription: |
-      Architettura Progressive Web App (PWA) progettata secondo la filosofia Zero-Trust.
-      Il sistema utilizza il core engine Panzer v7 per la gestione avanzata del Service Worker,
-      mentre l'interfaccia utente e la logica applicativa sono aggiornate alla versione 3.0.0.0.
-      Implementa algoritmi di Network Resiliency adattiva e validazione binaria dei dati (Magic Numbers)
-      per garantire l'integrità delle risorse anche in condizioni di connettività degradata.
+      Architettura Progressive Web App (PWA) progettata secondo la filosofia Zero-Trust. Il sistema utilizza il core engine Panzer v7 per la gestione avanzata del Service Worker, mentre l'interfaccia utente e la logica applicativa sono aggiornate alla versione 3.0.0.0. Implementa algoritmi di Network Resiliency adattiva, logica Network-First predittiva con timeout e validazione binaria dei dati (Magic Numbers) per garantire l'integrità delle risorse anche in condizioni di connettività degradata.
     features:
       - "Applicativo UI versione 3.0.0.0 con ottimizzazione mobile."
-      - "Motore Service Worker Panzer v7 con logica adattiva brida, Network-First/Cache-First."
+      - "Motore Service Worker Panzer v7 con logica adattiva Network-First predittiva e Cache Fallback."
       - "Validazione binaria dei file tramite Magic Numbers."
       - "Manifest PWA configurato per l'installazione nativa."
       - "Resilienza di rete basata su 5 profili di velocità (Ultrafast to Verylow)."
@@ -44,3 +40,4 @@ it:
       - "linee-guida-design"
       - "misure-minime-sicurezza"
       - "linee-guida-acquisizione-riuso"
+      
