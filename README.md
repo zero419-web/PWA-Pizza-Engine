@@ -20,4 +20,4 @@ Il cuore del sistema è un Service Worker ad alta specializzazione che include:
 Professionista specializzato nello sviluppo di soluzioni software per la PA, con focus particolare su architetture PWA, gestione database (SQLite/MySQL) e sistemi resilienti.
 
 ## ⚖️ Licenza
-Questo progetto è rilasciato sotto licenza **EUPL 1.2 (European Union Public Licence)**. Consulta il file `LICENSE` per maggiori dettagli.
+Questo progetto è rilasciato sotto licenza **EUPL 1.2 (European Union Public Licence)**. Consulta il file [`LICENSE`](LICENSE) per maggiori dettagli.
