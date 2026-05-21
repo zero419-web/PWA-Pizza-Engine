@@ -1497,7 +1497,7 @@ function downloadVCard() {
         `ADR;TYPE=WORK,PREF:;;${c.address}`,
         `PHOTO;ENCODING=b;TYPE=PNG:${logoB64}`,
         "X-ABShowAs:COMPANY",
-        `URL:${FRONTEND_BASE}`,
+        `URL:${window.location.origin+FRONTEND_BASE}`,
         "REV:" + new Date().toISOString(),
         "END:VCARD"
     ].join("\n");
