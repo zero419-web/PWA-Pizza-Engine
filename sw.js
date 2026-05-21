@@ -14,7 +14,7 @@ let encryptionKey = null;
 
  let isLogicEnabled = false;
  let syncAbortController = null;
-const BASE_PATH = self.location.pathname.replace(/\/sw\/[^\/]+$/, '/').replace(/\/+/g, '/');
+const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, '/');
 const CONFIG = {
     ROOT: BASE_PATH,
         cacheName:      'ZC_PWA_v11107_civico51',
