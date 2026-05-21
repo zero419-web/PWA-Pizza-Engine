@@ -22,6 +22,5 @@ Professionista specializzato nello sviluppo di soluzioni software per la PA, con
 ## ⚖️ Licenza
 Questo progetto è rilasciato sotto licenza **EUPL 1.2 (European Union Public Licence)**. Consulta il file [`LICENSE`](LICENSE) per maggiori dettagli.
 
----
 ## 📚 Documentazione Ufficiale
 Per l'architettura tecnica dettagliata, i diagrammi di flusso ASCII e gli esempi di utilizzo sul campo per Comuni e ASP, consulta la nostra [🌐 Wiki Ufficiale](../../wiki).
