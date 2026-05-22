@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="sw_logo.svg" width="200" alt="Panzer v7 Core Logo">
+</p>
+
 # 🍕 PIZZA ENGINE - PWA Resiliente (Motore Panzer v7)
 
 Un'architettura per Progressive Web App (PWA) progettata per la massima resilienza e conformità alle linee guida tecniche AgID per la Pubblica Amministrazione.
