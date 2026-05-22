@@ -1,6 +1,6 @@
-<p align="center">
-  <img src="sw_logo.svg" width="200" alt="Panzer v7 Core Logo">
-</p>
+<p align="center"><img src="https://raw.githubusercontent.com/zero419-web/PWA-Pizza-Engine/main/sw_logo.svg" width="200" alt="Panzer v7 Core Logo"></p>
+
+---
 
 # 🍕 PIZZA ENGINE - PWA Resiliente (Motore Panzer v7)
 
