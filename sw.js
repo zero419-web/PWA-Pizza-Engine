@@ -3,7 +3,7 @@
  * (Structured Manifest & Smart Sync Resident)
  *
  * Service Worker
- * Carrarmato Panzer v7.0
+ * Carrarmato Panzer v7.1
  * U-Boot - Stealth Edition (Encrypted)
  *
  * By Valentino Aglianò - Idoneo ASMEL 2025 !
@@ -17,8 +17,8 @@ let encryptionKey = null;
 const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, '/');
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'ZC_PWA_v11107_civico51',
-    userCacheName: 'user_ZC_PWA_v11107_civico51',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.1',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.1',
     userCacheTTL: 7,
     networkResilient: {
         maxRetries: 5,
@@ -177,7 +177,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     }
     if (isEncrypted || isTransformed) minSize = CONFIG.minSizeMap.universal.minAbsoluteByte;
     if (blob.size < minSize) {
-        console.warn(`⚠️ SW Forensics: Asset scartato (${blob.size}b < Min: ${Math.round(minSize)}b) -> ${finalContentType}`);
+        console.log(`⚠️ SW Forensics: Asset scartato (${blob.size}b < Min: ${Math.round(minSize)}b) -> ${finalContentType}`);
         return result;
     }
 
@@ -191,7 +191,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             const hasValidSig = section.sigs.some(sig => headerHex.includes(sig.toUpperCase()));
             if (!hasValidSig) {
                 if (!(subType === 'webp' && headerHex.startsWith('52494646') && headerHex.includes('57454250'))) {
-                    console.error(`🛡️ SW Security: Firma fallita per ${finalContentType}. DNA: ${headerHex}`);
+                    console.log(`🛡️ SW Security: Firma fallita per ${finalContentType}. DNA: ${headerHex}`);
                     return result;
                 }
             }
@@ -285,7 +285,7 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
     const cleanKey = normalize(url);
     let isEncrypted = false;
     if (isLogicEnabled && !encryptionKey) {
-        encryptionKey = await getStoredKey();
+		throw new Error("VAULT_LOCKED_NO_KEY");
     }
 
     const existing = await cache.match(cleanKey);
@@ -310,7 +310,19 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
             }
 
             try {
-                const head = await fetch(url, { method: 'HEAD', cache: 'no-cache' });
+				const profile = getNetworkProfile(self.navigator);
+				const controller = new AbortController();
+				const timeoutId = setTimeout(() => controller.abort(), (profile?.timeout * 1000));
+				const fetchSignal = syncAbortController
+                ? AbortSignal.any([syncAbortController?.signal, controller?.signal])
+                : controller?.signal;
+                const head = await fetch(url, {
+					method: 'HEAD',
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' },
+                    mode: 'cors',
+                    signal: fetchSignal
+                });
                 const serverLastMod = head.headers.get('Last-Modified');
                 const localLastMod = existing.headers.get('X-PWA-LastMod');
                 if (serverLastMod && localLastMod && serverLastMod === localLastMod) {
@@ -344,11 +356,11 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
         for (let attempt = 0; attempt <= attempts; attempt++) {
             if (syncAbortController?.signal.aborted) return false;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), (profile.timeout * 1000));
+            const timeoutId = setTimeout(() => controller.abort(), (profile?.timeout * 1000));
 
             const fetchSignal = syncAbortController
-                ? AbortSignal.any([syncAbortController.signal, controller.signal])
-                : controller.signal;
+                ? AbortSignal.any([syncAbortController?.signal, controller?.signal])
+                : controller?.signal;
             try {
                 if (attempt > 0) await sleep(timeWaitSec * 1000);
                 const fetchUrl = targetUrl.includes('?') ? `${targetUrl}&cb=${Date.now()}` : `${targetUrl}?cb=${Date.now()}`;
@@ -388,7 +400,7 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
                             console.info(`📦🛡️ SW: Risorsa validata e salvata: ${targetUrl}`);
                         } catch (cacheError) {
                             if (cacheError.name === 'QuotaExceededError') {
-                                console.warn("🚨 SW: Storage Pieno! Emergency Clean...");
+                                console.log("🚨 SW: Storage Pieno! Emergency Clean...");
                                 await cleanUserCache(true);
                                 await cache.put(cleanKey, new Response(finalBlob, { status: 200, headers: newHeaders }));
                             } else {
@@ -507,13 +519,13 @@ async function checkRealOnline(mode = 'fetch') {
             cache: 'no-store',
             mode: 'no-cors',
 			signal: syncAbortController ?
-					AbortSignal.any([syncAbortController.signal, controller.signal]) :
-					controller.signal
+					AbortSignal.any([syncAbortController?.signal, controller?.signal]) :
+					controller?.signal
         });
         clearTimeout(tId);
         return true;
     } catch (e) {
-        console.warn(`🌐 SW: Offline in ${mode} (Profilo: ${profileName})`);
+        console.log(`🌐 SW: Offline in ${mode} (Profilo: ${profileName})`);
         return false;
     }
 }
@@ -555,13 +567,12 @@ self.addEventListener('message', (event) => {
 				broadcast({ type: 'SYNC_START' });
 		try {
 			if ((!await checkRealOnline('sync')) || isCriticalLow) {
-				console.warn("📡❌ SW: Rete assente al decollo. Abort !");
+				console.log("📡❌ SW: Rete assente al decollo. Abort !");
 				if (syncAbortController) syncAbortController.abort();
 				isSyncing = false;
 				broadcast({ type: 'SYNC_RETRY' });
 				return;
 			}
-			if (!encryptionKey) encryptionKey = await getStoredKey();
 			const cache = await caches.open(CONFIG.cacheName);
 
 			const cacheKeys = await cache.keys();
@@ -585,13 +596,8 @@ self.addEventListener('message', (event) => {
 							const vLocal = currentVersion.split('.');
 
 							if (vServer[0] !== vLocal[0] || vServer[1] !== vLocal[1]) {
-								console.info(`💥 SW Radar: Rilevato Major Update (${currentVersion} -> ${serverV}). Tabula Rasa!`);
-
-								const keys = await caches.keys();
-								await Promise.all(keys.map(k => caches.delete(k)));
-
-								const allClients = await self.clients.matchAll();
-								allClients.forEach(c => c.postMessage({ type: 'CORE_UPDATE_RELOAD', sSV: serverV }));
+								console.info(`💥 SW Radar: Rilevato Major Update (${currentVersion} -> ${serverV}). Tabula Rasa Core File !`);
+								CoreAssets_Destroy_Caches(serverV);
 								return;
 							}
 
@@ -612,23 +618,20 @@ self.addEventListener('message', (event) => {
 				CONFIG.coreAssets.map(url => smartDownload(url, cache, true, realServerVersion) )
 			);
 			if(IsCFUD){
-				for (let i = 0; i < coreResults.length; i++) {
-					const res = coreResults[i];
-					const url = CONFIG.coreAssets[i];
-					const cleanKey = normalize(url);
-
-					const isDownloaded = res.status === 'fulfilled' && res.value === "DOWNLOADED";
+				coreResults.forEach((res, i) => {
+				const url = CONFIG.coreAssets[i];
+				const isDownloaded = res.status === 'fulfilled' && res.value === "DOWNLOADED";
 					if (isDownloaded) {
 						console.info(`⚙️ SW: asset core: ${url}`);
 					}
-				}
+				});
 			}
 			await waitTillIdle(1000);
 
 				console.info(`⚙️📜 SW: Avvio Raccolta Lista File dal Manifest...`);
                 const manifestList = [];
 					if ((!await checkRealOnline('sync')) || isCriticalLow) {
-						console.warn("📡❌ SW Stop: Rete persa durante il 🔄 sync.");
+						console.log("📡❌ SW Stop: Rete persa durante il 🔄 sync.");
 						if (syncAbortController) {
 							syncAbortController.abort();
 						}
@@ -750,7 +753,7 @@ self.addEventListener('message', (event) => {
                     const ext = url.split('.').pop().toLowerCase();
                     const isAllowed = CONFIG.extensions.includes(ext);
                     if (!isAllowed) {
-                        console.warn(`📄⚠️ SW: Estensione .${ext} non autorizzata, risorsa esclusa: ${url}`);
+                        console.log(`📄⚠️ SW: Estensione .${ext} non autorizzata, risorsa esclusa: ${url}`);
                     }
                     return isAllowed;
                 });
@@ -762,7 +765,7 @@ self.addEventListener('message', (event) => {
                     if (syncAbortController?.signal.aborted) return;
                     if ( !(await checkRealOnline('sync')) ) { isSyncing = false; return; }
 					if ((!await checkRealOnline('sync')) || (limit === CONFIG.networkResilient.profiles['Verylow'].limit)) {
-						console.warn("📡❌ SW Stop: Rete persa o Verylow, durante il 🔄 sync.");
+						console.log("📡❌ SW Stop: Rete persa o Verylow, durante il 🔄 sync.");
 						if (syncAbortController) {
 							syncAbortController.abort();
 						}
@@ -795,8 +798,10 @@ self.addEventListener('message', (event) => {
                                 completed++;
                             }
                         } else {
-
 							console.info(`📄⚠️ SW: Errore critico nel processo per: ${url}`, res.reason);
+							if (res.reason && ( res.reason.message.includes('VAULT') )){
+								throw res.reason;
+							}
                             rfailed++;
                             completed++;
                         }
@@ -834,11 +839,13 @@ self.addEventListener('message', (event) => {
 				if (syncAbortController) syncAbortController.abort();
                 const isVaultError = err.message && err.message.includes('VAULT');
 				const isIntegritaError = err.message && err.message.includes('Integrità');
-				if (isVaultError || isIntegritaError) {
-				const allClients = await self.clients.matchAll();
-					allClients.forEach(client => {
-						client.postMessage({ type: 'CORE_UPDATE_RELOAD', reason: err.message });
-					});
+				if (isVaultError) {
+					Destroy_ALL_Caches(err.message);
+				}
+				if (isIntegritaError) {
+					console.log("⚠️ SW: Errore di Integrità rilevato su un asset.");
+				}else {
+					console.info("🌐 Errore di rete standard, alla prossima Sync...");
 				}
 		} finally {
 				console.info(`✅ SW: SYNC Completata. Total file Download: ${completed} - Exclud(IsBunker): ${completed_ok}`);
@@ -895,6 +902,7 @@ self.addEventListener('fetch', (event) => {
 
 		const isCoreAsset = CORE_ASSETS_SET.has(finalPath);
         const shouldBeEncrypted = isCoreAsset || existsInMain;
+		const targetCache = shouldBeEncrypted ? "📦🛡️ (Bunker)" : "📦🔓 (Magazzino)";
 
 		const isOnline = await checkRealOnline('fetch');
 		if (isOnline) {
@@ -918,7 +926,8 @@ self.addEventListener('fetch', (event) => {
                     const responseClone = networkResponse.clone();
                     event.waitUntil((async () => {
                         try {
-
+							const isOk = await verifyVaultIntegrity();
+							if (!isOk) throw new Error("VAULT_LOCKED_NO_KEY");
 							if (!responseClone || !isLogicEnabled || isSyncing) {
 
 								return;
@@ -938,8 +947,8 @@ self.addEventListener('fetch', (event) => {
                                 const updatedHeaders = new Headers(responseClone.headers);
                                 updatedHeaders.set('X-PWA-Date', Date.now().toString());
                                 if (lastMod) updatedHeaders.set('X-PWA-LastMod', lastMod);
-                                if (shouldBeEncrypted) {
-                                    if (!encryptionKey) await getStoredKey();
+								console.info(`🔄💾 SW: [ ${targetCache} ], ♻️ File: ${finalPath}`);
+								if (shouldBeEncrypted) {
                                     const encryptedBlob = await encryptBlob(finalBlob);
                                     updatedHeaders.set('X-PWA-Encrypted', 'true');
                                     await mainCache.put(finalPath, new Response(encryptedBlob, {
@@ -947,19 +956,26 @@ self.addEventListener('fetch', (event) => {
                                         statusText: responseClone.statusText,
                                         headers: updatedHeaders
                                     }));
-                                    console.info("📦🛡️ SW: Aggiornamento Criptato:", finalPath);
                                 } else {
                                     await userCache.put(finalPath, new Response(finalBlob, {
                                         status: responseClone.status,
                                         statusText: responseClone.statusText,
                                         headers: updatedHeaders
                                     }));
-                                    console.info("📦🔓 SW: Aggiornamento UserCache:", finalPath);
                                 }
-                            }
+								console.info(`✅🔄💾 SW: [ ${targetCache} ], Aggiornamento - File: ${finalPath}`);
+                            }else{
+								throw new Error(`Integrità/DNA Fallito per ${finalPath}`);
+							}
                         } catch (cacheError) {
-                            console.warn("📦⚠️ SW: Update cache fallito:", cacheError);
-                        }
+							console.log(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`);
+							const isVaultError = cacheError.message && cacheError.message.includes('VAULT');
+							if (isVaultError) {
+								Destroy_ALL_Caches(cacheError.message);
+							}
+							console.log("📦⚠️ SW: Update cache fallito:", cacheError);
+							throw cacheError;
+						}
                     })());
                     return networkResponse;
                 }
@@ -979,7 +995,8 @@ self.addEventListener('fetch', (event) => {
         if (cached) {
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
-                    if (!encryptionKey) await getStoredKey();
+					const isOk = await verifyVaultIntegrity();
+					if (!isOk) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
                     const decrypted = await decryptBuffer(buffer);
 
@@ -991,15 +1008,22 @@ self.addEventListener('fetch', (event) => {
                     });
                 } catch (err) {
                     console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
-					if (isCoreAsset) {
-						const allClients = await self.clients.matchAll();
-						allClients.forEach(client => {
-							client.postMessage({ type: 'CORE_UPDATE_RELOAD' });
-						});
+					const isVaultError = err.message && err.message.includes('VAULT');
+					if (isVaultError) {
+						Destroy_ALL_Caches(err.message);
+						return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Empty", { status: 403 });
+					}else{
+						const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
+						if(deletedMain){
+							console.log(`⚠️🧹 SW: Risorsa Corrotta nel (🛡️ Bunker), ✅ eliminata correttamente: ${finalPath}`);
+							return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
+						}
 					}
+					throw err;
                 }
-            }
-            return cached;
+            }else{
+				return cached;
+			}
 		} else {
 
             const dotIdx = finalPath.lastIndexOf('.');
@@ -1018,7 +1042,6 @@ self.addEventListener('fetch', (event) => {
                             console.info(`🛸🎯 SW Recovery: Trovata variante -> ${altPath}`);
                             try {
                                 if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
-                                    if (!encryptionKey) await getStoredKey();
                                     const buffer = await altCached.clone().arrayBuffer();
                                     const decrypted = await decryptBuffer(buffer);
                                     return new Response(decrypted, {
@@ -1032,7 +1055,7 @@ self.addEventListener('fetch', (event) => {
 
                                 return altCached.clone();
                             } catch (decryptErr) {
-                                console.warn(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
+                                console.log(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
 
                                 continue;
                             }
@@ -1061,7 +1084,6 @@ self.addEventListener('fetch', (event) => {
 				try {
 					let imageBlob;
 					if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
-						if (!encryptionKey) await getStoredKey();
 						const buffer = await placeholder.arrayBuffer();
 						const decrypted = await decryptBuffer(buffer);
 						imageBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
@@ -1101,13 +1123,13 @@ self.addEventListener('fetch', (event) => {
 		if (!isImageRequest && isExcluded) {
 			console.info("📦❌ SW: Recupero fallito per:", finalPath);
 		}
+		if (isCoreAsset && !isNewInstallation) {
+			console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
+			CoreAssets_Destroy_Caches();
+		}
         if (isHTML) {
             return await generateErrorPage(finalResponse, url.pathname);
         }
-
-		if (isCoreAsset && !isNewInstallation) {
-			console.error(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
-		}
         return new Response('📡🚫 Offline', {
             status: 503,
             statusText: 'Service Unavailable',
@@ -1120,17 +1142,14 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('install', (event) => {
 	isNewInstallation = true;
     console.info("🛠️ SW: Installazione in corso...");
-
-    self.skipWaiting();
     event.waitUntil((async () => {
-
         const key = await getStoredKey();
         if (key) {
             console.info("🔑️ SW: Vault inizializzato durante l'installazione.");
         } else {
             console.info("⚠️ SW: Vault fallito, verrà ritentato all'attivazione.");
         }
-
+		self.skipWaiting();
         await caches.open(CONFIG.cacheName);
         await caches.open(CONFIG.userCacheName);
     })());
@@ -1153,15 +1172,21 @@ self.addEventListener('activate', (event) => {
             }),
 
             (async () => {
-                try {
-
+				try {
 					encryptionKey = await getStoredKey();
 					console.info("🗄️✅ SW: Vault Unlock Ok.");
-                } catch (e) {
-					console.info("🗄️❌ SW: Error init Vault...", e);
-                }
-
-				await cleanUserCache();
+					console.info("🛡️🔍 SW: Check di Sicurezza...");
+					await deepVaultValidation();
+					console.info("🛡️✅ SW: Integrità Bunker confermata.");
+					await cleanUserCache();
+				} catch (err) {
+					console.info("⚡🚨 SW: ACTIVATION FAILURE ", err.message);
+					const isVaultError = err.message && err.message.includes('VAULT');
+					if (isVaultError) {
+						Destroy_ALL_Caches(err.message);
+						throw new Error("ACTIVATION_ABORTED_SECURITY_BREACH");
+					}
+				}
             })()
         ]).then(() => self.clients.claim())
     );
@@ -1169,14 +1194,94 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('online', () => {
     console.info("📡📶 SW: Rete rilevata! Pronto per nuovi comandi.");
-
 });
 
-let lastKeyErrorTime = 0;
-async function getStoredKey() {
+
+
+async function CoreAssets_Destroy_Caches(serverV = null) {
+	const keys = await caches.keys();
+	await Promise.all(keys.map(async (k) => {
+		const cacheX = await caches.open(k);
+		await Promise.all(Array.from(CORE_ASSETS_SET).map(asset => cacheX.delete(asset)));
+	}));
+	const allClients = await self.clients.matchAll();
+	allClients.forEach(client => {
+		client.postMessage({ type: 'CORE_UPDATE_RELOAD', sSV: serverV });
+	});
+}
+async function Destroy_ALL_Caches(err = null) {
+	console.log("💣 SW: Errore critico rilevato, Avvio Distruzione Totale!");
+	const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+    const allClients = await self.clients.matchAll();
+	allClients.forEach(client => {
+		client.postMessage({ type: 'CORE_UPDATE_RELOAD', msg: 'DESTROY_ALL_CACHE', msg_err: err });
+	});
+}
+
+async function deepVaultValidation() {
+    let db;
+    try {
+        db = await new Promise((resolve, reject) => {
+            const req = indexedDB.open("PWA_Vault", 1);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(new Error("VAULT_DB_ACCESS_ERROR"));
+        });
+        const realKey = await new Promise((resolve, reject) => {
+            const tx = db.transaction("keys", "readonly");
+            const req = tx.objectStore("keys").get("master_key");
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(new Error("VAULT_KEY_READ_ERROR"));
+        });
+        db.close();
+        if (!realKey) throw new Error("VAULT_EMPTY_CRITICAL");
+
+        const canaryData = new Uint8Array([75, 65, 78, 65, 82, 89]);
+        const encryptedCanary = await encryptBlob(new Blob([canaryData]));
+        const decryptedBuffer = await decryptBuffer(await encryptedCanary.arrayBuffer());
+        const decryptedData = new Uint8Array(decryptedBuffer);
+        const isValid = canaryData.every((val, i) => val === decryptedData[i]);
+        if (!isValid) throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+    } catch (err) {
+        console.log("🗄️🚨 SW: VIOLAZIONE VAULT RILEVATA: ", err.message);
+        try {
+            if (db) db.close();
+            await new Promise((resolve, reject) => {
+                const req = indexedDB.deleteDatabase("PWA_Vault");
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject();
+            });
+            console.log("🗄️🔥 SW: Vault compromesso, database eliminato per sicurezza.");
+        } catch (e) {
+            console.log("🗄️⚠️ SW: Errore durante la distruzione del Vault:", e);
+        }
+
+        encryptionKey = null;
+        throw new Error("VAULT_COMPROMISED_AND_CLEANED");
+    }
+}
+let lastVaultCheck = 0;
+const CHECK_INTERVAL = 3000;
+async function verifyVaultIntegrity() {
     const now = Date.now();
+    if (now - lastVaultCheck < CHECK_INTERVAL) return true;
+    lastVaultCheck = now;
+    try {
+		await deepVaultValidation();
+	} catch (err) {
+		return false;
+	}
+    return true;
+}
+
+async function getStoredKey() {
+    // 1. Controllo cache RAM per non aprire inutilmente l'IndexedDB
+    if (encryptionKey !== null) return encryptionKey;
     return new Promise(async (resolve) => {
         try {
+            // Otteniamo la lista dei DB esistenti per sapere se il Vault è mai stato creato
+            const dbs = indexedDB.databases ? await indexedDB.databases() : [];
+            const vaultExists = dbs.some(db => db.name === "PWA_Vault");
             const request = indexedDB.open("PWA_Vault", 1);
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
@@ -1192,7 +1297,14 @@ async function getStoredKey() {
                 getReq.onsuccess = async () => {
                     let key = getReq.result;
                     if (!key) {
-                        console.info("🔑 SW: Generazione nuova Chiave Master...");
+                        if (vaultExists) {
+                            console.error("⚠️💣 ANOMALIA CRITICA: Vault compromesso, chiave sparita!");
+                            encryptionKey = null;
+                            db.close();
+                            resolve(null);
+                            return;
+                        }
+                        console.info("🔑 SW: Primo avvio, inizializzazione chiave...");
                         key = await crypto.subtle.generateKey(
                             { name: "AES-GCM", length: 256 },
                             false,
@@ -1206,6 +1318,7 @@ async function getStoredKey() {
                 };
                 getReq.onerror = () => {
                     console.info("❌ SW: Errore lettura store chiavi");
+                    db.close();
                     resolve(null);
                 };
             };
@@ -1214,15 +1327,8 @@ async function getStoredKey() {
                 resolve(null);
             };
         } catch (criticalErr) {
-            if (now - lastKeyErrorTime > 60000) {
-                lastKeyErrorTime = now;
-                self.clients.matchAll().then(allClients => {
-                    allClients.forEach(client => {
-						client.postMessage({ type: 'CORE_UPDATE_RELOAD' });
-                    });
-                });
-            }
             console.info("❌ SW: Fallimento critico sistema Vault", criticalErr);
+            encryptionKey = null;
             resolve(null);
         }
     });
@@ -1262,9 +1368,6 @@ async function encryptBlob(blob) {
 }
 
 async function decryptBuffer(buffer) {
-	const allClients = await self.clients.matchAll();
-	const now = Date.now();
-
     if (!encryptionKey) {
         console.info("🔑💾 SW: Chiave non in memoria, recupero forzato dal Vault...");
         await getStoredKey();
@@ -1272,11 +1375,6 @@ async function decryptBuffer(buffer) {
 
     if (!encryptionKey) {
         console.info("❌🔐 SW: Impossibile decriptare. Vault bloccato o chiave assente.");
-		if (now - lastKeyErrorTime > 60000) {
-			allClients.forEach(client => {
-				client.postMessage({ type: 'CORE_UPDATE_RELOAD' });
-			});
-		}
         throw new Error("VAULT_LOCKED");
     }
     try {
@@ -1291,14 +1389,8 @@ async function decryptBuffer(buffer) {
             ciphertext
         );
     } catch (err) {
-
         console.info("❌🛡️ SW: Fallimento decrittazione. Dati non integri o chiave errata.");
-		if (now - lastKeyErrorTime > 60000) {
-			allClients.forEach(client => {
-				client.postMessage({ type: 'CORE_UPDATE_RELOAD' });
-			});
-		}
-        throw err;
+		throw new Error("VAULT_LOCKED_DECRYPTION", err);
     }
 }
 
@@ -1356,7 +1448,7 @@ async function generateErrorPage(logoBlob, failedPath) {
                 r.readAsDataURL(logoBlob);
             });
         } catch (e) {
-			console.warn("⚠️ SW: ErrorPage B64 Not Blob...", e);
+			console.log("⚠️ SW: ErrorPage B64 Not Blob...", e);
 		}
     }
     const p = decodeURIComponent(failedPath || '???');

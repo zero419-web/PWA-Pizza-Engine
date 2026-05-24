@@ -16,7 +16,7 @@ window.addEventListener('load', () => {
 if (window.matchMedia('(display-mode: standalone)').matches) {
 console.log('PWA: Già in esecuzione come app.');
 
-        Sw_PwA_calls(1); 
+        Sw_PwA_calls(1);
         return;
     }
 
@@ -49,7 +49,7 @@ if (typeof handleIncognitoMode === "function"){
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     window.deferredPrompt = e;
-    Sw_PwA_calls(2); 
+    Sw_PwA_calls(2);
 });
 async function initPwaCheck(timeoutMs) {
 if (!('serviceWorker' in navigator)){
@@ -59,7 +59,7 @@ if (!('serviceWorker' in navigator)){
     const d = DATA?.[lang];
     const os = getMobileOS();
     if (os === 'iOS') {
-        Sw_PwA_calls(1); 
+        Sw_PwA_calls(1);
         return;
     }
 
@@ -77,7 +77,7 @@ item.brand.toLowerCase().includes('chromium')) || false;
 const estimate = await navigator.storage.estimate();
 const qMB = Math.round(estimate.quota / (1024 * 1024));
 
-let isSuspiciousQuota = (qMB >= 2000 && qMB <= 2400); 
+let isSuspiciousQuota = (qMB >= 2000 && qMB <= 2400);
 if (isChromium) {
     if(getMobileOS() === 'Android'){
         isSuspiciousQuota = (
@@ -85,7 +85,7 @@ if (isChromium) {
             );
     }else if(getMobileOS() === 'Desktop'){
         isSuspiciousQuota = (
-            (qMB < 5000) 
+            (qMB < 5000)
             );
     }
 }
@@ -102,7 +102,7 @@ const pwaEventRace = new Promise((resolve) => {
             window.removeEventListener('beforeinstallprompt', eventHandler);
             e.preventDefault();
            window.deferredPrompt = e;
-           Sw_PwA_calls(2); 
+           Sw_PwA_calls(2);
            resolve(true);
         }
         window.addEventListener('beforeinstallprompt', eventHandler);
@@ -115,7 +115,7 @@ const savedPoint = localStorage.getItem('pwa_check_point');
         const diffMinutes = (now - parseInt(savedPoint)) / (1000 * 60);
 
         if (diffMinutes > 60) {
-            Sw_PwA_calls(1); 
+            Sw_PwA_calls(1);
             return 0;
         }
     }else{
@@ -156,35 +156,35 @@ if (isSuspiciousQuota && !installEventTriggered) {
 console.warn("PWA: Conferma Incognito dopo timeout.");
     if (isChromium) {
         if (!PWAisInstall) {
-            Sw_PwA_calls(4); 
+            Sw_PwA_calls(4);
         }else{
             SetupdatePwaStatus('sw_not_work');
         }
     } else {
 const msg1 = d?.ErrMsgBox_msg1 ?? '';
 if(msg1 !== ''){ showErrorPanel(msg1); }
-        Sw_PwA_calls(1); 
+        Sw_PwA_calls(1);
     }
     return;
 }
 
 console.log("PWA: Utente legittimo.");
-        Sw_PwA_calls(1); 
+        Sw_PwA_calls(1);
     } catch (error) {
 console.error("PWA: Error (is sandbox).", error);
         if (isChromium) {
-            Sw_PwA_calls(4); 
+            Sw_PwA_calls(4);
         } else {
 const msg1 = d?.ErrMsgBox_msg1 ?? '';
 if(msg1 !== ''){ showErrorPanel(msg1); }
-            Sw_PwA_calls(1); 
+            Sw_PwA_calls(1);
         }
     }
 }
 
 async function getFullBrowserProfile() {
     let profile = {
-        userAgent: navigator.userAgent, 
+        userAgent: navigator.userAgent,
         platform: navigator.platform,
         language: navigator.language,
         isHighEntropyDataAvailable: false,
@@ -409,9 +409,9 @@ function sendErrorFeedback(severity) {
 
     const logs = errorLog.length > 0 ? errorLog.join(" | ") : "Nessun errore rilevato (Debug Manuale)";
 
-var gearUrl = "%E2%9A%99%EF%B8%8F"; 
-var warnUrl = "%E2%9A%A0%EF%B8%8F"; 
-var sirenUrl = "%F0%9F%9A%A8";     
+var gearUrl = "%E2%9A%99%EF%B8%8F";
+var warnUrl = "%E2%9A%A0%EF%B8%8F";
+var sirenUrl = "%F0%9F%9A%A8";
 
     var iconUrl = (severity === 'low') ? warnUrl : sirenUrl;
     var statusText = (severity === 'low') ? "ANOMALIA MINORE" : "ERRORE CRITICO";
@@ -960,15 +960,15 @@ function sendWA(type) {
     const time = document.getElementById('b-time').value;
     const qty = document.getElementById('b-qty').value;
 
-    const iCal   = "%F0%9F%93%85"; 
-    const iInfo  = "%E2%84%B9%EF%B8%8F"; 
-    const iCheck = "%E2%9C%85";     
-    const iPin   = "%F0%9F%93%8D"; 
-    const iUser  = "%F0%9F%91%A4"; 
-    const iClock = "%E2%8F%B0";     
-    const iGroup = "%F0%9F%91%A5"; 
-    const NL     = "%0A";       
-    const SP     = "%20";       
+    const iCal   = "%F0%9F%93%85";
+    const iInfo  = "%E2%84%B9%EF%B8%8F";
+    const iCheck = "%E2%9C%85";
+    const iPin   = "%F0%9F%93%8D";
+    const iUser  = "%F0%9F%91%A4";
+    const iClock = "%E2%8F%B0";
+    const iGroup = "%F0%9F%91%A5";
+    const NL     = "%0A";
+    const SP     = "%20";
 
     let cleanTel = c?.tel.replace(/\D/g, '');
     if (!cleanTel.startsWith('39') && cleanTel.startsWith('3')) {
@@ -1259,7 +1259,7 @@ function openZoom(src, description = "") {
     };
 
     zoomImg.style.display = 'block';
-    zoomImg.style.opacity = "1"; 
+    zoomImg.style.opacity = "1";
     zoomImg.src = loaderGif;
 
     loadInBuffer(basePath + prioritizedExts[0]);
@@ -1283,7 +1283,7 @@ function closeLegal() {
     const modalText = document.getElementById('modal-text');
 
     if (zoomImg) {
-        zoomImg.src = ""; 
+        zoomImg.src = "";
         delete zoomImg.dataset.attempt;
         delete zoomImg.dataset.basePath;
     }
@@ -1354,7 +1354,7 @@ localStorage.setItem('user_preferred_theme', theme);
         body.classList.remove('lang-transition');
         isTransitioning = false;
     }, 50);
-    }, 450); 
+    }, 450);
 }
 
 function switchLang() {
@@ -1659,7 +1659,7 @@ document.getElementById('BTheme').classList.add('is-disabled');
 function tornaSu() {
 document.documentElement.scrollTop = 0;
 
-document.body.scrollTop = 0; 
+document.body.scrollTop = 0;
 }
 
 let isPwaAlreadySynced = false;
@@ -1851,7 +1851,7 @@ updatePwaStatus('working',
 if (event.data.type === 'SYNC_END') {
     const { hasChanged, serverVersion } = event.data;
     const lastVer = localStorage.getItem('pwa_last_version');
-    const currentHTMLVer = window.APP_CONFIG.ver_site; 
+    const currentHTMLVer = window.APP_CONFIG.ver_site;
     const alreadyRefreshed = sessionStorage.getItem('pwa_update_done');
 
     console.log("--- DEBUG PANZER ---");
@@ -1918,9 +1918,9 @@ if (event.data.type === 'SYNC_END') {
 						});
 					});
 				}, 500);
-				return; 
+				return;
 			}
-            sessionStorage.removeItem('pwa_update_done'); 
+            sessionStorage.removeItem('pwa_update_done');
             isPwaAlreadySynced = true;
         } else {
             isPwaAlreadySynced = false;
@@ -1932,14 +1932,13 @@ if (event.data.type === 'SYNC_END') {
 }
 
 if (event.data.type === 'CORE_UPDATE_RELOAD') {
-	localStorage.setItem('pwa_last_version', event.data.sSV);
+	localStorage.setItem('pwa_last_version', event.data?.sSV);
     console.log("💥 PWA Core-Assets: Reset totale in corso...");
 
     if (window.db) window.db.close();
 
     navigator.serviceWorker.getRegistrations().then(registrations => {
         Promise.all(registrations.map(r => r.unregister())).then(() => {
-            console.log("PWA: SW rimosso. e tutte cache svuotate...");
 			alert('💥 PWA CoreAssets: Reset, Push Ok to Refresh Now !');
 			window.location.href = window.location.pathname;
         });
