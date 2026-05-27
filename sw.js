@@ -3,7 +3,7 @@
  * (Structured Manifest & Smart Sync Resident)
  *
  * Service Worker
- * Carrarmato Panzer v7.1
+ * Carrarmato Panzer v7.2
  * U-Boot - Stealth Edition (Encrypted)
  *
  * By Valentino Aglianò - Idoneo ASMEL 2025 !
@@ -1005,7 +1005,9 @@ self.addEventListener('fetch', (event) => {
                         secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
                     }
 
-                    return new Response(decrypted, { headers: secureHeaders });
+                    const outResponse = new Response(decrypted, { headers: secureHeaders });
+					decrypted = null;
+                    return outResponse;
                 } catch (err) {
                     console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
                     const isVaultError = err.message && err.message.includes('VAULT');
@@ -1057,7 +1059,9 @@ self.addEventListener('fetch', (event) => {
                                         secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
                                     }
 
-                                    return new Response(decrypted, { headers: secureHeaders });
+                                    const outResponse = new Response(decrypted, { headers: secureHeaders });
+									decrypted = null;
+									return outResponse;
                                 }
 
                                 return altCached.clone();
