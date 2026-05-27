@@ -981,40 +981,49 @@ self.addEventListener('fetch', (event) => {
                 console.info("📡⚠️ SW: Fallimento rete, recupero locale per:", finalPath);
             }
         }
-
-        if (cached) {
+		if (cached) {
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
-					const isOk = await verifyVaultIntegrity();
-					if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
+                    const isOk = await verifyVaultIntegrity();
+                    if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
                     const decrypted = await decryptBuffer(buffer);
 
-                    return new Response(decrypted, {
-                        headers: {
-                            'Content-Type': cached.headers.get('Content-Type'),
-                            'X-PWA-Source': 'Bunker-Decrypted'
-                        }
+                    const detectedContentType = cached.headers.get('Content-Type') || '';
+                    const dotIdx = finalPath.lastIndexOf('.');
+                    const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
+
+                    const secureHeaders = new Headers({
+                        'Content-Type': detectedContentType,
+                        'X-PWA-Source': 'Bunker-Decrypted',
+                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
                     });
+
+                    if (ext && CONFIG.extExlPHr.includes(ext)) {
+                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
+                    }
+
+                    return new Response(decrypted, { headers: secureHeaders });
                 } catch (err) {
                     console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
-					const isVaultError = err.message && err.message.includes('VAULT');
-					if (isVaultError) {
-						return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Erorr...", { status: 403 });
-					}else{
-						const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
-						if(deletedMain){
-							console.log(`⚠️🧹 SW: Risorsa Corrotta nel (🛡️ Bunker), ✅ eliminata correttamente: ${finalPath}`);
-							return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
-						}
-					}
-					throw err;
+                    const isVaultError = err.message && err.message.includes('VAULT');
+                    if (isVaultError) {
+                        return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Erorr...", { status: 403 });
+                    } else {
+                        const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
+                        if (deletedMain) {
+                            console.log(`⚠️🧹 SW: Risorsa Corrotta nel (🛡️ Bunker), ✅ eliminata correttamente: ${finalPath}`);
+                            return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
+                        }
+                    }
+                    throw err;
                 }
-            }else{
-				return cached;
-			}
-		} else {
-
+            } else {
+                return cached;
+            }
+        } else {
             const dotIdx = finalPath.lastIndexOf('.');
             if (dotIdx !== -1) {
                 const basePath = finalPath.substring(0, dotIdx);
@@ -1033,19 +1042,27 @@ self.addEventListener('fetch', (event) => {
                                 if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
                                     const buffer = await altCached.clone().arrayBuffer();
                                     const decrypted = await decryptBuffer(buffer);
-                                    return new Response(decrypted, {
-                                        headers: {
-                                            'Content-Type': contentTypeIMG,
-                                            'X-PWA-Source': 'Bunker-Recovered-Decrypted',
-                                            'X-PWA-Original-Path': altPath
-                                        }
+
+                                    const variantExtLower = variantExt.toLowerCase();
+                                    const secureHeaders = new Headers({
+                                        'Content-Type': contentTypeIMG,
+                                        'X-PWA-Source': 'Bunker-Recovered-Decrypted',
+                                        'X-PWA-Original-Path': altPath,
+                                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                                        'Pragma': 'no-cache',
+                                        'Expires': '0'
                                     });
+
+                                    if (CONFIG.extExlPHr.includes(variantExtLower)) {
+                                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
+                                    }
+
+                                    return new Response(decrypted, { headers: secureHeaders });
                                 }
 
                                 return altCached.clone();
                             } catch (decryptErr) {
                                 console.log(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
-
                                 continue;
                             }
                         }
@@ -1057,53 +1074,52 @@ self.addEventListener('fetch', (event) => {
         if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
-		let finalResponse = null;
-		const contentsType = event.request.headers.get('Accept') || "";
+        let finalResponse = null;
+        const contentsType = event.request.headers.get('Accept') || "";
 
         const isHTML = contentsType.includes('text/html');
 
-		const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
-		const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
-		const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
-		const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
-		if (isImageRequest || isHTML) {
-			const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
-			const placeholder = await caches.match(placeholderPath);
-			if (placeholder) {
-				try {
-					let imageBlob;
-					if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
-						const buffer = await placeholder.arrayBuffer();
-						const decrypted = await decryptBuffer(buffer);
-						imageBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
-					} else {
-						imageBlob = await placeholder.blob();
-					}
-					if (isImageRequest && !isHTML && !isExcluded) {
-						console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
-						return new Response(imageBlob, {
-							headers: {
-								'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
-								'X-PWA-Source': 'Bunker-Placeholder'
-							}
-						});
-					}
+        const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
+        const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
+        const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
+        const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
+        if (isImageRequest || isHTML) {
+            const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
+            const placeholder = await caches.match(placeholderPath);
+            if (placeholder) {
+                try {
+                    let imageBlob;
+                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
+                        const buffer = await placeholder.arrayBuffer();
+                        const decrypted = await decryptBuffer(buffer);
+                        imageBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
+                    } else {
+                        imageBlob = await placeholder.blob();
+                    }
+                    if (isImageRequest && !isHTML && !isExcluded) {
+                        console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
+                        return new Response(imageBlob, {
+                            headers: {
+                                'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
+                                'X-PWA-Source': 'Bunker-Placeholder'
+                            }
+                        });
+                    }
 
-					finalResponse = imageBlob;
-				} catch (err) {
-					console.info("❌ SW: Errore decriptazione placeholder:", err);
-				}
-			} else {
+                    finalResponse = imageBlob;
+                } catch (err) {
+                    console.info("❌ SW: Errore decriptazione placeholder:", err);
+                }
+            } else {
+                if (isImageRequest && !isHTML && !isExcluded) {
+                    console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
 
-				if (isImageRequest && !isHTML && !isExcluded) {
-					console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
-
-					const brokenImgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="21" x2="21" y2="3"/><path d="M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M21 15l-5-5L5 21"/></svg>`;
-					const brokenBlob = new Blob([brokenImgSvg], { type: 'image/svg+xml' });
-					return new Response(brokenBlob, {
-						headers: {
-							'Content-Type': 'image/svg+xml',
-							'X-PWA-Source': 'SW-Emergency-SVG'
+                    const brokenImgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="21" x2="21" y2="3"/><path d="M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M21 15l-5-5L5 21"/></svg>`;
+                    const brokenBlob = new Blob([brokenImgSvg], { type: 'image/svg+xml' });
+                    return new Response(brokenBlob, {
+                        headers: {
+                            'Content-Type': 'image/svg+xml',
+                            'X-PWA-Source': 'SW-Emergency-SVG'
 						}
 					});
 				}
@@ -1125,9 +1141,7 @@ self.addEventListener('fetch', (event) => {
             headers: { 'Content-Type': 'text/plain' }
         });
 
-    })());
-});
-
+		
 self.addEventListener('install', (event) => {
 	isNewInstallation = true;
     console.info("🛠️ SW: Installazione in corso...");
