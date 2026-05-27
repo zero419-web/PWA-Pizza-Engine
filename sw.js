@@ -285,10 +285,10 @@ const normalize = (url) => {
 async function smartDownload(url, cache, isCore = false, version = '', probeSize = 0) {
     const cleanKey = normalize(url);
     let isEncrypted = false;
-    if (isLogicEnabled && !encryptionKey) {
-		throw new Error("VAULT_LOCKED_NO_KEY");
+    const isVaultReady = await verifyVaultIntegrity();
+    if (!isVaultReady || !encryptionKey) {
+        throw new Error("VAULT_LOCKED_NO_KEY");
     }
-
     const existing = await cache.match(cleanKey);
     if (existing) {
         const cachedVersion = existing.headers.get('X-PWA-Version');
@@ -923,7 +923,7 @@ self.addEventListener('fetch', (event) => {
                     event.waitUntil((async () => {
                         try {
 							const isOk = await verifyVaultIntegrity();
-							if (!isOk) throw new Error("VAULT_LOCKED_NO_KEY");
+							if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
 							if (!responseClone || !isLogicEnabled || isSyncing) {
 
 								return;
@@ -988,7 +988,7 @@ self.addEventListener('fetch', (event) => {
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
 					const isOk = await verifyVaultIntegrity();
-					if (!isOk) throw new Error("VAULT_LOCKED_NO_KEY");
+					if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
                     const decrypted = await decryptBuffer(buffer);
 
@@ -1269,7 +1269,7 @@ async function deepVaultValidation() {
 }
 
 let lastVaultCheck = 0;
-const CHECK_INTERVAL = 3000;
+const CHECK_INTERVAL = 300000;
 async function verifyVaultIntegrity() {
     const now = Date.now();
     if (encryptionKey !== null && (now - lastVaultCheck < CHECK_INTERVAL)) return true;
