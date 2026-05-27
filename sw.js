@@ -17,8 +17,8 @@ let encryptionKey = null;
 const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, '/');
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.1',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.1',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.2',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.2',
 	vaultCanaryText: 'KANARY_CHECK_OK_PANZER_VAULT',
     userCacheTTL: 7,
     networkResilient: {
@@ -1362,20 +1362,34 @@ async function encryptBlob(blob) {
        throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
     }
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const buffer = await blob.arrayBuffer();
+    let buffer = await blob.arrayBuffer();
+    let ciphertext = null;
+    let combined = null;
     try {
-
-        const ciphertext = await crypto.subtle.encrypt(
+        ciphertext = await crypto.subtle.encrypt(
             { name: "AES-GCM", iv: iv },
             encryptionKey,
             buffer
         );
-        const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+        
+        new Uint8Array(buffer).fill(0);
+        buffer = null;
+
+        combined = new Uint8Array(iv.length + ciphertext.byteLength);
         combined.set(iv);
         combined.set(new Uint8Array(ciphertext), iv.length);
-        return new Blob([combined], { type: blob.type });
+        
+        const outBlob = new Blob([combined], { type: blob.type });
+        
+        combined.fill(0);
+        combined = null;
+        ciphertext = null;
+        
+        return outBlob;
     } catch (err) {
         console.info("❌🛡️ SW: Errore durante la cifratura del file.");
+        if (buffer instanceof ArrayBuffer) new Uint8Array(buffer).fill(0);
+        if (combined instanceof Uint8Array) combined.fill(0);
         throw err;
     }
 }
@@ -1384,34 +1398,47 @@ async function decryptBuffer(buffer) {
     if (!encryptionKey) {
         throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
     }
+    let data = new Uint8Array(buffer);
     try {
-        const data = new Uint8Array(buffer);
-        const iv = data.slice(0, 12);
-        const ciphertext = data.slice(12);
-        return await crypto.subtle.decrypt(
+        const iv = data.subarray(0, 12);
+        const ciphertext = data.subarray(12);
+        
+        const decrypted = await crypto.subtle.decrypt(
             { name: "AES-GCM", iv: iv },
             encryptionKey,
             ciphertext
         );
+
+        data.fill(0);
+        data = null;
+
+        return decrypted;
     } catch (err) {
         console.info("❌🛡️ SW: Fallimento decrittazione. Dati non integri o chiave errata.");
-		throw new Error("VAULT_LOCKED_DECRYPTION", err);
+        if (data) data.fill(0);
+        throw new Error("VAULT_LOCKED_DECRYPTION", { cause: err });
     }
 }
 
-async function getHash(blob, algo = 'SHA-1') {
+async function getHash(blob, algo = 'SHA-256') {
+    let buffer = null;
+    let hashBuffer = null;
     try {
+        buffer = await blob.arrayBuffer();
+        hashBuffer = await crypto.subtle.digest(algo, buffer);
 
-        const hashBuffer = await crypto.subtle.digest(algo, await blob.arrayBuffer());
+        new Uint8Array(buffer).fill(0);
+        buffer = null;
 
         const hashArray = new Uint8Array(hashBuffer);
-        let hashHex = '';
-        for (let i = 0; i < hashArray.length; i++) {
-            hashHex += hashArray[i].toString(16).padStart(2, '0');
-        }
+        const hashHex = Array.from(hashArray)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+
         return hashHex;
     } catch (err) {
         console.info(`🧬❌ SW: Errore calcolo hash (${algo}):`, err);
+        if (buffer instanceof ArrayBuffer) new Uint8Array(buffer).fill(0);
         return null;
     }
 }
