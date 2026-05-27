@@ -19,6 +19,7 @@ const CONFIG = {
     ROOT: BASE_PATH,
         cacheName:      'PWA_PIZZA_ENGINE_v7.1',
     userCacheName: 'user_PWA_PIZZA_ENGINE_v7.1',
+	vaultCanaryText: 'KANARY_CHECK_OK_PANZER_VAULT',
     userCacheTTL: 7,
     networkResilient: {
         maxRetries: 5,
@@ -835,13 +836,8 @@ self.addEventListener('message', (event) => {
 
 		} catch (err) {
                 console.info("🔄⚠️ SW: Errore Sync", err);
-
 				if (syncAbortController) syncAbortController.abort();
-                const isVaultError = err.message && err.message.includes('VAULT');
 				const isIntegritaError = err.message && err.message.includes('Integrità');
-				if (isVaultError) {
-					Destroy_ALL_Caches(err.message);
-				}
 				if (isIntegritaError) {
 					console.log("⚠️ SW: Errore di Integrità rilevato su un asset.");
 				}else {
@@ -969,10 +965,6 @@ self.addEventListener('fetch', (event) => {
 							}
                         } catch (cacheError) {
 							console.log(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`);
-							const isVaultError = cacheError.message && cacheError.message.includes('VAULT');
-							if (isVaultError) {
-								Destroy_ALL_Caches(cacheError.message);
-							}
 							console.log("📦⚠️ SW: Update cache fallito:", cacheError);
 							throw cacheError;
 						}
@@ -1010,8 +1002,7 @@ self.addEventListener('fetch', (event) => {
                     console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
 					const isVaultError = err.message && err.message.includes('VAULT');
 					if (isVaultError) {
-						Destroy_ALL_Caches(err.message);
-						return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Empty", { status: 403 });
+						return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Erorr...", { status: 403 });
 					}else{
 						const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
 						if(deletedMain){
@@ -1180,12 +1171,7 @@ self.addEventListener('activate', (event) => {
 					console.info("🛡️✅ SW: Integrità Bunker confermata.");
 					await cleanUserCache();
 				} catch (err) {
-					console.info("⚡🚨 SW: ACTIVATION FAILURE ", err.message);
-					const isVaultError = err.message && err.message.includes('VAULT');
-					if (isVaultError) {
-						Destroy_ALL_Caches(err.message);
-						throw new Error("ACTIVATION_ABORTED_SECURITY_BREACH");
-					}
+					console.info("⚡🚨 SW: Erorre: ", err.message);
 				}
             })()
         ]).then(() => self.clients.claim())
@@ -1220,8 +1206,11 @@ async function Destroy_ALL_Caches(err = null) {
 }
 
 async function deepVaultValidation() {
-    let db;
+    let db = null;
     try {
+        if (encryptionKey !== null) {
+            return;
+        }
         db = await new Promise((resolve, reject) => {
             const req = indexedDB.open("PWA_Vault", 1);
             req.onsuccess = () => resolve(req.result);
@@ -1234,52 +1223,70 @@ async function deepVaultValidation() {
             req.onerror = () => reject(new Error("VAULT_KEY_READ_ERROR"));
         });
         db.close();
-        if (!realKey) throw new Error("VAULT_EMPTY_CRITICAL");
-
-        const canaryData = new Uint8Array([75, 65, 78, 65, 82, 89]);
-        const encryptedCanary = await encryptBlob(new Blob([canaryData]));
-        const decryptedBuffer = await decryptBuffer(await encryptedCanary.arrayBuffer());
-        const decryptedData = new Uint8Array(decryptedBuffer);
-        const isValid = canaryData.every((val, i) => val === decryptedData[i]);
-        if (!isValid) throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
-    } catch (err) {
-        console.log("🗄️🚨 SW: VIOLAZIONE VAULT RILEVATA: ", err.message);
-        try {
-            if (db) db.close();
-            await new Promise((resolve, reject) => {
-                const req = indexedDB.deleteDatabase("PWA_Vault");
-                req.onsuccess = () => resolve();
-                req.onerror = () => reject();
-            });
-            console.log("🗄️🔥 SW: Vault compromesso, database eliminato per sicurezza.");
-        } catch (e) {
-            console.log("🗄️⚠️ SW: Errore durante la distruzione del Vault:", e);
+        db = null;
+        if (!realKey) {
+            throw new Error("VAULT_EMPTY_TEMPORARY");
         }
-
-        encryptionKey = null;
-        throw new Error("VAULT_COMPROMISED_AND_CLEANED");
+        const canaryText = CONFIG.vaultCanaryText;
+        const testKey = realKey;
+        try {
+            encryptionKey = testKey;
+            const testBlob = new Blob([canaryText], { type: "text/plain" });
+            const encryptedBlob = await encryptBlob(testBlob);
+            const decryptedBuffer = await decryptBuffer(await encryptedBlob.arrayBuffer());
+            const decryptedText = new TextDecoder().decode(decryptedBuffer);
+            if (decryptedText !== canaryText) {
+                throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+            }
+            encryptionKey = testKey;
+        } catch (cryptoErr) {
+            encryptionKey = null;
+            throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+        }
+    } catch (err) {
+        if (db) {
+            try { db.close(); } catch(e){}
+        }
+        if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
+            console.log("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
+            try {
+                await Destroy_ALL_Caches("VAULT_COMPROMISED");
+                await new Promise((resolve) => {
+                    const req = indexedDB.deleteDatabase("PWA_Vault");
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => resolve();
+                });
+                console.log("🗄️🔥 SW: Tabula rasa completata con successo.");
+            } catch (purgErr) {
+                console.log("🗄️⚠️ SW: Errore durante la purga del sistema:", purgErr);
+            }
+            encryptionKey = null;
+            throw new Error("VAULT_COMPROMISED_AND_CLEANED");
+        }
+        console.warn("🗄️⚠️ SW: Accesso Vault: (" + err.message + ")");
+        throw new Error("VAULT_TEMPORARILY_LOCKED");
     }
 }
+
 let lastVaultCheck = 0;
 const CHECK_INTERVAL = 3000;
 async function verifyVaultIntegrity() {
     const now = Date.now();
-    if (now - lastVaultCheck < CHECK_INTERVAL) return true;
-    lastVaultCheck = now;
+    if (encryptionKey !== null && (now - lastVaultCheck < CHECK_INTERVAL)) return true;
     try {
-		await deepVaultValidation();
-	} catch (err) {
-		return false;
-	}
-    return true;
+        await deepVaultValidation();
+        lastVaultCheck = Date.now();
+        return true;
+    } catch (err) {
+        console.warn("⚠️ SW: Validazione temporaneamente fallita: ", err.message);
+        return false;
+    }
 }
 
 async function getStoredKey() {
-    // 1. Controllo cache RAM per non aprire inutilmente l'IndexedDB
     if (encryptionKey !== null) return encryptionKey;
     return new Promise(async (resolve) => {
         try {
-            // Otteniamo la lista dei DB esistenti per sapere se il Vault è mai stato creato
             const dbs = indexedDB.databases ? await indexedDB.databases() : [];
             const vaultExists = dbs.some(db => db.name === "PWA_Vault");
             const request = indexedDB.open("PWA_Vault", 1);
@@ -1335,17 +1342,9 @@ async function getStoredKey() {
 }
 
 async function encryptBlob(blob) {
-
     if (!encryptionKey) {
-        console.info("🔑🛡️ SW: Chiave mancante durante criptazione, recupero...");
-        await getStoredKey();
+       throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
     }
-
-    if (!encryptionKey) {
-        console.info("❌🔐 SW: Impossibile criptare, Vault bloccato.");
-        throw new Error("VAULT_LOCKED_ENCRYPTION");
-    }
-
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const buffer = await blob.arrayBuffer();
     try {
@@ -1355,11 +1354,9 @@ async function encryptBlob(blob) {
             encryptionKey,
             buffer
         );
-
         const combined = new Uint8Array(iv.length + ciphertext.byteLength);
         combined.set(iv);
         combined.set(new Uint8Array(ciphertext), iv.length);
-
         return new Blob([combined], { type: blob.type });
     } catch (err) {
         console.info("❌🛡️ SW: Errore durante la cifratura del file.");
@@ -1369,20 +1366,12 @@ async function encryptBlob(blob) {
 
 async function decryptBuffer(buffer) {
     if (!encryptionKey) {
-        console.info("🔑💾 SW: Chiave non in memoria, recupero forzato dal Vault...");
-        await getStoredKey();
-    }
-
-    if (!encryptionKey) {
-        console.info("❌🔐 SW: Impossibile decriptare. Vault bloccato o chiave assente.");
-        throw new Error("VAULT_LOCKED");
+        throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
     }
     try {
         const data = new Uint8Array(buffer);
-
         const iv = data.slice(0, 12);
         const ciphertext = data.slice(12);
-
         return await crypto.subtle.decrypt(
             { name: "AES-GCM", iv: iv },
             encryptionKey,
