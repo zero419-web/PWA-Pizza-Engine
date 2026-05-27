@@ -499,7 +499,7 @@ async function checkRealOnline(mode = 'fetch') {
     if (mode === 'fetch') {
 
         if (profileName === 'Verylow' || profileName === 'Low') {
-            console.info(`🌐 SW Fetch: Profilo ${profileName}`);
+            console.info(`🌐🚫 SW Fetch: Profilo ${profileName}`);
             return false;
         }
     }
@@ -526,7 +526,7 @@ async function checkRealOnline(mode = 'fetch') {
         clearTimeout(tId);
         return true;
     } catch (e) {
-        console.log(`🌐 SW: Offline in ${mode} (Profilo: ${profileName})`);
+        console.log(`🌐❌ SW: Offline in ${mode} (Profilo: ${profileName})`);
         return false;
     }
 }
@@ -840,8 +840,6 @@ self.addEventListener('message', (event) => {
 				const isIntegritaError = err.message && err.message.includes('Integrità');
 				if (isIntegritaError) {
 					console.log("⚠️ SW: Errore di Integrità rilevato su un asset.");
-				}else {
-					console.info("🌐 Errore di rete standard, alla prossima Sync...");
 				}
 		} finally {
 				console.info(`✅ SW: SYNC Completata. Total file Download: ${completed} - Exclud(IsBunker): ${completed_ok}`);
@@ -1247,7 +1245,7 @@ async function deepVaultValidation() {
         if (db) {
             try { db.close(); } catch(e){}
         }
-        if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
+        if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY" || err.message === "VAULT_EMPTY_TEMPORARY") {
             console.log("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
             try {
                 await Destroy_ALL_Caches("VAULT_COMPROMISED");
