@@ -216,7 +216,7 @@ async function performProbe(url, rules) {
     }
 
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), 5000);
+	const timeoutId = setTimeout(() => controller.abort(), 2500);
     try {
         const probe = await fetch(url, {
             method: 'HEAD',
@@ -227,7 +227,7 @@ async function performProbe(url, rules) {
 					controller.signal
         });
         clearTimeout(timeoutId);
-        if (probe.ok) {
+        if (probe.ok && probe.status === 200) {
             const contentLength = probe.headers.get('Content-Length');
             const contentType = (probe.headers.get('Content-Type') || '').toLowerCase();
 
@@ -403,6 +403,7 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
                             if (cacheError.name === 'QuotaExceededError') {
                                 console.log("🚨 SW: Storage Pieno! Emergency Clean...");
                                 await cleanUserCache(true);
+								await sleep(300);
                                 await cache.put(cleanKey, new Response(finalBlob, { status: 200, headers: newHeaders }));
                             } else {
                                 throw cacheError;
@@ -588,7 +589,7 @@ self.addEventListener('message', (event) => {
 							cache: 'no-store',
 							signal: syncAbortController?.signal
 						});
-					if (radarRes.ok) {
+					if (radarRes.ok && radarRes.status === 200) {
 						const radarText = await radarRes.text();
 						const match = radarText.match(/ver_site\s*:\s*['"]([^'"]+)['"]/i);
 						const serverV = match ? match[1] : null;
@@ -613,53 +614,94 @@ self.addEventListener('message', (event) => {
 				}
 			}
 
-			console.info(`⚙️📥 SW: Avvio download file core...`);
-			broadcast({ type: 'SYNC_PROGRESS' });
-			const coreResults = await Promise.allSettled(
-				CONFIG.coreAssets.map(url => smartDownload(url, cache, true, realServerVersion) )
-			);
-			if(IsCFUD){
-				coreResults.forEach((res, i) => {
-				const url = CONFIG.coreAssets[i];
-				const isDownloaded = res.status === 'fulfilled' && res.value === "DOWNLOADED";
-					if (isDownloaded) {
-						console.info(`⚙️ SW: asset core: ${url}`);
+				console.info(`⚙️📥 SW: Avvio download file core...`);
+				broadcast({ type: 'SYNC_PROGRESS' });
+				const coreResults = [];
+				let coreLimit = getNetworkProfile(self.navigator).limit;
+				for (let i = 0; i < CONFIG.coreAssets.length; i += coreLimit) {
+					if (syncAbortController?.signal.aborted) {
+						throw new Error("SYNC_ABORTED_DURING_CORE");
 					}
-				});
-			}
-			await waitTillIdle(1000);
+					coreLimit = getNetworkProfile(self.navigator).limit;
+					const coreChunk = CONFIG.coreAssets.slice(i, i + coreLimit);
+					const chunkPromises = coreChunk.map(url => smartDownload(url, cache, true, realServerVersion));
+					let coreAbortListener;
+					const coreAbortPromise = new Promise((_, reject) => {
+						if (syncAbortController?.signal.aborted) {
+							reject(new Error("SYNC_ABORTED_DURING_CORE"));
+							return;
+						}
+						coreAbortListener = () => reject(new Error("SYNC_ABORTED_DURING_CORE"));
+						syncAbortController?.signal.addEventListener('abort', coreAbortListener);
+					});
+					let chunkResults;
+					try {
+						chunkResults = await Promise.race([
+							Promise.allSettled(chunkPromises),
+							coreAbortPromise
+						]);
+						if (coreAbortListener) syncAbortController?.signal.removeEventListener('abort', coreAbortListener);
+					} catch (coreRaceError) {
+						if (coreAbortListener) syncAbortController?.signal.removeEventListener('abort', coreAbortListener);
+						throw coreRaceError;
+					}
+					coreResults.push(...chunkResults);
+					if (IsCFUD) {
+						chunkResults.forEach((res, index) => {
+							const url = coreChunk[index];
+							const isDownloaded = res.status === 'fulfilled' && res.value === "DOWNLOADED";
+							if (isDownloaded) {
+								console.info(`⚙️ SW: asset core scaricato: ${url}`);
+							}
+						});
+					}
+					await waitTillIdle(1000);
+				}
+				const core_Down_OK = coreResults.filter(r => r.status === 'fulfilled' && r.value === "DOWNLOADED").length;
+				console.info(`✅⚙️ SW: Core File Scaricati effettivi da rete: ${core_Down_OK}/${coreResults.length}`);
 
 				console.info(`⚙️📜 SW: Avvio Raccolta Lista File dal Manifest...`);
-                const manifestList = [];
-					if ((!await checkRealOnline('sync')) || isCriticalLow) {
-						console.log("📡❌ SW Stop: Rete persa durante il 🔄 sync.");
-						if (syncAbortController) {
-							syncAbortController.abort();
-						}
-						isSyncing = false;
-						broadcast({ type: 'SYNC_RETRY' });
-						return;
+				const manifestList = [];
+				if ((!await checkRealOnline('sync')) || isCriticalLow) {
+					console.log("📡❌ SW Stop: Rete persa durante il 🔄 sync.");
+					if (syncAbortController) {
+						syncAbortController.abort();
 					}
+					isSyncing = false;
+					broadcast({ type: 'SYNC_RETRY' });
+					return;
+				}
 				try {
 					const manifestRes = await fetch(CONFIG.manifestPath, {
 						cache: 'no-cache',
 						signal: syncAbortController?.signal
 					});
-                    if (manifestRes.ok) {
-						broadcast({ type: 'SYNC_PROGRESS' });
-                        const structured = await manifestRes.json();
-                        structured.forEach(group => {
-                            const directory = group.dir || "";
-                            group.files?.forEach(f => {
-								const fullPath = normalize(CONFIG.ROOT + directory + f);
-								manifestList.push(fullPath);
-
-								console.info(`📄 SW: File rilevato -> ${fullPath}`);
-                            });
-                        });
-						console.info(`✅📜 SW: Lista completata. File raccolti dal manifest: ${manifestList.length}`);
-                    }
-                } catch (e) { console.info("🚫⚠️ SW: Errore Assets Manifest", e); }
+					if (!manifestRes || !manifestRes.ok || manifestRes.status !== 200) {
+						throw new Error(`MANIFEST_SERVER_ERROR_STATUS_${manifestRes?.status}`);
+					}
+					broadcast({ type: 'SYNC_PROGRESS' });
+					let structured;
+					try {
+						structured = await manifestRes.json();
+					} catch (jsonErr) {
+						throw new Error("MANIFEST_JSON_CORRUPTED");
+					}
+					if (Array.isArray(structured)) {
+						structured.forEach(group => {
+							const directory = group.dir || "";
+							if (group.files && Array.isArray(group.files)) {
+								group.files.forEach(f => {
+									const fullPath = normalize(CONFIG.ROOT + directory + f);
+									manifestList.push(fullPath);
+								});
+							}
+						});
+					}
+					console.info(`✅📜 SW: Lista completata. File raccolti dal manifest: ${manifestList.length}`);
+				} catch (e) {
+					console.info("🚫⚠️ SW: Errore Critico durante l'elaborazione dell'Assets Manifest:", e.message);
+					throw new Error("ASSETS_MANIFEST_CORRUPTED");
+				}
 
                 const db = event.data.data;
                 const scanSet = new Set();
@@ -677,6 +719,12 @@ self.addEventListener('message', (event) => {
                             else if (CONFIG.mappingLogic.contexts[key]) nextCtx = key;
                             await universalScanner(val, nextCtx, key, depth + 1);
                             continue;
+                        }
+						if (typeof val === 'string') {
+                            const trimmed = val.trim();
+                            if (trimmed.length > 150 || (trimmed.split(' ').length - 1) > 2) {
+                                continue;
+                            }
                         }
                         const valStr = String(val).trim();
                         if (valStr.length < 2) continue;
@@ -715,7 +763,7 @@ self.addEventListener('message', (event) => {
 										cache: 'no-cache',
 										signal: combinedSignal
 									});
-                                    if (probe.ok) {
+                                    if (probe.ok && probe.status === 200) {
                                         scanSet.add(url);
                                         console.info(`🎯🕵️‍♂️ SW Scanner: Asset Agganciato -> ${url}`);
 
@@ -725,11 +773,9 @@ self.addEventListener('message', (event) => {
 												const nextProbe = await fetch(nextUrl, {
 														method: 'HEAD',
 														cache: 'no-cache',
-														signal: syncAbortController
-															? AbortSignal.any([syncAbortController.signal, AbortSignal.timeout(2500)])
-															: AbortSignal.timeout(2500)
+														signal: combinedSignal
 													});
-                                                if (nextProbe.ok) scanSet.add(nextUrl);
+                                                if (nextProbe.ok && nextProbe.status === 200) scanSet.add(nextUrl);
                                             }
                                         }
                                     }
@@ -778,8 +824,28 @@ self.addEventListener('message', (event) => {
                     const group = uniqueList.slice(i, i + limit);
 
 					console.info(`🗃️🚀 SW: Sync 🗂️ [ ${Math.floor(i/limit) + 1} / ${Math.ceil(List_File_Download/limit)} ] (${group.length} 📄)`);
-                    const results = await Promise.allSettled(group.map(url => smartDownload(url, cache, false, realServerVersion)));
 
+					let abortListener;
+					const abortPromise = new Promise((_, reject) => {
+						if (syncAbortController?.signal.aborted) {
+							reject(new Error("SYNC_ABORTED_DURING_CHUNK"));
+							return;
+						}
+						abortListener = () => reject(new Error("SYNC_ABORTED_DURING_CHUNK"));
+						syncAbortController?.signal.addEventListener('abort', abortListener);
+					});
+					let results;
+					try {
+						results = await Promise.race([
+							Promise.allSettled(group.map(url => smartDownload(url, cache, false, realServerVersion))),
+							abortPromise
+						]);
+						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
+						await waitTillIdle(1000);
+					} catch (raceError) {
+						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
+						throw raceError;
+					}
 					await waitTillIdle(1000);
 					results.forEach((res, index) => {
 						const url = group[index];
@@ -877,7 +943,10 @@ const CORE_ASSETS_SET = new Set(
     })
 );
 
+const BROKEN_IMAGE_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="21" x2="21" y2="3"/><path d="M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M21 15l-5-5L5 21"/></svg>`;
+const GLOBAL_BROKEN_BLOB = new Blob([BROKEN_IMAGE_SVG_STRING], { type: 'image/svg+xml' });
 let globalPlaceholderBlob = null;
+
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
     const url = new URL(event.request.url);
@@ -912,7 +981,7 @@ self.addEventListener('fetch', (event) => {
                     signal: controller.signal
                 });
                 clearTimeout(tId);
-                if (networkResponse && networkResponse.ok) {
+                if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
 					if (!isLogicEnabled || isSyncing) {
 
 						return networkResponse;
@@ -1094,16 +1163,16 @@ self.addEventListener('fetch', (event) => {
             const placeholder = await caches.match(placeholderPath);
             if (placeholder) {
                 try {
-				  if (globalPlaceholderBlob === null) {
-                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
-                        const buffer = await placeholder.arrayBuffer();
-                        let decrypted = await decryptBuffer(buffer);
-                        globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
-						decrypted = null;
-                    } else {
-                        globalPlaceholderBlob = await placeholder.blob();
-                    }
-				  }
+					if (globalPlaceholderBlob === null) {
+						if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
+							const buffer = await placeholder.arrayBuffer();
+							let decrypted = await decryptBuffer(buffer);
+							globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
+							decrypted = null;
+						} else {
+							globalPlaceholderBlob = await placeholder.blob();
+						}
+					}
                     if (isImageRequest && !isHTML && !isExcluded) {
                         console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
                         return new Response(globalPlaceholderBlob, {
@@ -1119,10 +1188,7 @@ self.addEventListener('fetch', (event) => {
             } else {
                 if (isImageRequest && !isHTML && !isExcluded) {
                     console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
-
-                    const brokenImgSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="21" x2="21" y2="3"/><path d="M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M21 15l-5-5L5 21"/></svg>`;
-                    const brokenBlob = new Blob([brokenImgSvg], { type: 'image/svg+xml' });
-                    return new Response(brokenBlob, {
+                    return new Response(GLOBAL_BROKEN_BLOB, {
                         headers: {
                             'Content-Type': 'image/svg+xml',
                             'X-PWA-Source': 'SW-Emergency-SVG'
@@ -1146,9 +1212,10 @@ self.addEventListener('fetch', (event) => {
             statusText: 'Service Unavailable',
             headers: { 'Content-Type': 'text/plain' }
         });
-	});
+
+    })());
 });
-		
+
 self.addEventListener('install', (event) => {
 	isNewInstallation = true;
     console.info("🛠️ SW: Installazione in corso...");
@@ -1202,18 +1269,31 @@ self.addEventListener('online', () => {
 });
 
 
-
+let lastReloadCommandTime = 0;
 async function CoreAssets_Destroy_Caches(serverV = null) {
-	const keys = await caches.keys();
-	await Promise.all(keys.map(async (k) => {
-		const cacheX = await caches.open(k);
-		await Promise.all(Array.from(CORE_ASSETS_SET).map(asset => cacheX.delete(asset)));
-	}));
-	const allClients = await self.clients.matchAll();
-	allClients.forEach(client => {
-		client.postMessage({ type: 'CORE_UPDATE_RELOAD', sSV: serverV });
-	});
+	const now = Date.now();
+	if (now - lastReloadCommandTime < 20000) { return; }
+	lastReloadCommandTime = now;
+	try {
+		const keys = await caches.keys();
+		await Promise.all(keys.map(async (k) => {
+			const cacheX = await caches.open(k);
+			await Promise.all(Array.from(CORE_ASSETS_SET).map(asset => cacheX.delete(asset)));
+		}));
+		console.log("🗑️ SW: Asset core Distrutti con successo...");
+		const allClients = await self.clients.matchAll();
+		allClients.forEach(client => {
+			client.postMessage({
+				type: 'CORE_UPDATE_RELOAD',
+				sSV: serverV,
+				timestamp: now
+			});
+		});
+	} catch (err) {
+		console.error("🚫 SW: Fallimento Distruzione dei file core dalla cache.", err);
+	}
 }
+
 async function Destroy_ALL_Caches(err = null) {
 	console.log("💣 SW: Errore critico rilevato, Avvio Distruzione Totale!");
 	const keys = await caches.keys();
@@ -1374,20 +1454,20 @@ async function encryptBlob(blob) {
             encryptionKey,
             buffer
         );
-        
+
         new Uint8Array(buffer).fill(0);
         buffer = null;
 
         combined = new Uint8Array(iv.length + ciphertext.byteLength);
         combined.set(iv);
         combined.set(new Uint8Array(ciphertext), iv.length);
-        
+
         const outBlob = new Blob([combined], { type: blob.type });
-        
+
         combined.fill(0);
         combined = null;
         ciphertext = null;
-        
+
         return outBlob;
     } catch (err) {
         console.info("❌🛡️ SW: Errore durante la cifratura del file.");
@@ -1405,7 +1485,7 @@ async function decryptBuffer(buffer) {
     try {
         const iv = data.subarray(0, 12);
         const ciphertext = data.subarray(12);
-        
+
         const decrypted = await crypto.subtle.decrypt(
             { name: "AES-GCM", iv: iv },
             encryptionKey,

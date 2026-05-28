@@ -1678,7 +1678,9 @@ async function initPwaLogic(X = false, Xtime = 5000) {
 const reg = await navigator.serviceWorker.register(File_SW, { scope: FRONTEND_BASE }).then((reg) => {
       console.log('📡 PWA: SW Registrato con successo per lo Scope:', reg.scope);
   }).catch((err) => {
-      console.error('❌ PWA: Errore di registrazione SW scope: ', err);
+      console.error('❌ PWA: Errore di registrazione SW: ', err);
+	  console.error('Name: ', err.name);
+      console.error('Msg: ', err.message);
   });
 
         const registration = await Promise.race([
