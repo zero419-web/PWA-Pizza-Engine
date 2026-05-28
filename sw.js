@@ -877,6 +877,7 @@ const CORE_ASSETS_SET = new Set(
     })
 );
 
+let globalPlaceholderBlob = null;
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
     const url = new URL(event.request.url);
@@ -987,7 +988,7 @@ self.addEventListener('fetch', (event) => {
                     const isOk = await verifyVaultIntegrity();
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
-                    const decrypted = await decryptBuffer(buffer);
+                    let decrypted = await decryptBuffer(buffer);
 
                     const detectedContentType = cached.headers.get('Content-Type') || '';
                     const dotIdx = finalPath.lastIndexOf('.');
@@ -1006,7 +1007,9 @@ self.addEventListener('fetch', (event) => {
                     }
 
                     const outResponse = new Response(decrypted, { headers: secureHeaders });
-					decrypted = null;
+					new Uint8Array(buffer).fill(0);
+                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+                    decrypted = null;
                     return outResponse;
                 } catch (err) {
                     console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
@@ -1043,7 +1046,7 @@ self.addEventListener('fetch', (event) => {
                             try {
                                 if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
                                     const buffer = await altCached.clone().arrayBuffer();
-                                    const decrypted = await decryptBuffer(buffer);
+                                    let decrypted = await decryptBuffer(buffer);
 
                                     const variantExtLower = variantExt.toLowerCase();
                                     const secureHeaders = new Headers({
@@ -1060,7 +1063,9 @@ self.addEventListener('fetch', (event) => {
                                     }
 
                                     const outResponse = new Response(decrypted, { headers: secureHeaders });
-									decrypted = null;
+									new Uint8Array(buffer).fill(0);
+                                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+                                    decrypted = null;
 									return outResponse;
                                 }
 
@@ -1078,11 +1083,8 @@ self.addEventListener('fetch', (event) => {
         if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
-        let finalResponse = null;
         const contentsType = event.request.headers.get('Accept') || "";
-
         const isHTML = contentsType.includes('text/html');
-
         const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
         const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
         const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
@@ -1092,25 +1094,24 @@ self.addEventListener('fetch', (event) => {
             const placeholder = await caches.match(placeholderPath);
             if (placeholder) {
                 try {
-                    let imageBlob;
+				  if (globalPlaceholderBlob !== null) {
                     if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
                         const buffer = await placeholder.arrayBuffer();
                         const decrypted = await decryptBuffer(buffer);
-                        imageBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
+                        globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
                     } else {
-                        imageBlob = await placeholder.blob();
+                        globalPlaceholderBlob = await placeholder.blob();
                     }
+				  }
                     if (isImageRequest && !isHTML && !isExcluded) {
                         console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
-                        return new Response(imageBlob, {
+                        return new Response(globalPlaceholderBlob, {
                             headers: {
                                 'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
                                 'X-PWA-Source': 'Bunker-Placeholder'
                             }
                         });
                     }
-
-                    finalResponse = imageBlob;
                 } catch (err) {
                     console.info("❌ SW: Errore decriptazione placeholder:", err);
                 }
@@ -1137,14 +1138,15 @@ self.addEventListener('fetch', (event) => {
 			CoreAssets_Destroy_Caches();
 		}
         if (isHTML) {
-            return await generateErrorPage(finalResponse, url.pathname);
+            return await generateErrorPage(globalPlaceholderBlob, url.pathname);
         }
         return new Response('📡🚫 Offline', {
             status: 503,
             statusText: 'Service Unavailable',
             headers: { 'Content-Type': 'text/plain' }
         });
-
+	});
+});
 		
 self.addEventListener('install', (event) => {
 	isNewInstallation = true;
