@@ -902,7 +902,7 @@ self.addEventListener('fetch', (event) => {
 		const isOnline = await checkRealOnline('fetch');
 		if (isOnline) {
             try {
-                const currentProfile = getNetworkProfile();
+                const currentProfile = getNetworkProfile(self.navigator);
                 const TIMEOUT_MS = currentProfile.timeout * 1000;
                 const controller = new AbortController();
                 const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -1094,7 +1094,7 @@ self.addEventListener('fetch', (event) => {
             const placeholder = await caches.match(placeholderPath);
             if (placeholder) {
                 try {
-				  if (globalPlaceholderBlob !== null) {
+				  if (globalPlaceholderBlob === null) {
                     if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
                         const buffer = await placeholder.arrayBuffer();
                         let decrypted = await decryptBuffer(buffer);
