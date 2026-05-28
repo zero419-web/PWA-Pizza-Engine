@@ -1097,8 +1097,9 @@ self.addEventListener('fetch', (event) => {
 				  if (globalPlaceholderBlob !== null) {
                     if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
                         const buffer = await placeholder.arrayBuffer();
-                        const decrypted = await decryptBuffer(buffer);
+                        let decrypted = await decryptBuffer(buffer);
                         globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
+						decrypted = null;
                     } else {
                         globalPlaceholderBlob = await placeholder.blob();
                     }
