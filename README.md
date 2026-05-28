@@ -1,3 +1,4 @@
+![LOGO](https://img.shields.io/badge/Core_PANZER_v7-Logo-1f4e79)
 <p align="center"><img src="https://raw.githubusercontent.com/zero419-web/PWA-Pizza-Engine/main/sw_logo.svg" width="200" alt="Panzer v7 Core Logo"></p>
 
 ---
