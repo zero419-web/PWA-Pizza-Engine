@@ -1,7 +1,8 @@
-# File publiccode.yml per il censimento AgID / Developers Italia
-publiccodeYmlVersion: "0.2"
+# File publiccode.yml per il censimento AgID / Developers Italia - Conforme a specifiche v0.5
+publiccodeYmlVersion: "0.5"
 name: "PWA-Pizza-Engine"
-softwareVersion: "3.1.0.0" # Allineato alla versione dell'applicativo (HTML)
+applicationSuite: "Civico51-Suite"
+softwareVersion: "3.1.0.0"
 releaseDate: "2026-05-28"
 platforms:
   - web
@@ -10,17 +11,23 @@ categories:
   - food-and-beverage
 developmentStatus: "stable"
 softwareType: "standalone/web"
+intendedAudience:
+  - public-administration
+  - private-sector
 description:
   it:
     shortDescription: "PWA ad alta resilienza per la gestione digitale di attività di ristorazione."
     longDescription: |
-      Architettura Progressive Web App (PWA) progettata secondo la filosofia Zero-Trust. Il sistema utilizza il core engine Panzer v7.2 per la gestione avanzata del Service Worker, mentre l'interfaccia utente e la logica applicativa sono aggiornate alla versione 3.0.0.0. Implementa algoritmi di Network Resiliency adattiva, logica Network-First predittiva con timeout e validazione binaria dei dati (Magic Numbers) per garantire l'integrità delle risorse anche in condizioni di connettività degradata.
+      Architettura Progressive Web App (PWA) progettata secondo la filosofia Zero-Trust, giunta alla release complessiva v3.1.0.0. 
+      Il sistema adotta il core engine Panzer v7.2 per la gestione avanzata e ultra-resiliente del Service Worker. 
+      Implementa algoritmi di Network Resiliency adattiva basati su 5 profili di velocità, logica Network-First predittiva con timeout, e validazione binaria dei dati (Magic Numbers) per garantire l'integrità delle risorse anche in condizioni di connettività degradata. 
+      Questa versione integra meccanismi di Reattività Avanzata asincrona tramite competizione su eventi di abort (Promise.race) sia nella stiva Core che nei moduli di scansione magazzino, neutralizzando memory leak e blocco dei thread su dispositivi mobili datati.
     features:
-      - "Applicativo UI versione 3.1.0.0 con ottimizzazione mobile."
-      - "Motore Service Worker Panzer v7.2 con logica adattiva Network-First predittiva e Cache Fallback."
-      - "Validazione binaria dei file tramite Magic Numbers."
-      - "Manifest PWA configurato per l'installazione nativa."
-      - "Resilienza di rete basata su 5 profili di velocità (Ultrafast to Verylow)."
+      - "Applicativo UI versione 3.1.0.0 con ottimizzazione mobile nativa."
+      - "Motore Service Worker Panzer v7.2 con logica adattiva e competizione Promise.race anti-congelamento."
+      - "Validazione binaria dei file tramite Magic Numbers e firme DNA crittografiche."
+      - "Rastrellamento asincrono e Universal Scanner dinamico per l'indicizzazione degli ID di database."
+      - "Resilienza di rete basata su profili dinamici da Ultrafast a Verylow con sicura anti-loop a tempo."
 legal:
   license: "EUPL-1.2"
   mainCopyrightOwner: "Valentino Aglianò"
@@ -30,6 +37,7 @@ maintenance:
   contacts:
     - name: "Valentino Aglianò"
       affiliation: "Istruttore Informatico - Idoneo Concorso Nazionale ASMEL 2025"
+      email: "valentino.agliano@example.com" # Inserisci qui la tua email ufficiale per AgID
 localization:
   localizationReady: true
   availableLanguages:
@@ -40,4 +48,8 @@ it:
       - "linee-guida-design"
       - "misure-minime-sicurezza"
       - "linee-guida-acquisizione-riuso"
-      
+  piattaforme:
+    pagoPa: false
+    spid: false
+    cie: false
+    anpr: false
