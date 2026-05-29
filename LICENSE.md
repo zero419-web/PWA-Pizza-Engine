@@ -1,4 +1,4 @@
-# European Union Public Licence (EUPL) v. 1.2
+# ℹ️ European Union Public Licence (EUPL) v. 1.2
 
 **Copyright © 2026 Valentino Aglianò**
 
@@ -10,9 +10,9 @@ La presente Licenza si applica all’**Opera**, fornita alle condizioni qui spec
 
 ### 📄 Termini e Condizioni
 Il testo completo e ufficiale della licenza, disponibile in tutte le lingue ufficiali dell'Unione Europea, è consultabile al seguente indirizzo:
-👉 [ https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12 ]
+👉 [LINK - LICENSE](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
 
 ---
 
-[!NOTA]
+> [!NOTE]
 > **per i contributori:** I diritti d'autore sulle modifiche o sulle opere derivate restano dei rispettivi autori, fermo restando l'obbligo di rilasciare l'opera complessiva sotto la medesima licenza EUPL.
