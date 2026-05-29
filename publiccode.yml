@@ -1,7 +1,7 @@
 # File publiccode.yml per il censimento AgID / Developers Italia - Conforme a specifiche v0.5
 publiccodeYmlVersion: "0.5"
 name: "PWA-Pizza-Engine"
-applicationSuite: "Civico51-Suite"
+applicationSuite: ""
 softwareVersion: "3.1.0.0"
 releaseDate: "2026-05-28"
 platforms:
@@ -37,7 +37,7 @@ maintenance:
   contacts:
     - name: "Valentino Aglianò"
       affiliation: "Istruttore Informatico - Idoneo Concorso Nazionale ASMEL 2025"
-      email: "valentino.agliano@example.com" # Inserisci qui la tua email ufficiale per AgID
+      email: "valentinoagliano@live.it"
 localization:
   localizationReady: true
   availableLanguages:
