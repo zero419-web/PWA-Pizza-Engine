@@ -1,24 +1,44 @@
-/**
- * CONFIGURAZIONE PWA
- * (Structured Manifest & Smart Sync Resident)
+/*
+ * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ OPERATIVA [ PANZER V7.3 ]:
+ * - Isolamento dei Flussi: Profilazione fisica del canale nello Scope isolato del SW
+ * - Flusso Fluido: Instradamento polimorfo d'ufficio basato su scansione ciclica 'for...in'
+ * - Resilienza Bunker: Meccanismo Smart Sync con campionamento RTT e interruzione via AbortController
+ * - SW Forensics: Validazione strict dei flussi in entrata via Magic Numbers e CONFIG.minSizeMap
+ * - Sicurezza Volatile: Derivazione chiavi via Web Crypto API senza persistenza del segreto in chiaro
  *
- * Service Worker
- * Carrarmato Panzer v7.2
- * U-Boot - Stealth Edition (Encrypted)
+ * ⚙️🪖️ NUCLEO CORE: Service Worker "Panzer v7.3"
+ * 	- ⚓📡️ U-Boot - 🥷🌫️ Stealth Edition (Encrypted AES-GCM 256-bit)
  *
- * By Valentino Aglianò - Idoneo ASMEL 2025 !
+ * Sviluppo Software e Protocollo di Sicurezza a cura di:
+ * 👨‍💻🇮🇹 Valentino Aglianò - Per. Ind. Informatico.(2013)
+ * [ Istruttore Informatico - Idoneo Nazionale ASMEL (2025) ]
+ * =====================================================================
  */
 
- // KEY ( IndexDB )
+ /* 🔑🛡️ SICUREZZA:
+ * [encryptionKey] Istanza Master Key non esportabile (CryptoKey) isolata in RAM.
+ * [IndexedDB]: Master Key blindata di tipo CryptoKey nativa (extractable: false, non esportabile/non leggibile in chiaro).
+ * - Persistenza protetta della CryptoKey opaca tramite algoritmo di clonazione strutturata (PWA_Vault).
+ * [Contenimento Sandbox]: Iniezione di header CSP restrittivi per l'isolamento dei contenuti erogati.
+ * [Watchdog & Loopback]: Test atomico di cifratura/decrittazione simmetrica a runtime (CONFIG.vaultCanaryText) per la validazione della memoria.
+ * [Emergency Wipe]: Tabula rasa immediata e distruzione Totale in caso di fallimento strutturale ad un tentativo di Data Breach.
+ * [Bonifica RAM]: Sovrascrittura perentoria dei buffer binari di transito via Uint8Array.fill(0) post-elaborazione (Anti-Memory Inspection).
+ */
+
 let encryptionKey = null;
 
  let isLogicEnabled = false;
  let syncAbortController = null;
 const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, '/');
+
+/**
+ * 📊 CONFIGURAZIONE GLOBALE (Dizionario dei Vincoli Operativi)
+ * Definisce i parametri strutturali per la resilienza di rete, crittografia e tolleranza ai guasti.
+ */
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.2',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.2',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.3',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.3',
 	vaultCanaryText: 'KANARY_CHECK_OK_PANZER_VAULT',
     userCacheTTL: 7,
     networkResilient: {
@@ -133,8 +153,20 @@ const CONFIG = {
     }
 };
 
+/**
+ * ⏳ Generatore di ritardo temporizzato isolato.
+ * Blocca l'esecuzione sequenziale asincrona del ciclo per i secondi di resilienza configurati.
+ * @param {number} ms - Tempo di sospensione espresso in millisecondi.
+ * @returns {Promise<void>} Promessa risolta al termine del timeout.
+ */
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * ⏳💤 Ottimizzatore dei tempi morti della CPU.
+ * Sfrutta le API native requestIdleCallback del browser per posticipare l'esecuzione dei flussi pesanti non critici nei momenti di inattività del thread.
+ * @param {number} [timeoutMs=8000] - Tempo limite massimo (guardia) espresso in millisecondi oltre il quale la promessa si sblocca d'ufficio.
+ * @returns {Promise<void>}
+ */
 const waitTillIdle = (timeoutMs = 8000) => {
     return new Promise((resolve) => {
         if ('requestIdleCallback' in self) {
@@ -145,6 +177,17 @@ const waitTillIdle = (timeoutMs = 8000) => {
     });
 };
 
+/**
+ * 🔍🧬 SW Forensics & DNA Check.
+ * Esegue il campionamento dimensionale e l'analisi dei Magic Numbers (Firme Esadecimali)
+ * sui payload telematici per intercettare file corrotti, tronchi o pacchetti malevoli (MIME-sniffing).
+ * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
+ * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
+ * @param {number} [expectedSize=0] - Dimensione nominale attesa (Content-Length) per verifica tolleranza.
+ * @param {boolean} [isEncrypted=false] - Flag di bypass firme per i flussi già cifrati nel Bunker.
+ * @param {AbortSignal} [signals=null] - Segnale di interruzione atomica per processi pendenti.
+ * @returns {Promise<{valid: boolean, blob: Blob|null}>} Esito della validazione con istanza blob pulita.
+ */
 const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = false, signals = null) => {
     let signal = signals || null;
 	let blob;
@@ -209,6 +252,15 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     return result;
 };
 
+/**
+ * 🧲 SONDA TECNICA HEAD: Pre-ispezione preventiva delle risorse (Anti-MIME Sniffing).
+ * Interroga l'endpoint remoto tramite metodo HEAD leggero per estrarre la dimensione nominale (Content-Length) ed il tipo MIME dichiarato dal server.
+ * Interrompe l'esecuzione via AbortController in caso di superamento della soglia massima di latenza di 2.5 secondi.
+ * @param {string} url - URI telematico della risorsa remota da scansionare.
+ * @param {Object|null} rules - Configurazione dei vincoli e tolleranze estratti da CONFIG.minSizeMap.
+ * @param {boolean} rules.useHeadProbe - Flag di abilitazione per l'attivazione della sonda HEAD.
+ * @returns {Promise<{ok: boolean, size: number, type: string}>} Struttura di audit contenente lo stato del server, la dimensione in byte (-1 se assente) e il Content-Type.
+ */
 async function performProbe(url, rules) {
 
     if (!rules || rules.useHeadProbe === false) {
@@ -256,6 +308,13 @@ async function performProbe(url, rules) {
     };
 }
 
+/**
+ * 🔗 FLUSSI: Normalizzatore Strict degli URI Telematici.
+ * Converte e depura qualsiasi stringa di percorso o URL in un cammino assoluto sterile privo di parametri di query superflui o doppi slash (//).
+ * Reinstalla l'instradamento d'ufficio verso l'entrypoint index.html in caso di corrispondenza esatta con la radice (ROOT).
+ * @param {string} url - Stringa grezza o percorso telematico intercettato dal network o dal database.
+ * @returns {string} Percorso pulito e standardizzato per le chiavi di indicizzazione del database delle cache.
+ */
 const normalize = (url) => {
 
     if (!url || typeof url !== 'string' || url.startsWith('data:')) return url;
@@ -282,6 +341,17 @@ const normalize = (url) => {
     }
 };
 
+/**
+ * 📥🚀 Smart Download Differito con Profilazione Dinamica.
+ * Gestisce l'allineamento degli asset core e dinamici applicando le barriere di controllo
+ * del network profile. Integra la crittografia asincrona nativa prima dello storage finale.
+ * @param {string} url - Endpoint telematico della risorsa da storicizzare.
+ * @param {Cache} cache - Riferimento all'istanza di destinazione (Bunker o Magazzino).
+ * @param {boolean} [isCore=false] - Flag di marcatura per file critici di infrastruttura.
+ * @param {string} [version=''] - Marcatore di versione telematico per l'audit di tracciabilità.
+ * @param {number} [probeSize=0] - Dimensione preventiva ricavata da sonda HEAD.
+ * @returns {Promise<string|boolean>} Stato finale dell'operazione ("DOWNLOADED", "ALREADY_OK", "variant_new" o false).
+ */
 async function smartDownload(url, cache, isCore = false, version = '', probeSize = 0) {
     const cleanKey = normalize(url);
     let isEncrypted = false;
@@ -451,6 +521,12 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
     return false;
 }
 
+/**
+ * 📡 Calcolo empirico del profilo del canale.
+ * Analizza le metriche hardware fornite dal modulo Network Information API (RTT e Downlink).
+ * @param {WorkerNavigator} [nav=self.navigator] - Interfaccia di profilazione del browser.
+ * @returns {{limit: number, timeout: number}} Struttura dati del profilo di rete attivo.
+ */
 const getNetworkProfile = (nav) => {
     const profiles = CONFIG.networkResilient.profiles;
     if (!nav || !nav.connection) return profiles['Medium'];
@@ -489,6 +565,11 @@ const getNetworkProfile = (nav) => {
     return profiles[status] || profiles['Medium'];
 };
 
+/**
+ * 🔀 VERIFICA CONNETTIVITÀ: Controllo di soglia reale (Anti-Lie-Fi).
+ * Interroga un endpoint tramite richiesta HEAD leggera per assicurarsi che internet sia operativo.
+ * @returns {Promise<boolean>} Esito formale dello stato di connettività reale.
+ */
 async function checkRealOnline(mode = 'fetch') {
     const netProfile = getNetworkProfile(self.navigator);
     const profiles = CONFIG.networkResilient.profiles;
@@ -497,20 +578,11 @@ async function checkRealOnline(mode = 'fetch') {
         profiles[key].timeout === netProfile.timeout
     ) || 'Medium';
 
-    if (mode === 'fetch') {
-
-        if (profileName === 'Verylow' || profileName === 'Low') {
-            console.info(`🌐🚫 SW Fetch: Profilo ${profileName}`);
-            return false;
-        }
-    }
     let timeoutMs = 3000;
     if (mode === 'sync') {
         if (navigator.connection && navigator.connection.saveData) return false;
-
         timeoutMs = Math.min(netProfile.timeout * 1000, 15000);
     } else {
-
         timeoutMs = (profileName === 'Fast' || profileName === 'ultrafast') ? 2500 : 5500;
     }
     try {
@@ -532,6 +604,13 @@ async function checkRealOnline(mode = 'fetch') {
     }
 }
 
+/**
+ * 📡 REGISTRO DI CANALE: Canale di Comunicazione Inter-Processo (IPC / PostMessage).
+ * Intercetta i comandi operativi e i payload relazionali trasmessi dal frontend.
+ * Gestisce l'attivazione dei cicli di Smart Sync, le verifiche temporizzate del caveau,
+ * l'estrazione crittografica delle chiavi e la cancellazione d'urgenza dei registri.
+ * @param {ExtendableMessageEvent} e - Evento di messaggistica intercettato contenente il comando (e.data.type).
+ */
 let isNewInstallation = false;
 let isSyncing = false;
 self.addEventListener('message', (event) => {
@@ -707,6 +786,15 @@ self.addEventListener('message', (event) => {
                 const scanSet = new Set();
                 const knownDirs = new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
+/**
+ * 🧠🧬 Universal Object Scanner Deep Validation.
+ * Esegue la scansione ricorsiva polimorfa del database fornito in input il file db.json,
+ * isolando chiavi identificative e percorsi per agganciare in modo predittivo gli asset extra correlati.
+ * @param {Object} obj - Il nodo o sotto-albero JSON da sottoporre a ispezione.
+ * @param {string} [currentCtx='base'] - Contesto logico di instradamento per l'assegnazione delle directory.
+ * @param {string} [parentKey=''] - Identificativo del nodo padre per l'attivazione di logiche speciali.
+ * @param {number} [depth=0] - Contatore di profondità per la prevenzione di loop di memoria (Stack Overflow).
+ */
                 const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth = 0) => {
                     if (!obj || typeof obj !== 'object' || depth > 12) return;
 					if (syncAbortController?.signal.aborted) return;
@@ -937,17 +1025,60 @@ self.addEventListener('message', (event) => {
     }
 });
 
+/**
+ * 🚦👮‍♂️ Regolatore di Flusso Polimorfo.
+ * Determina in tempo reale la strategia di erogazione (Network-First o Stale-While-Revalidate)
+ * analizzando lo stato hardware della rete (RTT/Downlink) e la disponibilità della cache locale.
+ * @param {Response} hasCache - Istanza della risorsa eventualmente già presente a livello locale.
+ * @param {WorkerNavigator} [nav=self.navigator] - Interfaccia di profilazione delle metriche hardware di rete.
+ * @returns {string} Stringa di comando identificativa della strategia strategica ('NetworkFirst' | 'SWR').
+ */
+function assegnaFlussoPolimorfo(hasCache, nav = self.navigator) {
+	const netProfile = getNetworkProfile(nav);
+	const profiles = CONFIG?.networkResilient?.profiles;
+	const profileName = Object.keys(profiles).find(key =>
+        profiles[key].limit === netProfile.limit &&
+        profiles[key].timeout === netProfile.timeout
+    ) || 'Medium';
+    switch (profileName) {
+        case 'Ultrafast':
+        case 'Fast':
+            return 'NetworkFirst';
+        case 'Medium':
+            return hasCache ? 'SWR' : 'NetworkFirst';
+        case 'Low':
+        case 'Verylow':
+        default:
+            if (hasCache) {
+                console.info(`🌐👮‍♂️ SW: Rete Degradata, [ ${profileName} ].\n SWR(Sate-While-Revlidate), ON per continuità operativa...`);
+                return 'SWR';
+            }
+            return 'NetworkFirst';
+    }
+}
+
 const CORE_ASSETS_SET = new Set(
     (CONFIG.coreAssets || []).map(asset => {
         return normalize(asset);
     })
 );
 
+
+/**
+ * 🚦 SMITIZZAZIONE E INTERCETTAZIONE: Vigile Urbano e Gateway di Sicurezza Net-Layer.
+ * Intercetta ogni singola richiesta telematica in uscita dal frontend dell'applicazione.
+ * Applica i filtri di normalizzazione degli URI, isola le richieste core e devia l'instradamento
+ * verso le strategie crittografiche del Bunker (AES-GCM) o verso il Magazzino di cache utente.
+ * @param {FetchEvent} e - Evento di recupero della risorsa telematica.
+ * @returns {void} Sblocca il thread rispondendo direttamente tramite e.respondWith().
+ */
 const BROKEN_IMAGE_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="21" x2="21" y2="3"/><path d="M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M21 15l-5-5L5 21"/></svg>`;
 const GLOBAL_BROKEN_BLOB = new Blob([BROKEN_IMAGE_SVG_STRING], { type: 'image/svg+xml' });
 let globalPlaceholderBlob = null;
 
 self.addEventListener('fetch', (event) => {
+	// 🚧 SEZIONE I: NORMALIZZAZIONE E FILTRAGGIO FLUSSI IN INGRESSO
+    // Isola lo scope della richiesta, pulisce l'URI telematico rimuovendo i parametri di query e verifica i bypass.
     if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
     const url = new URL(event.request.url);
     if (url.origin !== self.location.origin) return;
@@ -968,6 +1099,10 @@ self.addEventListener('fetch', (event) => {
         const shouldBeEncrypted = isCoreAsset || existsInMain;
 		const targetCache = shouldBeEncrypted ? "📦🛡️ (Bunker)" : "📦🔓 (Magazzino)";
 
+// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ATTIVA (ONLINE GATEWAY)
+// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
+// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
+		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		const isOnline = await checkRealOnline('fetch');
 		if (isOnline) {
             try {
@@ -983,7 +1118,7 @@ self.addEventListener('fetch', (event) => {
                 clearTimeout(tId);
                 if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
 					if (!isLogicEnabled || isSyncing) {
-
+						// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
 						return networkResponse;
 					}
 
@@ -1037,7 +1172,11 @@ self.addEventListener('fetch', (event) => {
 							throw cacheError;
 						}
                     })());
-                    return networkResponse;
+                    console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${isSWR ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
+                    if(!(finalStrategy === 'SWR' && cached)){
+                        return networkResponse;
+                    }
+					// 🗄️ Decade Verso la SEZIONE III
                 }
                 if (networkResponse && networkResponse.status === 404) {
                     if (cached) {
@@ -1052,6 +1191,9 @@ self.addEventListener('fetch', (event) => {
             }
         }
 		if (cached) {
+			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA (CACHE HIT LAYER)
+			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
+			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
                     const isOk = await verifyVaultIntegrity();
@@ -1084,7 +1226,8 @@ self.addEventListener('fetch', (event) => {
                     console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
                     const isVaultError = err.message && err.message.includes('VAULT');
                     if (isVaultError) {
-                        return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Erorr...", { status: 403 });
+						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
+                        return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
                     } else {
                         const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
                         if (deletedMain) {
@@ -1098,6 +1241,10 @@ self.addEventListener('fetch', (event) => {
                 return cached;
             }
         } else {
+			// 🖼️ SEZIONE IV: FILTRO MULTIMEDIALE ED EROGAZIONE PLACEHOLDER (GRAPHIC RESILIENCE)
+			// Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
+			// 1) Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
+			// 2) Fallback finale con iniezione del vettore statico base64 (CONFIG.fallbackImage) in caso di assenza totale.
             const dotIdx = finalPath.lastIndexOf('.');
             if (dotIdx !== -1) {
                 const basePath = finalPath.substring(0, dotIdx);
@@ -1148,7 +1295,6 @@ self.addEventListener('fetch', (event) => {
                 }
             }
         }
-
         if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
@@ -1197,6 +1343,9 @@ self.addEventListener('fetch', (event) => {
 				}
 			}
 		}
+	// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI (CRITICAL FALLBACK BLOCK)
+    // Isola l'ambiente di runtime in caso di avaria totale (assenza di rete e di cache). Evita il crash
+    // erogando l'interfaccia di cortesia sterile a tolleranza di guasto (503) con marcatura forense.
 		if (!isImageRequest && isExcluded) {
 			console.info("📦❌ SW: Recupero fallito per:", finalPath);
 		}
@@ -1216,6 +1365,12 @@ self.addEventListener('fetch', (event) => {
     })());
 });
 
+/**
+ * 📥🏛️ INSTALLAZIONE SW: Inizializzazione Core e Pre-Cache.
+ * Dispone il caricamento forzato dei moduli di sistema e impone il bypass
+ * dei tempi di attesa tramite self.skipWaiting() per l'allineamento immediato del Panzer.
+ * @param {ExtendableEvent} e - Evento di installazione intercettato dal browser.
+ */
 self.addEventListener('install', (event) => {
 	isNewInstallation = true;
     console.info("🛠️ SW: Installazione in corso...");
@@ -1232,6 +1387,12 @@ self.addEventListener('install', (event) => {
     })());
 });
 
+/**
+ * ⚡⚙️ ATTIVAZIONE SW: Bonifica Archivi e Sblocco Interfaccia.
+ * Esegue il subentro immediato nei frontend attivi (clients.claim) e avvia
+ * la purga automatica dei magazzini di cache obsoleti non conformi alla versione corrente.
+ * @param {ExtendableEvent} e - Evento di attivazione del ciclo di vita.
+ */
 self.addEventListener('activate', (event) => {
 	console.info("⚡ SW: attivazione...");
     event.waitUntil(
@@ -1264,11 +1425,20 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+
 self.addEventListener('online', () => {
     console.info("📡📶 SW: Rete rilevata! Pronto per nuovi comandi.");
 });
 
 
+/**
+ * 🗑️ EVACUAZIONE E AGGIORNAMENTO: Purga mirata dei file d'infrastruttura critica.
+ * Interviene in caso di Major Update o disallineamento atomico per distruggere esclusivamente i Core Assets da tutte le cache di sistema.
+ * Invia una notifica di emergenza in broadcast a tutti i client attivi imponendo il ricaricamento forzato (Reload) dell'applicazione.
+ * Protegge il browser da attacchi di Denial of Service interni bloccando l'esecuzione se richiamata a distanza inferiore di 20 secondi dall'ultima esecuzione.
+ * @param {string|null} [serverV=null] - Stringa identificativa della nuova versione telematica rilevata dal Radar del server.
+ * @returns {Promise<void>}
+ */
 let lastReloadCommandTime = 0;
 async function CoreAssets_Destroy_Caches(serverV = null) {
 	const now = Date.now();
@@ -1294,6 +1464,13 @@ async function CoreAssets_Destroy_Caches(serverV = null) {
 	}
 }
 
+/**
+ * 💣🔥 PROCEDURA DISTRUTTIVA D'URGENZA: Tabula Rasa dei DATI.
+ * Esegue l'epurazione perentoria e simultanea di tutti i segmenti di cache memorizzati
+ * (Bunker e Magazzino) a seguito di un alert di sicurezza o violazione dei dati (Data Breach).
+ * @param {string} reason - Verbale motivazionale che ha scatenato la purga di sistema.
+ * @returns {Promise<boolean>} Conferma di avvenuta cancellazione dei registri locali.
+ */
 async function Destroy_ALL_Caches(err = null) {
 	console.log("💣 SW: Errore critico rilevato, Avvio Distruzione Totale!");
 	const keys = await caches.keys();
@@ -1304,6 +1481,11 @@ async function Destroy_ALL_Caches(err = null) {
 	});
 }
 
+/**
+ * 🗄️ WATCHDOG DI SICUREZZA: Ispezione Forense dell'Integrità Crittografica.
+ * Esegue un test di cifratura/decrittazione simmetrica (Canary Loopback) per rilevare violazioni hardware.
+ * @throws {Error} VAULT_COMPROMISED_AND_CLEANED - Se viene rilevata una violazione strutturale dei dati.
+ */
 async function deepVaultValidation() {
     let db = null;
     try {
@@ -1347,6 +1529,7 @@ async function deepVaultValidation() {
             try { db.close(); } catch(e){}
         }
         if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY" || err.message === "VAULT_EMPTY_TEMPORARY") {
+			// 💣 EMERGENCY WIPE: Rilevato tentativo di Data Breach o corruzione strutturale. Attivazione immediata tabula rasa di sicurezza.
             console.log("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
             try {
                 await Destroy_ALL_Caches("VAULT_COMPROMISED");
@@ -1367,6 +1550,11 @@ async function deepVaultValidation() {
     }
 }
 
+/**
+ * ⏳ VERIFICA: Controllo Temporizzato del Caveau.
+ * Gestisce l'ancora temporale del Watchdog assicurando la validità della chiave a intervalli regolari.
+ * @returns {Promise<boolean>} Esito dello stato di sblocco e integrità del caveau.
+ */
 let lastVaultCheck = 0;
 const CHECK_INTERVAL = 300000;
 async function verifyVaultIntegrity() {
@@ -1382,6 +1570,11 @@ async function verifyVaultIntegrity() {
     }
 }
 
+/**
+ * 🔑 GESTIONE STORAGE CHIAVI: Estrazione e Clonazione Strutturata.
+ * Recupera l'oggetto CryptoKey opaco da IndexedDB o provvede alla generazione univoca via Web Crypto API.
+ * @returns {Promise<CryptoKey|null>} L'istanza della chiave simmetrica non esportabile (extractable: false).
+ */
 async function getStoredKey() {
     if (encryptionKey !== null) return encryptionKey;
     return new Promise(async (resolve) => {
@@ -1404,6 +1597,7 @@ async function getStoredKey() {
                     let key = getReq.result;
                     if (!key) {
                         if (vaultExists) {
+							// 💥 FORENSIC ALERT: DB presente ma chiave assente. Possibile attacco di estrazione forzata. Blocco dell'istanza.
                             console.error("⚠️💣 ANOMALIA CRITICA: Vault compromesso, chiave sparita!");
                             encryptionKey = null;
                             db.close();
@@ -1440,6 +1634,12 @@ async function getStoredKey() {
     });
 }
 
+/**
+ * 🔐 ARCHITETTURA BUNKER: Cifratura asincrona dei flussi di memoria.
+ * Cifra un Blob tramite algoritmo simmetrico AES-GCM a 256 bit e ripulisce la RAM tramite .fill(0).
+ * @param {Blob} blob - Il file binario grezzo da sottoporre a cifratura.
+ * @returns {Promise<Blob>} Il pacchetto protetto unificato contenente [12B IV + Ciphertext].
+ */
 async function encryptBlob(blob) {
     if (!encryptionKey) {
        throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
@@ -1454,7 +1654,7 @@ async function encryptBlob(blob) {
             encryptionKey,
             buffer
         );
-
+		// 🚨 ZERO-TRUST: Sovrascrittura immediata del plaintext in RAM per prevenire Memory Inspection di terze parti.
         new Uint8Array(buffer).fill(0);
         buffer = null;
 
@@ -1477,6 +1677,12 @@ async function encryptBlob(blob) {
     }
 }
 
+/**
+ * 🔓 DISPOSITIVO DECRITTAZIONE: Ripristino Flussi protetti estratti da Bunker.
+ * Isola il vettore IV da 12 byte, decifra il payload e azzera immediatamente i buffer cifrati di transito.
+ * @param {ArrayBuffer} buffer - Il blocco binario grezzo estratto dalla stiva cache.
+ * @returns {Promise<ArrayBuffer>} Il buffer plaintext decifrato pronto per l'erogazione sterile al frontend.
+ */
 async function decryptBuffer(buffer) {
     if (!encryptionKey) {
         throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
@@ -1491,7 +1697,7 @@ async function decryptBuffer(buffer) {
             encryptionKey,
             ciphertext
         );
-
+		// 🚨 ZERO-TRUST: Distruzione perentoria del buffer cifrato originale dopo il completamento della decrittazione.
         data.fill(0);
         data = null;
 
@@ -1503,6 +1709,14 @@ async function decryptBuffer(buffer) {
     }
 }
 
+/**
+ * 🧬 INTEGRITÀ FORENSE: Calcolo dell'Impronta Digitale (Checksum).
+ * Genera l'hash esadecimale univoco di un blocco dati binario tramite le librerie native Web Crypto API.
+ * Garantisce la bonifica immediata della memoria RAM (Zero-Trust) sovrascrivendo il buffer plaintext transitorio tramite fill(0).
+ * @param {Blob} blob - Il flusso binario grezzo sul quale calcolare l'impronta digitale di integrità.
+ * @param {string} [algo='SHA-256'] - Algoritmo di hashing normato standard per il calcolo ('SHA-256' | 'SHA-384' | 'SHA-512').
+ * @returns {Promise<string|null>} Stringa esadecimale rappresentante il checksum dell'asset, o null in caso di fallimento critico.
+ */
 async function getHash(blob, algo = 'SHA-256') {
     let buffer = null;
     let hashBuffer = null;
@@ -1526,6 +1740,13 @@ async function getHash(blob, algo = 'SHA-256') {
     }
 }
 
+/**
+ * 🧹 MANUTENZIONE ORDINARIA: Purga selettiva e monitoraggio dello spazio di archiviazione (TTL).
+ * Analizza le intestazioni di tracciabilità 'X-PWA-Date' per eliminare dal Magazzino i file che hanno superato il Time-To-Live massimo di 7 giorni.
+ * In caso di saturazione dello storage (QuotaExceededError) o comando di sicurezza, esegue d'ufficio la tabula rasa radicale dell'intera userCache.
+ * @param {boolean} [forceAll=false] - Se impostato su true, forza l'azzeramento perentorio e immediato di tutto il Magazzino senza controlli temporali.
+ * @returns {Promise<void>}
+ */
 async function cleanUserCache(forceAll = false) {
     const cache = await caches.open(CONFIG.userCacheName);
     const requests = await cache.keys();
@@ -1550,6 +1771,13 @@ async function cleanUserCache(forceAll = false) {
     }
 }
 
+/**
+ * 🖥️🚨 INTERFACCIA DI CORTESIA: Generatore Statico Fallback Digitale (503).
+ * Rilascia al frontend un documento HTML sterile d'emergenza in modalità provvisoria Della Risorsa Non Trovata.
+ * @param {string} logoBlob - Blob di byte del logo dell Ente, se null inserisce un generica imagine Icona (!) rossa.
+ * @param {string} failedPath - URI telematico della risorsa che ha generato il blocco.
+ * @returns {Promise<Response>} Flusso HTML di cortesia iniettato con header di sicurezza.
+ */
 async function generateErrorPage(logoBlob, failedPath) {
 
     const svgNewLogo = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmY0NDQ0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxsaW5lIHgxPSIxMiIgeTE9IjgiIHgyPSIxMiIgeTI9IjEyIi8+PGxpbmUgeDE9IjEyIiB5MT0iMTYiIHgyPSIxMi4wMSIgeTI9IjE2Ii8+PC9zdmc+";
