@@ -3,14 +3,14 @@
 
 ---
 
-# 🍕 PIZZA ENGINE - PWA Resiliente (Motore Panzer v7)
+# 🍕 PIZZA ENGINE - PWA Resiliente (Motore Panzer v7.3)
 
 Un'architettura per Progressive Web App (PWA) progettata per la massima resilienza e conformità alle linee guida tecniche AgID per la Pubblica Amministrazione.
 
 ## 🚀 Obiettivi del Progetto
 Questo engine implementa strategie avanzate di gestione dinamica della connettività e tolleranza ai guasti, garantendo che le applicazioni web rimangano operative anche in condizioni di rete degradata o assente, seguendo i criteri di affidabilità richiesti per i servizi digitali pubblici.
 
-## 🛠️ Caratteristiche Tecniche (Engine Panzer v7)
+## 🛠️ Caratteristiche Tecniche (Engine Panzer v7.3)
 Il cuore del sistema è un Service Worker ad alta specializzazione con scope globale sulla root, che include:
 
 - **Dynamic Adaptive Network Resiliency:** Algoritmo proprietario che adatta timeout (fino a 120s) e tentativi di recupero (max 5 retries) basandosi su 5 profili di velocità della rete (da *Ultrafast* a *Verylow*).
