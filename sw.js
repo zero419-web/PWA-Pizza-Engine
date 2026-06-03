@@ -35,6 +35,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
  * 📊 CONFIGURAZIONE GLOBALE (Dizionario dei Vincoli Operativi)
  * Definisce i parametri strutturali per la resilienza di rete, crittografia e tolleranza ai guasti.
  */
+ 
+let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
         cacheName:      'PWA_PIZZA_ENGINE_v7.3',
@@ -100,7 +102,8 @@ const CONFIG = {
         },
         'universal': {
             'tolerance': 0.05,
-            'minAbsoluteByte': 64
+            'minAbsoluteByte': 64,
+            'fallbackToGet': true
         }
     },
     coreAssets: [
@@ -397,7 +400,7 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
             try {
 				const profile = getNetworkProfile(self.navigator);
 				// 🛡️ ADATTAMENTO DINAMICO: Il timeout segue il profilo...
-				const dynamicTimeout = (profile.timeout * 1000) / 2;
+				const dynamicTimeout = (profile.timeout * 1000);
 				const controller = new AbortController();
 				const timeoutId = setTimeout(() => controller.abort(), dynamicTimeout);
 				const fetchSignal = syncAbortController
@@ -443,7 +446,7 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
         for (let attempt = 0; attempt <= attempts; attempt++) {
             if (syncAbortController?.signal.aborted) return false;
             // 🛡️ ADATTAMENTO DINAMICO: Il timeout segue il profilo...
-			const dynamicTimeout = (profile.timeout * 1000) / 2;
+			const dynamicTimeout = (profile.timeout * 1000);
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => controller.abort(), dynamicTimeout);
 
@@ -1236,7 +1239,7 @@ self.addEventListener('fetch', (event) => {
 							console.log("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", err);
 						}
 					})());
-                    console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${isSWR ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
+                    console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${(finalStrategy === 'SWR' && cached) ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
                     if(!(finalStrategy === 'SWR' && cached)){
                         return networkResponse;
                     }
@@ -1547,7 +1550,6 @@ async function CoreAssets_Destroy_Caches(serverV = null) {
 	}
 }
 
-let globalAbortController = new AbortController();
 /**
  * 💣🔥 PROCEDURA DISTRUTTIVA D'URGENZA: Tabula Rasa dei DATI.
  * Esegue l'epurazione perentoria e simultanea di tutti i segmenti di cache memorizzati
