@@ -162,20 +162,31 @@ const CONFIG = {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * ⏳💤 Ottimizzatore dei tempi morti della CPU.
- * Sfrutta le API native requestIdleCallback del browser per posticipare l'esecuzione dei flussi pesanti non critici nei momenti di inattività del thread.
- * @param {number} [timeoutMs=8000] - Tempo limite massimo (guardia) espresso in millisecondi oltre il quale la promessa si sblocca d'ufficio.
+ * ⏳💤 Ottimizzatore adattivo del respiro della CPU per Service Worker.
+ * Misura lo stress attuale dell'Event Loop e calcola la pausa ideale.
+ * @param {number} [minPauseMs=200] - Pausa minima richiesta (Base assoluta: 200ms).
+ * @param {number} [timeoutMs=8000] - Tempo limite massimo (guardia) di sicurezza.
  * @returns {Promise<void>}
  */
-const waitTillIdle = (timeoutMs = 8000) => {
+const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
     return new Promise((resolve) => {
-        if ('requestIdleCallback' in self) {
-            self.requestIdleCallback(() => resolve(), { timeout: timeoutMs });
-        } else {
-            setTimeout(resolve, 4000);
-        }
+        const pausaBaseMinima = Math.max(200, minPauseMs);
+        const inizioTest = performance.now();
+        const ATTESA_TEST_MS = 20; // Micro-timer
+        setTimeout(() => {
+            const fineTest = performance.now();
+            const tempoEffettivo = fineTest - inizioTest;
+            // Calcola lo sfasamento reale dell'Event Loop (drift)
+            const driftEventLoop = Math.max(0, tempoEffettivo - ATTESA_TEST_MS);
+            const coefficienteSensibilita = 25;
+            let tempoRespiroCalcolato = pausaBaseMinima + (driftEventLoop * coefficienteSensibilita);
+            tempoRespiroCalcolato = Math.min(tempoRespiroCalcolato, timeoutMs);
+            console.log(`⏳ SW Drift: ${driftEventLoop.toFixed(1)}ms -> Pausa applicata: ${Math.round(tempoRespiroCalcolato)}ms`);
+            setTimeout(resolve, tempoRespiroCalcolato);
+        }, ATTESA_TEST_MS);
     });
 };
+
 
 /**
  * 🔍🧬 SW Forensics & DNA Check.
@@ -234,8 +245,11 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 .join('').toUpperCase();
             const hasValidSig = section.sigs.some(sig => headerHex.includes(sig.toUpperCase()));
             if (!hasValidSig) {
+				// 🛡️ BONIFICA DEI BUFFER DI ANALISI
+				new Uint8Array(headerBuffer).fill(0);
                 if (!(subType === 'webp' && headerHex.startsWith('52494646') && headerHex.includes('57454250'))) {
                     console.log(`🛡️ SW Security: Firma fallita per ${finalContentType}. DNA: ${headerHex}`);
+					headerHex = 0;
                     return result;
                 }
             }
@@ -382,8 +396,10 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
 
             try {
 				const profile = getNetworkProfile(self.navigator);
+				// 🛡️ ADATTAMENTO DINAMICO: Il timeout segue il profilo...
+				const dynamicTimeout = (profile.timeout * 1000) / 2;
 				const controller = new AbortController();
-				const timeoutId = setTimeout(() => controller.abort(), (profile?.timeout * 1000));
+				const timeoutId = setTimeout(() => controller.abort(), dynamicTimeout);
 				const fetchSignal = syncAbortController
                 ? AbortSignal.any([syncAbortController?.signal, controller?.signal])
                 : controller?.signal;
@@ -426,8 +442,10 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
         const profile = getNetworkProfile(self.navigator);
         for (let attempt = 0; attempt <= attempts; attempt++) {
             if (syncAbortController?.signal.aborted) return false;
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), (profile?.timeout * 1000));
+            // 🛡️ ADATTAMENTO DINAMICO: Il timeout segue il profilo...
+			const dynamicTimeout = (profile.timeout * 1000) / 2;
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), dynamicTimeout);
 
             const fetchSignal = syncAbortController
                 ? AbortSignal.any([syncAbortController?.signal, controller?.signal])
@@ -454,34 +472,46 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
                             throw new Error(`Integrità/DNA Fallito per ${targetUrl}`);
                         }
 
-                        let finalBlob = check.blob;
-                        const newHeaders = new Headers(r.headers);
-                        if (version) newHeaders.set('X-PWA-Version', version.toString());
-                        newHeaders.set('X-PWA-Date', Date.now().toString());
-                        const lastMod = r.headers.get('Last-Modified');
-                        if (lastMod) newHeaders.set('X-PWA-LastMod', lastMod);
+						let finalBlob = check.blob;
+						const newHeaders = new Headers(r.headers);
+						if (version) newHeaders.set('X-PWA-Version', version.toString());
+						newHeaders.set('X-PWA-Date', Date.now().toString());
+						const lastMod = r.headers.get('Last-Modified');
+						if (lastMod) newHeaders.set('X-PWA-LastMod', lastMod);
 
-                        if (encryptionKey) {
-                            finalBlob = await encryptBlob(finalBlob);
-                            newHeaders.set('X-PWA-Encrypted', 'true');
-                        }
-                        try {
+						if (encryptionKey) {
+							finalBlob = await encryptBlob(finalBlob);
+							newHeaders.set('X-PWA-Encrypted', 'true');
+						}
 
-                            await cache.put(cleanKey, new Response(finalBlob, { status: 200, headers: newHeaders }));
-                            console.info(`📦🛡️ SW: Risorsa validata e salvata: ${targetUrl}`);
-                        } catch (cacheError) {
-                            if (cacheError.name === 'QuotaExceededError') {
-                                console.log("🚨 SW: Storage Pieno! Emergency Clean...");
-                                await cleanUserCache(true);
-								await sleep(300);
-                                await cache.put(cleanKey, new Response(finalBlob, { status: 200, headers: newHeaders }));
-                            } else {
-                                throw cacheError;
-                            }
-                        }
+						// Riferimento per la pulizia della Ram...
+						let bufferToClear = (finalBlob instanceof Uint8Array) ? finalBlob : null;
+
+						try {
+							await cache.put(cleanKey, new Response(finalBlob, { status: 200, headers: newHeaders }));
+							console.info(`📦🛡️ SW: Risorsa validata e salvata: ${targetUrl}`);
+						} catch (cacheError) {
+							if (await QuotaExceeded_User_Assets(cacheError) !== false) {
+								try {
+									await cache.put(cleanKey, new Response(finalBlob, { status: 200, headers: newHeaders }));
+									console.info(`📦🛡️ SW: Risorsa salvata con successo dopo 🧹 pulizia: ${targetUrl}`);
+								} catch (retryError) {
+									console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", retryError);
+									throw retryError;
+								}
+							} else {
+								throw cacheError;
+							}
+						} finally {
+							if (bufferToClear) {
+								bufferToClear.fill(0);
+								console.debug(`🛡🧹️ SW: Bonifica RAM eseguita per: ${targetUrl}`);
+							}
+						}
 
                         const uCache = await caches.open(CONFIG.userCacheName);
                         await uCache.delete(cleanKey);
+
                         return "DOWNLOADED";
                     } catch (e) {
                         console.info(`🔍⚠️ SW: Scarto tecnico su ${targetUrl} -> ${e.message}`);
@@ -624,7 +654,15 @@ self.addEventListener('message', (event) => {
             isSyncing = false;
         }
 
-        syncAbortController = new AbortController();
+        const localController = new AbortController();
+		const combinedSignal = globalAbortController?.signal
+			? AbortSignal.any([globalAbortController.signal, localController.signal])
+			: localController.signal;
+		syncAbortController = {
+			signal: combinedSignal,
+			abort: () => localController.abort()
+		};
+
         isSyncing = true;
         const currentVersion = event.data?.version;
         isLogicEnabled = true;
@@ -734,7 +772,7 @@ self.addEventListener('message', (event) => {
 							}
 						});
 					}
-					await waitTillIdle(1000);
+					await waitTillIdle(200);
 				}
 				const core_Down_OK = coreResults.filter(r => r.status === 'fulfilled' && r.value === "DOWNLOADED").length;
 				console.info(`✅⚙️ SW: Core File Scaricati effettivi da rete: ${core_Down_OK}/${coreResults.length}`);
@@ -929,12 +967,11 @@ self.addEventListener('message', (event) => {
 							abortPromise
 						]);
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
-						await waitTillIdle(1000);
+						await waitTillIdle(200);
 					} catch (raceError) {
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
 						throw raceError;
 					}
-					await waitTillIdle(1000);
 					results.forEach((res, index) => {
 						const url = group[index];
                         if (res.status === 'fulfilled') {
@@ -1099,6 +1136,9 @@ self.addEventListener('fetch', (event) => {
         const shouldBeEncrypted = isCoreAsset || existsInMain;
 		const targetCache = shouldBeEncrypted ? "📦🛡️ (Bunker)" : "📦🔓 (Magazzino)";
 
+		if (event.request.url.includes('favicon.ico')) {
+            return new Response(null, { status: 204 });
+        }
 // 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ATTIVA (ONLINE GATEWAY)
 // Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 // o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
@@ -1110,10 +1150,13 @@ self.addEventListener('fetch', (event) => {
                 const TIMEOUT_MS = currentProfile.timeout * 1000;
                 const controller = new AbortController();
                 const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+				const fetchSignal = globalAbortController
+                ? AbortSignal.any([globalAbortController?.signal, controller?.signal])
+                : controller?.signal;
 
                 const networkResponse = await fetch(event.request, {
                     cache: 'no-cache',
-                    signal: controller.signal
+                    signal: fetchSignal
                 });
                 clearTimeout(tId);
                 if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
@@ -1124,54 +1167,75 @@ self.addEventListener('fetch', (event) => {
 
                     const responseClone = networkResponse.clone();
                     event.waitUntil((async () => {
-                        try {
+						try {
 							const isOk = await verifyVaultIntegrity();
 							if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
-							if (!responseClone || !isLogicEnabled || isSyncing) {
+							if (!responseClone || !isLogicEnabled || isSyncing) return;
 
+							const contentType = responseClone.headers.get('Content-Type') || '';
+							const lastMod = responseClone.headers.get('Last-Modified');
+							const localLastMod = existsInMain ? existsInMain.headers.get('X-PWA-LastMod') : null;
+							const UserlocalLastMod = cached ? cached.headers.get('X-PWA-LastMod') : null;
+
+							if (lastMod && ((localLastMod && lastMod === localLastMod) || (UserlocalLastMod && lastMod === UserlocalLastMod))) {
 								return;
 							}
-                            const contentType = responseClone.headers.get('Content-Type') || '';
-                            const lastMod = responseClone.headers.get('Last-Modified');
-                            const localLastMod = existsInMain ? existsInMain.headers.get('X-PWA-LastMod') : null;
-                            const UserlocalLastMod = cached ? cached.headers.get('X-PWA-LastMod') : null;
 
-                            if (lastMod && ((localLastMod && lastMod === localLastMod) || (UserlocalLastMod && lastMod === UserlocalLastMod))) {
-                                return;
-                            }
+							const check = await isValidBlob(responseClone, contentType, 0, false, controller.signal);
+							if (check.valid) {
+								let finalBlob = check.blob;
+								const updatedHeaders = new Headers(responseClone.headers);
+								updatedHeaders.set('X-PWA-Date', Date.now().toString());
+								if (lastMod) updatedHeaders.set('X-PWA-LastMod', lastMod);
 
-                            const check = await isValidBlob(responseClone, contentType, 0, false, controller.signal);
-                            if (check.valid) {
-                                let finalBlob = check.blob;
-                                const updatedHeaders = new Headers(responseClone.headers);
-                                updatedHeaders.set('X-PWA-Date', Date.now().toString());
-                                if (lastMod) updatedHeaders.set('X-PWA-LastMod', lastMod);
 								console.info(`🔄💾 SW: [ ${targetCache} ], ♻️ File: ${finalPath}`);
+
 								if (shouldBeEncrypted) {
-                                    const encryptedBlob = await encryptBlob(finalBlob);
-                                    updatedHeaders.set('X-PWA-Encrypted', 'true');
-                                    await mainCache.put(finalPath, new Response(encryptedBlob, {
-                                        status: responseClone.status,
-                                        statusText: responseClone.statusText,
-                                        headers: updatedHeaders
-                                    }));
-                                } else {
-                                    await userCache.put(finalPath, new Response(finalBlob, {
-                                        status: responseClone.status,
-                                        statusText: responseClone.statusText,
-                                        headers: updatedHeaders
-                                    }));
-                                }
-								console.info(`✅🔄💾 SW: [ ${targetCache} ], Aggiornamento - File: ${finalPath}`);
-                            }else{
+									finalBlob = await encryptBlob(finalBlob);
+									updatedHeaders.set('X-PWA-Encrypted', 'true');
+								}
+
+								const targetCacheObj = shouldBeEncrypted ? mainCache : userCache;
+								let bufferToClear = (finalBlob instanceof Uint8Array) ? finalBlob : null;
+
+								try {
+									await targetCacheObj.put(finalPath, new Response(finalBlob, {
+										status: responseClone.status,
+										statusText: responseClone.statusText,
+										headers: updatedHeaders
+									}));
+									console.info(`✅🔄💾 SW: [ ${targetCache} ], Aggiornamento - File: ${finalPath}`);
+								} catch (cacheError) {
+									console.log(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`);
+									if (await QuotaExceeded_User_Assets(cacheError) !== false) {
+										try {
+											await targetCacheObj.put(finalPath, new Response(finalBlob, {
+												status: responseClone.status,
+												statusText: responseClone.statusText,
+												headers: updatedHeaders
+											}));
+											console.info(`✅🔄💾 SW: [ ${targetCache} ], Salvataggio riuscito dopo pulizia: ${finalPath}`);
+										} catch (retryError) {
+											console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", retryError);
+											throw retryError;
+										}
+									} else {
+										console.log("📦⚠️ SW: Update cache fallito:", cacheError);
+										throw cacheError;
+									}
+								} finally {
+									if (bufferToClear) {
+										bufferToClear.fill(0);
+										console.debug(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
+									}
+								}
+							} else {
 								throw new Error(`Integrità/DNA Fallito per ${finalPath}`);
 							}
-                        } catch (cacheError) {
-							console.log(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`);
-							console.log("📦⚠️ SW: Update cache fallito:", cacheError);
-							throw cacheError;
+						} catch (err) {
+							console.log("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", err);
 						}
-                    })());
+					})());
                     console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${isSWR ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
                     if(!(finalStrategy === 'SWR' && cached)){
                         return networkResponse;
@@ -1186,9 +1250,7 @@ self.addEventListener('fetch', (event) => {
                         return networkResponse;
                     }
                 }
-            } catch (e) {
-                console.info("📡⚠️ SW: Fallimento rete, recupero locale per:", finalPath);
-            }
+            } catch (e) { }
         }
 		if (cached) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA (CACHE HIT LAYER)
@@ -1294,9 +1356,6 @@ self.addEventListener('fetch', (event) => {
                     }
                 }
             }
-        }
-        if (event.request.url.includes('favicon.ico')) {
-            return new Response(null, { status: 204 });
         }
         const contentsType = event.request.headers.get('Accept') || "";
         const isHTML = contentsType.includes('text/html');
@@ -1430,6 +1489,30 @@ self.addEventListener('online', () => {
     console.info("📡📶 SW: Rete rilevata! Pronto per nuovi comandi.");
 });
 
+/**
+ * 🚨💾 GESTIONE EMERGENZA STORAGE: Risoluzione errore di quota superata.
+ * Interviene quando il Service Worker rileva un errore di 'QuotaExceededError' causato dal riempimento dello spazio di archiviazione disponibile.
+ * Avvia una procedura di emergenza per tentare la pulizia della cache utente e ripristinare la funzionalità del sistema.
+ * Restituisce true se l'errore era di tipo QuotaExceeded (e la procedura è stata tentata), false altrimenti.
+ * In caso di fallimento della procedura di pulizia, logga l'errore critico per il debug diagnostico e restituisce l'errore.
+ * @param {Error} e - L'oggetto errore catturato che ha scatenato la procedura.
+ * @returns {Promise<boolean|Error>} - True se l'errore è stato gestito, False se l'errore non era di quota, Error in caso di fallimento.
+ */
+async function QuotaExceeded_User_Assets(e) {
+	if (e.name === 'QuotaExceededError') {
+		console.log("🚨 SW: Storage Pieno!\n Emergency !\n🧹 cleanUserCache !");
+		try {
+			await cleanUserCache(true);
+			await waitTillIdle(500);
+			return true;
+		} catch(err) {
+			console.log("🧹❌ SW: Errore critico durante la pulizia della cache: ", err);
+			return err;
+		}
+	} else {
+		return false;
+	}
+}
 
 /**
  * 🗑️ EVACUAZIONE E AGGIORNAMENTO: Purga mirata dei file d'infrastruttura critica.
@@ -1464,6 +1547,7 @@ async function CoreAssets_Destroy_Caches(serverV = null) {
 	}
 }
 
+let globalAbortController = new AbortController();
 /**
  * 💣🔥 PROCEDURA DISTRUTTIVA D'URGENZA: Tabula Rasa dei DATI.
  * Esegue l'epurazione perentoria e simultanea di tutti i segmenti di cache memorizzati
@@ -1472,6 +1556,8 @@ async function CoreAssets_Destroy_Caches(serverV = null) {
  * @returns {Promise<boolean>} Conferma di avvenuta cancellazione dei registri locali.
  */
 async function Destroy_ALL_Caches(err = null) {
+	globalAbortController.abort();
+    globalAbortController = new AbortController();
 	console.log("💣 SW: Errore critico rilevato, Avvio Distruzione Totale!");
 	const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
@@ -1482,16 +1568,13 @@ async function Destroy_ALL_Caches(err = null) {
 }
 
 /**
- * 🗄️ WATCHDOG DI SICUREZZA: Ispezione Forense dell'Integrità Crittografica.
+ * 🗄🐺️🐤 WATCHDOG DI SICUREZZA: Ispezione Forense dell'Integrità Crittografica.
  * Esegue un test di cifratura/decrittazione simmetrica (Canary Loopback) per rilevare violazioni hardware.
  * @throws {Error} VAULT_COMPROMISED_AND_CLEANED - Se viene rilevata una violazione strutturale dei dati.
  */
 async function deepVaultValidation() {
     let db = null;
     try {
-        if (encryptionKey !== null) {
-            return;
-        }
         db = await new Promise((resolve, reject) => {
             const req = indexedDB.open("PWA_Vault", 1);
             req.onsuccess = () => resolve(req.result);
@@ -1528,7 +1611,7 @@ async function deepVaultValidation() {
         if (db) {
             try { db.close(); } catch(e){}
         }
-        if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY" || err.message === "VAULT_EMPTY_TEMPORARY") {
+        if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
 			// 💣 EMERGENCY WIPE: Rilevato tentativo di Data Breach o corruzione strutturale. Attivazione immediata tabula rasa di sicurezza.
             console.log("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
             try {
@@ -1545,27 +1628,48 @@ async function deepVaultValidation() {
             encryptionKey = null;
             throw new Error("VAULT_COMPROMISED_AND_CLEANED");
         }
-        console.warn("🗄️⚠️ SW: Accesso Vault: (" + err.message + ")");
+        console.log("🗄️⚠️ SW: Accesso Vault: (" + err.message + ")");
         throw new Error("VAULT_TEMPORARILY_LOCKED");
     }
 }
 
 /**
- * ⏳ VERIFICA: Controllo Temporizzato del Caveau.
+ * 🗄️⏳ VERIFICA: Controllo Temporizzato del Caveau.
  * Gestisce l'ancora temporale del Watchdog assicurando la validità della chiave a intervalli regolari.
  * @returns {Promise<boolean>} Esito dello stato di sblocco e integrità del caveau.
  */
 let lastVaultCheck = 0;
+let isCanaryLock = false;
 const CHECK_INTERVAL = 300000;
 async function verifyVaultIntegrity() {
     const now = Date.now();
     if (encryptionKey !== null && (now - lastVaultCheck < CHECK_INTERVAL)) return true;
+    // 🛡️ CONTROLLO ADATTIVO ANTI-CONCORRENZA
+    if (isCanaryLock) {
+        if (encryptionKey !== null) return true;
+        const inizioInseguimento = Date.now();
+        const TIMEOUT_GUARDIA_MS = 8000;
+        // Ciclo finché il primo thread non finisce e rilascia il lock
+        while (isCanaryLock) {
+            // Se superiamo gli 8 secondi di guardia totale, interrompiamo per evitare deadlock di sistema
+            if (Date.now() - inizioInseguimento > TIMEOUT_GUARDIA_MS) {
+                console.log("🗄🐺️🚨 SW: Timeout di guardia superato in coda di attesa!");
+                break;
+            }
+            // applica la pausa proporzionale al carico hardware
+            await waitTillIdle(200, 2000);
+        }
+        return encryptionKey !== null;
+    }
+    isCanaryLock = true;
     try {
         await deepVaultValidation();
         lastVaultCheck = Date.now();
+        isCanaryLock = false;
         return true;
     } catch (err) {
-        console.warn("⚠️ SW: Validazione temporaneamente fallita: ", err.message);
+        isCanaryLock = false;
+        console.warn("🗄🐺️⚠️ SW: Validazione temporaneamente fallita: ", err.message);
         return false;
     }
 }
@@ -1795,6 +1899,6 @@ async function generateErrorPage(logoBlob, failedPath) {
 		}
     }
     const p = decodeURIComponent(failedPath || '???');
-	const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#000;font-family:sans-serif;color:#fff;overflow:hidden}.box{width:95vw;height:95vh;border:2px solid red;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-sizing:border-box;padding:20px}h2{color:#ff4444;margin:5px 0;font-size:1.2rem}p{color:#bbb;font-style:italic;margin:2px 0;font-size:0.9rem}small{color:#444;margin-top:25px;font-size:0.65rem;word-break:break-all;max-width:90%;border-top:1px solid #222;padding-top:10px}img{max-width:140px;max-height:30vh;margin-bottom:20px;object-fit:contain}</style></head><body><div class="box"><img src="${imgContent}"><h2>Risorsa non disponibile &#x1F4E1;&#x274C;</h2><h2>Resource not available &#x1F4E1;&#x274C;</h2><small>&#x1F4C4;&#x274C; ${p}</small></div></body></html>`;
+	const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#000;font-family:sans-serif;color:#fff;overflow:hidden}.box{width:95vw;height:95vh;border:2px solid red;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-sizing:border-box;padding:20px}h2{color:#ff4444;margin:5px 0;font-size:1.2rem}p{color:#bbb;font-style:italic;margin:2px 0;font-size:0.9rem}small{color:#aaa;margin-top:25px;font-size:0.65rem;word-break:break-all;max-width:90%;border-top:1px solid #222;padding-top:10px}img{max-width:140px;max-height:30vh;margin-bottom:20px;object-fit:contain}</style></head><body><div class="box"><img src="${imgContent}"><h2>Risorsa non disponibile &#x1F4E1;&#x274C;</h2><h2>Resource not available &#x1F4E1;&#x274C;</h2><small>&#x1F4C4;&#x274C; ${p}</small></div></body></html>`;
     return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' }});
 }
