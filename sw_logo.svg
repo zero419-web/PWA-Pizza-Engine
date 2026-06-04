@@ -61,7 +61,6 @@
       <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
     </g>
   </g>
-
   <polygon points="22 43, 78 43, 78 75, 50 106, 22 75" fill="none" stroke="#D32F2F" stroke-width="1.2" stroke-dasharray="3,3" stroke-linejoin="round">
     <animate attributeName="opacity" values="0.3; 1.0; 0.3" dur="2s" repeatCount="indefinite"/>
   </polygon>
@@ -89,4 +88,7 @@
     <path d="M 11 1.5 L 13 1.5 L 13 5 L 11 5 Z M 14 1.5 L 16 1.5 L 16 5 L 14 5 Z" fill="#0078D4" />
     <text x="0" y="1.5" fill="#C5A059" font-family="system-ui, -apple-system, sans-serif" font-size="3.5" font-weight="900" text-anchor="middle">256</text>
   </g>
+  <text x="50" y="32" font-family="system-ui, sans-serif" font-size="3.5" fill="#0078D4" text-anchor="middle" font-weight="bold">
+    🇪🇺📜 EUPL-1.2
+  </text>
 </svg>
