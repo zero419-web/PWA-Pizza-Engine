@@ -4,10 +4,18 @@
   <line x1="50" y1="14" x2="50" y2="22" stroke="#4B5320" stroke-width="3" stroke-linecap="round"/>
   <polygon points="15 38, 85 38, 85 78, 50 114, 15 78" fill="none" stroke="#4B5320" stroke-width="4" stroke-linejoin="round"/>
   <g fill="#4A148C" stroke="#4A148C" stroke-width="0.5" stroke-linejoin="round">
-    <path d="M 18 30 L 24 30 L 21 32 Z M 18 36 L 24 36 L 21 34 Z" />
-    <path d="M 76 30 L 82 30 L 79 32 Z M 76 36 L 82 36 L 79 34 Z" />
-    <path d="M 87 46 L 87 52 L 89 49 Z M 93 46 L 93 52 L 91 49 Z" />
-    <path d="M 87 63 L 87 69 L 89 66 Z M 93 63 L 93 69 L 91 66 Z" />
+    <g transform="translate(21, 33) rotate(45)">
+      <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
+    </g>
+    <g transform="translate(79, 33) rotate(-45)">
+      <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
+    </g>
+    <g transform="translate(90, 49) rotate(45)">
+      <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
+    </g>
+    <g transform="translate(90, 66) rotate(45)">
+      <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
+    </g>
     <g transform="translate(76.5, 93.5) rotate(45)">
       <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
     </g>
@@ -20,8 +28,12 @@
     <g transform="translate(37.5, 107.5) rotate(-45)">
       <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
     </g>
-    <path d="M 7 46 L 7 52 L 9 49 Z M 13 46 L 13 52 L 11 49 Z" />
-    <path d="M 7 63 L 7 69 L 9 66 Z M 13 63 L 13 69 L 11 66 Z" />
+    <g transform="translate(10, 49) rotate(-45)">
+      <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
+    </g>
+    <g transform="translate(10, 66) rotate(-45)">
+      <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
+    </g>
   </g>
   <polygon points="22 43, 78 43, 78 75, 50 106, 22 75" fill="none" stroke="#D32F2F" stroke-width="1.2" stroke-dasharray="3,3" stroke-linejoin="round"/>
   <rect x="36" y="54" width="28" height="28" rx="3" fill="none" stroke="#4B5320" stroke-width="3.5" stroke-linejoin="round"/>
