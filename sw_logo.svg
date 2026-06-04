@@ -1,13 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100%" height="100%" style="max-width: 250px; display: block; margin: auto;">
   <path d="M35 28 C35 12, 65 12, 65 28 Z" fill="none" stroke="#4B5320" stroke-width="4" stroke-linecap="round"/>
   <path d="M30 28 L70 28 L64 34 L36 34 Z" fill="#4B5320"/> 
-  <line x1="50" y1="14" x2="50" y2="22" stroke="#4B5320" stroke-width="3" stroke-linecap="round"/>
+  <line x1="50" y1="12" x2="50" y2="22" stroke="#4B5320" stroke-width="2" stroke-linecap="round"/>
+  <g transform="translate(50, 5)">
+    <path d="M 0,1 C 2,0 3,2 5,1 L 5,7 C 3,8 2,6 0,7 Z" fill="#009246" />
+    <path d="M 5,1 C 7,0 8,2 10,1 L 10,7 C 8,8 7,6 5,7 Z" fill="#F1F2F1" />
+    <path d="M 10,1 C 12,0 13,2 15,1 L 12,4 L 15,7 C 13,8 12,6 10,7 Z" fill="#CE2B37" />
+  </g>
   <polygon points="15 38, 85 38, 85 78, 50 114, 15 78" fill="none" stroke="#4B5320" stroke-width="4" stroke-linejoin="round"/>
   <g fill="#4A148C" stroke="#4A148C" stroke-width="0.5" stroke-linejoin="round">
-    <g transform="translate(21, 33) rotate(45)">
+    <g transform="translate(18, 33) rotate(45)">
       <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
     </g>
-    <g transform="translate(79, 33) rotate(-45)">
+    <g transform="translate(82, 33) rotate(-45)">
       <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
     </g>
     <g transform="translate(90, 49) rotate(45)">
@@ -32,7 +37,7 @@
       <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
     </g>
     <g transform="translate(10, 66) rotate(-45)">
-      <path d="M -3 -3 L 3 -3 L 0 -1 Z M -3 3 L 3 3 L 0 1 Z" />
+      <path d="M -3 -3 L 3 -3 L 0 -1 Z  M -3 3 L 3 3 L 0 1 Z" />
     </g>
   </g>
   <polygon points="22 43, 78 43, 78 75, 50 106, 22 75" fill="none" stroke="#D32F2F" stroke-width="1.2" stroke-dasharray="3,3" stroke-linejoin="round"/>
