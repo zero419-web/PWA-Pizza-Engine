@@ -1283,9 +1283,11 @@ self.addEventListener('fetch', (event) => {
                     }
 
                     const outResponse = new Response(decrypted, { headers: secureHeaders });
+					console.debug(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
 					new Uint8Array(buffer).fill(0);
                     if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                     decrypted = null;
+					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                     return outResponse;
                 } catch (err) {
                     console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
@@ -1303,6 +1305,7 @@ self.addEventListener('fetch', (event) => {
                     throw err;
                 }
             } else {
+				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
         } else {
