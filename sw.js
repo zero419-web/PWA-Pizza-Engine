@@ -508,7 +508,7 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
 						} finally {
 							if (bufferToClear) {
 								bufferToClear.fill(0);
-								console.debug(`🛡🧹️ SW: Bonifica RAM eseguita per: ${targetUrl}`);
+								console.log(`🛡🧹️ SW: Bonifica RAM eseguita per: ${targetUrl}`);
 							}
 						}
 
@@ -819,7 +819,7 @@ self.addEventListener('message', (event) => {
 					}
 					console.info(`✅📜 SW: Lista completata. File raccolti dal manifest: ${manifestList.length}`);
 				} catch (e) {
-					console.info("🚫⚠️ SW: Errore Critico durante l'elaborazione dell'Assets Manifest:", e.message);
+					console.error("🚫⚠️ SW: Errore Critico durante l'elaborazione dell'Assets Manifest:", e.message);
 					throw new Error("ASSETS_MANIFEST_CORRUPTED");
 				}
 
@@ -1029,11 +1029,11 @@ self.addEventListener('message', (event) => {
                 }
 
 		} catch (err) {
-                console.info("🔄⚠️ SW: Errore Sync", err);
+                console.warn("🔄⚠️ SW: Errore Sync", err);
 				if (syncAbortController) syncAbortController.abort();
 				const isIntegritaError = err.message && err.message.includes('Integrità');
 				if (isIntegritaError) {
-					console.log("⚠️ SW: Errore di Integrità rilevato su un asset.");
+					console.error("🚨 SW: Errore di Integrità rilevato su un asset.", err);
 				}
 		} finally {
 				console.info(`✅ SW: SYNC Completata. Total file Download: ${completed} - Exclud(IsBunker): ${completed_ok}`);
@@ -1229,14 +1229,14 @@ self.addEventListener('fetch', (event) => {
 								} finally {
 									if (bufferToClear) {
 										bufferToClear.fill(0);
-										console.debug(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
+										console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
 									}
 								}
 							} else {
 								throw new Error(`Integrità/DNA Fallito per ${finalPath}`);
 							}
 						} catch (err) {
-							console.log("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", err);
+							console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", err);
 						}
 					})());
                     console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${(finalStrategy === 'SWR' && cached) ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
@@ -1283,14 +1283,14 @@ self.addEventListener('fetch', (event) => {
                     }
 
                     const outResponse = new Response(decrypted, { headers: secureHeaders });
-					console.debug(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
+					console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
 					new Uint8Array(buffer).fill(0);
                     if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                     decrypted = null;
 					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                     return outResponse;
                 } catch (err) {
-                    console.info("❌🔑 SW: Decrittazione fallita per:", finalPath);
+                    console.error("❌🔑 SW: Decrittazione fallita per:", finalPath);
                     const isVaultError = err.message && err.message.includes('VAULT');
                     if (isVaultError) {
 						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
@@ -1355,7 +1355,7 @@ self.addEventListener('fetch', (event) => {
 
                                 return altCached.clone();
                             } catch (decryptErr) {
-                                console.log(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
+                                console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
                                 continue;
                             }
                         }
@@ -1394,7 +1394,7 @@ self.addEventListener('fetch', (event) => {
                         });
                     }
                 } catch (err) {
-                    console.info("❌ SW: Errore decriptazione placeholder:", err);
+                    console.error("❌ SW: Errore decriptazione placeholder:", err);
                 }
             } else {
                 if (isImageRequest && !isHTML && !isExcluded) {
@@ -1467,7 +1467,7 @@ self.addEventListener('activate', (event) => {
                 return Promise.all(
                     keys.map(k => {
                         if (k !== CONFIG.cacheName && k !== CONFIG.userCacheName) {
-							console.info(`🧹📦 PWA: Remove Old cache: ${k}`);
+							console.info(`🧹📦 SW: Remove Old cache version: ${k}`);
 							return caches.delete(k);
                         }
                     })
@@ -1483,7 +1483,7 @@ self.addEventListener('activate', (event) => {
 					console.info("🛡️✅ SW: Integrità Bunker confermata.");
 					await cleanUserCache();
 				} catch (err) {
-					console.info("⚡🚨 SW: Erorre: ", err.message);
+					console.error("⚡🚨 SW: Erorre: ", err.message);
 				}
             })()
         ]).then(() => self.clients.claim())
@@ -1512,7 +1512,7 @@ async function QuotaExceeded_User_Assets(e) {
 			await waitTillIdle(500);
 			return true;
 		} catch(err) {
-			console.log("🧹❌ SW: Errore critico durante la pulizia della cache: ", err);
+			console.error("🧹❌ SW: Errore critico durante la pulizia della cache: ", err);
 			return err;
 		}
 	} else {
@@ -1563,7 +1563,7 @@ async function CoreAssets_Destroy_Caches(serverV = null) {
 async function Destroy_ALL_Caches(err = null) {
 	globalAbortController.abort();
     globalAbortController = new AbortController();
-	console.log("💣 SW: Errore critico rilevato, Avvio Distruzione Totale!");
+	console.error("💣 SW: Errore critico rilevato, Avvio Distruzione Totale!", err);
 	const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
     const allClients = await self.clients.matchAll();
@@ -1618,7 +1618,7 @@ async function deepVaultValidation() {
         }
         if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
 			// 💣 EMERGENCY WIPE: Rilevato tentativo di Data Breach o corruzione strutturale. Attivazione immediata tabula rasa di sicurezza.
-            console.log("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
+            console.error("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
             try {
                 await Destroy_ALL_Caches("VAULT_COMPROMISED");
                 await new Promise((resolve) => {
@@ -1628,7 +1628,7 @@ async function deepVaultValidation() {
                 });
                 console.log("🗄️🔥 SW: Tabula rasa completata con successo.");
             } catch (purgErr) {
-                console.log("🗄️⚠️ SW: Errore durante la purga del sistema:", purgErr);
+                console.error("🗄️⚠️ SW: Errore durante la purga del sistema:", purgErr);
             }
             encryptionKey = null;
             throw new Error("VAULT_COMPROMISED_AND_CLEANED");
@@ -1736,7 +1736,7 @@ async function getStoredKey() {
                 resolve(null);
             };
         } catch (criticalErr) {
-            console.info("❌ SW: Fallimento critico sistema Vault", criticalErr);
+            console.error("❌ SW: Fallimento critico sistema Vault", criticalErr);
             encryptionKey = null;
             resolve(null);
         }
@@ -1779,7 +1779,7 @@ async function encryptBlob(blob) {
 
         return outBlob;
     } catch (err) {
-        console.info("❌🛡️ SW: Errore durante la cifratura del file.");
+        console.error("❌🛡️ SW: Errore durante la cifratura del file.");
         if (buffer instanceof ArrayBuffer) new Uint8Array(buffer).fill(0);
         if (combined instanceof Uint8Array) combined.fill(0);
         throw err;
@@ -1812,7 +1812,7 @@ async function decryptBuffer(buffer) {
 
         return decrypted;
     } catch (err) {
-        console.info("❌🛡️ SW: Fallimento decrittazione. Dati non integri o chiave errata.");
+        console.error("❌🛡️ SW: Fallimento decrittazione. Dati non integri o chiave errata.");
         if (data) data.fill(0);
         throw new Error("VAULT_LOCKED_DECRYPTION", { cause: err });
     }
@@ -1843,7 +1843,7 @@ async function getHash(blob, algo = 'SHA-256') {
 
         return hashHex;
     } catch (err) {
-        console.info(`🧬❌ SW: Errore calcolo hash (${algo}):`, err);
+        console.error(`🧬❌ SW: Errore calcolo hash (${algo}):`, err);
         if (buffer instanceof ArrayBuffer) new Uint8Array(buffer).fill(0);
         return null;
     }
@@ -1900,7 +1900,7 @@ async function generateErrorPage(logoBlob, failedPath) {
                 r.readAsDataURL(logoBlob);
             });
         } catch (e) {
-			console.log("⚠️ SW: ErrorPage B64 Not Blob...", e);
+			console.warn("⚠️ SW: ErrorPage B64 Not Blob...", e);
 		}
     }
     const p = decodeURIComponent(failedPath || '???');
