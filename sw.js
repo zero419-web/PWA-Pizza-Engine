@@ -1,30 +1,56 @@
 /*
- * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ OPERATIVA [ PANZER V7.3 ]:
- * - Isolamento dei Flussi: Profilazione fisica del canale nello Scope isolato del SW
- * - Flusso Fluido: Instradamento polimorfo d'ufficio basato su scansione ciclica 'for...in'
- * - Resilienza Bunker: Meccanismo Smart Sync con campionamento RTT e interruzione via AbortController
- * - SW Forensics: Validazione strict dei flussi in entrata via Magic Numbers e CONFIG.minSizeMap
- * - Sicurezza Volatile: Derivazione chiavi via Web Crypto API senza persistenza del segreto in chiaro
+ * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ
  *
- * ⚙️🪖️ NUCLEO CORE: Service Worker "Panzer v7.3"
- * 	- ⚓📡️ U-Boot - 🥷🌫️ Stealth Edition (Encrypted AES-GCM 256-bit)
+ * ⚙️ CORE: 🪖 PANZER V7.4
  *
- * Sviluppo Software e Protocollo di Sicurezza a cura di:
- * 👨‍💻🇮🇹 Valentino Aglianò - Per. Ind. Informatico.(2013)
- * [ Istruttore Informatico - Idoneo Nazionale ASMEL (2025) ]
- * =====================================================================
+ *
+ * 🛡️ REQUISITI OPERATIVI DI SISTEMA
+ *
+ * 1. 🧱🔀 ISOLAMENTO DEI FLUSSI:
+ * Profilazione fisica del canale nello Scope isolato e protetto del Service Worker.
+ *
+ * 2. 🔀🎭 INSTRADAMENTO POLIMORFO:
+ * Flusso Fluido d'ufficio basato su scansione ciclica 'for...in' e telemetria hardware.
+ *
+ * 3. 🩻🪨 RESILIENZA STRUTTURALE:
+ * Meccanismo Smart Sync con campionamento RTT e interruzione atomica via AbortController.
+ *
+ * 4. 🔬🧬 SW FORENSICS (DNA CHECK):
+ * Ispezione biometrica sequenziale del payload su tre (3) scomparti stagni:
+ * - FASE 1 (TESTA 🤯): Validazione Strict dei Magic Numbers contro attacchi di MIME-sniffing.
+ * - FASE 2 (CODA 🚓🚓🚓): Verifica dei marcatori strutturali (Footer 👣) contro attacchi di tipo Append.
+ * - FASE 3 (CORPO 🪵🧬): Analisi euristica stringente anti-script per l'intercettazione di vettori malevoli nei PDF.
+ *
+ * 5. 🌡️🛡 ️CPU THERMAL SHIELD:
+ * Ottimizzatore adattivo del respiro dell'Event Loop via 'waitTillIdle' per la prevenzione del logoramento hardware.
+ *
+ * ⚙️️ NUCLEO: SERVICE WORKER (SW) 🪖 "PANZER V7.4"
+ * 🎖 MILITARY EDITION (CRYPTOGRAPHIC VAULT AES-GCM 256-BIT)
+ * Licenza di Distribuzione:
+ * 🇪🇺📜 EUPL 1.2 (Conforme alle direttive CAD della PA 🏛️)
+ *
+ * Sviluppo Software e Ingegnerizzazione del Protocollo a cura di:
+ * 👩‍💻🇮🇹 Valentino Aglianò - Perito Industriale Informatico (2013)
+ * [ Istruttore Informatico - Idoneo Nazionale MaxConcorso ASMEL 2025 ]
+ *
+ *
+ * 🛡 ️DIRECTIVE DI SICUREZZA ATTIVA E BONIFICA FORENSE (🔐 ZERO-TRUST POLICY 🚨)
+ *
+ * [🔑 MASTER KEY]:
+ * Istanza crittografica non esportabile (CryptoKey) generata a runtime e isolata in RAM volatile.
+ * [🗄️ PWA_VAULT]:
+ * Persistenza protetta della chiave opaca in IndexedDB ➿ tramite algoritmo di clonazione strutturata (extractable: false).
+ * [🫙 SANDBOX CONTENIMENTO]:
+ * Iniezione perentoria di header CSP restrittivi per l'isolamento dei contenuti erogati a schermo.
+ * [🦈 WATCHDOG LOOPBACK]:
+ * Test atomico di cifratura/decrittazione simmetrica a runtime (🐦 vaultCanaryText) per la validazione della memoria.
+ * [🚨🧼 EMERGENCY WIPE]:
+ * Tabula rasa immediata, distruzione totale e bonifica delle cache in caso di fallimento strutturale del canarino.
+ * [🚧🕵 ️ANTI-MEMORY INSPECTION]:
+ * Sovrascrittura fisica e azzeramento dei buffer binari di transito (headBuffer, tailBuffer, fullBuffer), tramite metodo nativo 'Uint8Array.prototype.fill(0)' immediatamente post-elaborazione.
+ *
  */
-
- /* 🔑🛡️ SICUREZZA:
- * [encryptionKey] Istanza Master Key non esportabile (CryptoKey) isolata in RAM.
- * [IndexedDB]: Master Key blindata di tipo CryptoKey nativa (extractable: false, non esportabile/non leggibile in chiaro).
- * - Persistenza protetta della CryptoKey opaca tramite algoritmo di clonazione strutturata (PWA_Vault).
- * [Contenimento Sandbox]: Iniezione di header CSP restrittivi per l'isolamento dei contenuti erogati.
- * [Watchdog & Loopback]: Test atomico di cifratura/decrittazione simmetrica a runtime (CONFIG.vaultCanaryText) per la validazione della memoria.
- * [Emergency Wipe]: Tabula rasa immediata e distruzione Totale in caso di fallimento strutturale ad un tentativo di Data Breach.
- * [Bonifica RAM]: Sovrascrittura perentoria dei buffer binari di transito via Uint8Array.fill(0) post-elaborazione (Anti-Memory Inspection).
- */
-
+ 
 let encryptionKey = null;
 
  let isLogicEnabled = false;
@@ -39,9 +65,9 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.3',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.3',
-	vaultCanaryText: 'KANARY_CHECK_OK_PANZER_VAULT',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.4',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.4',
+	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
     userCacheTTL: 7,
     networkResilient: {
         maxRetries: 5,
@@ -72,12 +98,20 @@ const CONFIG = {
            'png': 500,
            'avif': 500,
            'svg': 100,
-           'sigs': [
-               '52494646',
-               'FFD8FF',
-               '89504E47',
-               '3C737667'
-            ],
+           'magicNumbers': {
+               'header': [
+                   '52494646', // WEBP/RIFF
+                   'FFD8FF',   // JPEG
+                   '89504E47', // PNG
+                   '3C737667'  // SVG
+                ],
+               'footer': [
+                   '49454E44AE426082', // PNG (IEND)
+                   'FFD9',             // JPEG (EOI)
+                   '3B',               // GIF (Terminator)
+                   '3C2F7376673E'      // SVG (</svg>)
+                ]
+           },
            'useHeadProbe': true,
            'tolerance': 0.30,
            'defaultMin': 500
@@ -85,7 +119,16 @@ const CONFIG = {
         'pdf': {
            'firmato': 5000,
            'default': 10000,
-           'sigs': ['25504446'],
+           'magicNumbers': {
+               'header': ['25504446'], // %PDF (Rilevazione universale)
+               'footer': ['2525454F46']  // %%EOF (Rilevazione strutturale di coda)
+           },
+           'pdfMaliciousPatterns': [
+               '/JavaScript',
+               '/JS',
+               '/Launch',
+               '/OpenAction'
+           ],
            'useHeadProbe': false,
            'tolerance': 0.30,
            'defaultMin': 1000
@@ -95,7 +138,11 @@ const CONFIG = {
             'css': 100,
             'js': 100,
             'json': 10,
-            'sigs': [],
+            // Lasciati vuoti per garantire 0  falsi positivi nella PA
+            'magicNumbers': {
+                'header': [],
+                'footer': []
+            },
             'useHeadProbe': true,
             'tolerance': 0.20,
             'defaultMin': 100
@@ -204,7 +251,7 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
  */
 const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = false, signals = null) => {
     let signal = signals || null;
-	let blob;
+    let blob;
     let encoding = null;
     let finalContentType = contentType;
     let result = { valid: false, blob: null };
@@ -214,7 +261,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         encoding = input.headers.get('Content-Encoding');
         finalContentType = contentType || input.headers.get('Content-Type') || '';
         try {
-
             blob = await input.blob();
         } catch (e) { return result; }
     } else {
@@ -239,30 +285,113 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         return result;
     }
 
-    if (!isEncrypted && !isTransformed && section && section.sigs?.length > 0) {
+    let headerBuffer = null;
+    let tailBuffer = null;
+    let fullBuffer = null;
+
+    // --- 🛡️ FASE 1: ANALISI DEI MAGIC NUMBERS DI TESTA (HEADER) ---
+    if (!isEncrypted && !isTransformed && section && section.magicNumbers?.header?.length > 0) {
         try {
             if (signal?.aborted) return result;
-            const headerBuffer = await blob.slice(0, 12).arrayBuffer();
-            const headerHex = Array.from(new Uint8Array(headerBuffer))
+            headerBuffer = await blob.slice(0, 12).arrayBuffer();
+            let headerHex = Array.from(new Uint8Array(headerBuffer))
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('').toUpperCase();
-            const hasValidSig = section.sigs.some(sig => headerHex.includes(sig.toUpperCase()));
+            const hasValidSig = section.magicNumbers.header.some(sig => headerHex.includes(sig.toUpperCase()));
             if (!hasValidSig) {
-				// 🛡️ BONIFICA DEI BUFFER DI ANALISI
-				new Uint8Array(headerBuffer).fill(0);
                 if (!(subType === 'webp' && headerHex.startsWith('52494646') && headerHex.includes('57454250'))) {
-                    console.log(`🛡️ SW Security: Firma fallita per ${finalContentType}. DNA: ${headerHex}`);
-					headerHex = 0;
+                    console.log(`🛡️ SW Security: Firma testa fallita per ${finalContentType}. DNA: ${headerHex}`);
+                    if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
                     return result;
                 }
             }
-        } catch (e) { return result; }
+        } catch (e) { 
+            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+            return result; 
+        }
     }
 
+    // --- 🛡️ FASE 2: ANALISI DEI MARCATORI DI CODA (FOOTER) ---
+    if (!isEncrypted && !isTransformed && section && section.magicNumbers?.footer?.length > 0) {
+        try {
+            if (signal?.aborted) {
+                if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+                return result;
+            }
+            const fetchSize = Math.min(blob.size, 128);
+            tailBuffer = await blob.slice(-fetchSize).arrayBuffer();
+            const tailHex = Array.from(new Uint8Array(tailBuffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('').toUpperCase();
+            
+            const hasValidFooter = section.magicNumbers.footer.some(foot => tailHex.includes(foot.toUpperCase()));
+            if (!hasValidFooter) {
+                console.log(`🛡️ SW Security: Firma coda fallita o corrotta per ${finalContentType}. TAIL DNA: ${tailHex}`);
+                if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+                if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+                return result;
+            }
+        } catch (e) {
+            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+            if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+            return result;
+        }
+    }
+
+    // --- 🛡️ FASE 3: ANALISI EURISTICA ANTI-SCRIPT (SPECIFICA PER PDF CON ESCUDO TERMICO CPU) ---
+    if (!isEncrypted && !isTransformed && mainType === 'pdf' && section?.pdfMaliciousPatterns) {
+        try {
+            if (signal?.aborted) {
+                if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+                if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+                return result;
+            }
+            
+            // ⏳💤 Attivazione dell'ottimizzatore adattivo del respiro prima del carico computazionale pesante
+            if (typeof waitTillIdle === 'function') {
+                await waitTillIdle(200, 8000);
+            }
+
+            fullBuffer = await blob.arrayBuffer();
+            const pdfTextContent = new TextDecoder('utf-8').decode(new Uint8Array(fullBuffer));
+
+            for (const pattern of section.pdfMaliciousPatterns) {
+                if (pdfTextContent.includes(pattern)) {
+                    console.log(`🛡️ SW,  Vettore malevolo intercettato nel codice del PDF [${pattern}]. Blocco.`);
+                    if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+                    if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+                    if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+                    return result;
+                }
+            }
+        } catch (e) {
+            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+            if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+            if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+            return result;
+        }
+    }
+
+    // Controllo finale di integrità di lettura strutturale del blob originale
     try {
-        if (signal?.aborted) return result;
+        if (signal?.aborted) {
+            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+            if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+            if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+            return result;
+        }
         await blob.slice(-5).arrayBuffer();
-    } catch (e) { return result; }
+    } catch (e) { 
+        if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+        if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+        if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+        return result; 
+    }
+
+    // --- 🧼 BONIFICA DELLA RAM
+    if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+    if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+    if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
 
     result.valid = true;
     result.blob = blob;
