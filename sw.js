@@ -1,7 +1,7 @@
 /*
  * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ
  *
- * ⚙️ CORE: 🪖 PANZER V7.4
+ * ⚙️ CORE: 🪖 PANZER V7.5
  *
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA
@@ -24,7 +24,7 @@
  * 5. 🌡️🛡 ️CPU THERMAL SHIELD:
  * Ottimizzatore adattivo del respiro dell'Event Loop via 'waitTillIdle' per la prevenzione del logoramento hardware.
  *
- * ⚙️️ NUCLEO: SERVICE WORKER (SW) 🪖 "PANZER V7.4"
+ * ⚙️️ NUCLEO: SERVICE WORKER (SW) 🪖 "PANZER V7.5"
  * 🎖 MILITARY EDITION (CRYPTOGRAPHIC VAULT AES-GCM 256-BIT)
  * Licenza di Distribuzione:
  * 🇪🇺📜 EUPL 1.2 (Conforme alle direttive CAD della PA 🏛️)
@@ -1704,27 +1704,71 @@ async function Destroy_ALL_Caches(err = null) {
 /**
  * 🗄🐺️🐤 WATCHDOG DI SICUREZZA: Ispezione Forense dell'Integrità Crittografica.
  * Esegue un test di cifratura/decrittazione simmetrica (Canary Loopback) per rilevare violazioni hardware.
+ * Integra una gara asincrona adattiva (Thermal Shield Race via waitTillIdle) per isolare falsi positivi di I/O.
  * @throws {Error} VAULT_COMPROMISED_AND_CLEANED - Se viene rilevata una violazione strutturale dei dati.
  */
 async function deepVaultValidation() {
     let db = null;
     try {
-        db = await new Promise((resolve, reject) => {
-            const req = indexedDB.open("PWA_Vault", 1);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(new Error("VAULT_DB_ACCESS_ERROR"));
-        });
-        const realKey = await new Promise((resolve, reject) => {
-            const tx = db.transaction("keys", "readonly");
-            const req = tx.objectStore("keys").get("master_key");
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(new Error("VAULT_KEY_READ_ERROR"));
-        });
-        db.close();
-        db = null;
-        if (!realKey) {
-            throw new Error("VAULT_EMPTY_TEMPORARY");
+        let realKey = null;
+        let isIOStable = false;
+         // 🎲 JITTERING: Calcola un tempo casuale tra 250ms e 600ms
+        const randomTimeoutMs = Math.random() * (600 - 250) + 250;
+        
+        // ⏳💤  Il Timeout si adatta dinamicamente allo stress attuale dell'Event Loop
+        const thermalShieldRace = (async () => {
+            await waitTillIdle(200, Math.ceil(randomTimeoutMs));
+            throw new Error("THERMAL_SHIELD_TIMEOUT");
+        })();
+
+        // 🏁 GARA ADATTIVA: L'operazione sul disco contro il respiro della CPU
+        try {
+            realKey = await Promise.race([
+                (async () => {
+                    db = await new Promise((resolve, reject) => {
+                        const req = indexedDB.open("PWA_Vault", 1);
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(new Error("VAULT_DB_ACCESS_ERROR"));
+                    });
+                    const resKey = await new Promise((resolve, reject) => {
+                        const tx = db.transaction("keys", "readonly");
+                        const req = tx.objectStore("keys").get("master_key");
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(new Error("VAULT_KEY_READ_ERROR"));
+                    });
+                    db.close();
+                    db = null;
+                    return resKey;
+                })(),
+                thermalShieldRace
+            ]);
+
+            // Se IndexedDB vince la gara contro il respiro della CPU, il canale I/O è reattivo e stabile
+            isIOStable = true;
+
+        } catch (raceErr) {
+            if (raceErr.message === "THERMAL_SHIELD_TIMEOUT") {
+                console.warn("🌡️🛡️  SW: ️ THERMAL SHIELD\n L'Event Loop 🔁 o 1️⃣/0️⃣ sono saturi.\n 🚧 Sbarramento adattivo ✅.");
+                isIOStable = false;
+            } else {
+                if (db) { try { db.close(); } catch(e){} db = null; }
+                throw raceErr;
+            }
         }
+
+        // --- VERDETTO GEOMETRICO SULL'ASSENZA DELLA CHIAVE ---
+        if (!realKey) {
+            if (isIOStable) {
+                // 🚨 SCENARIO ATTACCO (Test DevTools): Canale sano e reattivo, ma record rimosso dolosamente.
+                console.error("🗄️🚨 SW: CANALE REATTIVO MA CHIAVE ASSENTE!\n Rilevata rimozione dolosa dal disco. 💾");
+                throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+            } else {
+                // FALSO POSITIVO: La CPU o il disco erano bloccati. Attivazione Bunker Shield protettivo.
+                throw new Error("VAULT_EMPTY_TEMPORARY");
+            }
+        }
+
+        // --- DECRITTAZIONE REGOLARE DEL CANARINO ---
         const canaryText = CONFIG.vaultCanaryText;
         const testKey = realKey;
         try {
@@ -1741,12 +1785,13 @@ async function deepVaultValidation() {
             encryptionKey = null;
             throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
         }
+
     } catch (err) {
         if (db) {
             try { db.close(); } catch(e){}
         }
         if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
-			// 💣 EMERGENCY WIPE: Rilevato tentativo di Data Breach o corruzione strutturale. Attivazione immediata tabula rasa di sicurezza.
+            // 💣 EMERGENCY WIPE
             console.error("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
             try {
                 await Destroy_ALL_Caches("VAULT_COMPROMISED");
@@ -1762,10 +1807,11 @@ async function deepVaultValidation() {
             encryptionKey = null;
             throw new Error("VAULT_COMPROMISED_AND_CLEANED");
         }
-        console.log("🗄️⚠️ SW: Accesso Vault: (" + err.message + ")");
+        console.error("🗄️⚠️ SW: Accesso Vault: (" + err.message + ")");
         throw new Error("VAULT_TEMPORARILY_LOCKED");
     }
 }
+
 
 /**
  * 🗄️⏳ VERIFICA: Controllo Temporizzato del Caveau.
