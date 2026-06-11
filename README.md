@@ -1,4 +1,4 @@
-![LOGO](https://img.shields.io/badge/Core_PANZER_v7.5-Logo-1f4e79)
+![LOGO](https://img.shields.io/badge/Core_PANZER_v7+-Logo-1f4e79)
 <p align="center"><img src="https://raw.githubusercontent.com/zero419-web/PWA-Pizza-Engine/main/sw_logo.svg" width="200" alt="Panzer v7+ Core Logo"></p>
 
 ---
@@ -43,7 +43,14 @@
 - Perito Industriale **Informatico** *(2013)*
 - Istruttore Informatico: qualificatosi *Idoneo nel Concorso Nazionale ASMEL 2025* per **Profili IT della Pubblica Amministrazione.**
 
-Specialista nello sviluppo di soluzioni software ad alta resilienza ed ingegneria difensiva per **Enti Locali, Comuni e ASP** *(ASP8)*, con focus verticale su architetture PWA in Bunker Mode, gestione database nativi e ottimizzazione prestazionale client-side del codice telematico.
+- Specialista nello sviluppo di soluzioni software ad alta resilienza ed ingegneria difensiva per **Enti Locali, Comuni e ASP**, con focus verticale su architetture PWA in Bunker Mode, gestione database nativi e ottimizzazione prestazionale client-side del codice telematico.
+
+- 🛡️ Esperienza Operativa e Cyber Security:
+- **🟣 Purple Team:** Specialista in sicurezza applicativa con competenze bilaterali.
+- Unisce la mentalità offensiva del **🔴 Red Team** (analisi forense, individuazione di vettori di attacco e logiche difensive del **🔵 Blue Team** (blindatura dei sistemi, cifratura locale e mitigazione dei rischi telematici).
+- **(2018/2019) Esperienza sul Campo (PA/Sanità):** Ha collaborato a livello tecnico-operativo e *ufficioso* per strutture sanitarie locali (**ASP8**), maturando un forte orientamento alla **protezione del dato sensibile in ambienti critici.** *uso di ( SQLite.dll crypted )*
+
+- **Focus Tecnologico:** Sviluppo di architetture PWA difensive basate sul ferro (Vanilla JS), **crittografia client-side**, gestione **database (DB)** nativi e aderenza rigida ai capitolati di riuso e accessibilità **AgID.**
 
 ## ⚖️ Licenza
 - Questo progetto è rilasciato sotto licenza internazionale **EUPL 1.2 (European Union Public Licence)**, garantendo la piena *legalità del riuso*, la *trasparenza del codice sorgente* e la conformità ai **framework normativi dell'Unione Europea**. Consulta il file [`LICENSE`](LICENSE) per maggiori dettagli.
