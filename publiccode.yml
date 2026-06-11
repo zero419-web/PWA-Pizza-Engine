@@ -2,8 +2,8 @@
 publiccodeYmlVersion: "0.5"
 name: "PWA-Pizza-Engine"
 applicationSuite: ""
-softwareVersion: "3.2.3.2"
-releaseDate: "2026-06-10"
+softwareVersion: "3.2.3.3"
+releaseDate: "2026-06-11"
 platforms:
   - web
 categories:
@@ -18,13 +18,13 @@ description:
   it:
     shortDescription: "PWA ad alta resilienza con architettura Zero-Trust per la gestione digitale di servizi di ristorazione."
     longDescription: |
-      Architettura Progressive Web App (PWA) progettata secondo il paradigma Zero-Trust, basata sul core engine Panzer v7.4.
+      Architettura Progressive Web App (PWA) progettata secondo il paradigma Zero-Trust, basata sul core engine Panzer v7.5.
       Il sistema garantisce continuità operativa anche in scenari di connettività severamente degradata o assente, grazie a un Service Worker evoluto che implementa logiche di Network Resiliency adattiva su 5 profili di banda.
       La sicurezza è garantita da validazione crittografica binaria (Magic Numbers), cifratura AES-GCM 256-bit tramite Web Crypto API e protocolli automatici di protezione dell'integrità del Vault locale (IndexedDB).
       Il sistema è ottimizzato per prevenire memory leak e garantire la massima responsività su dispositivi mobili, integrando meccanismi di monitoraggio dei processi asincroni e purga atomica di sicurezza in caso di violazione rilevata.
     features:
       - "Architettura Zero-Trust con crittografia Web Crypto API (AES-GCM)."
-      - "Motore Service Worker Panzer v7.4 con logica di resilienza adattiva e gestione asincrona."
+      - "Motore Service Worker Panzer v7.5 con logica di resilienza adattiva e gestione asincrona."
       - "Validazione forense degli asset tramite firma digitale Magic Numbers."
       - "Protocolli di auto-protezione e purga atomica del Vault (Tabula Rasa)."
       - "Monitoraggio telemetrico della qualità del segnale (RTT) con profili dinamici."
