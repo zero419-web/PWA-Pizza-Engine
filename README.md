@@ -53,7 +53,7 @@
 - **Focus Tecnologico:** Sviluppo di architetture PWA difensive basate sul ferro (Vanilla JS), **crittografia client-side**, gestione **database (DB)** nativi e aderenza rigida ai capitolati di riuso e accessibilità **AgID.**
 
 ## ⚖️ Licenza
-- Questo progetto è rilasciato sotto licenza internazionale **EUPL 1.2 (European Union Public Licence)**, garantendo la piena *legalità del riuso*, la *trasparenza del codice sorgente* e la conformità ai **framework normativi dell'Unione Europea**. Consulta il file [`LICENSE`](LICENSE) per maggiori dettagli.
+- Questo progetto è rilasciato sotto licenza internazionale **EUPL 1.2 (European Union Public Licence)**, garantendo la piena *legalità del riuso*, la *trasparenza del codice sorgente* e la conformità ai **framework normativi dell'Unione Europea**. Consulta il file [`LICENSE`](LICENSE.md) per maggiori dettagli.
 
 ## 📚 Documentazione Ufficiale
 - Per **l'analisi dei vettori crittografici**, le metriche forensi di stabilità del disco, i diagrammi di flusso dei moduli e gli scenari applicativi d'uso sul campo per **Comuni e Aziende Sanitarie**, consulta la nostra [🌐 Wiki Ufficiale](../../wiki).
