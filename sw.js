@@ -1,7 +1,7 @@
 /*
  * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ
  *
- * ⚙️ CORE: 🪖 PANZER V7.5
+ * ⚙️ CORE: 🪖 PANZER v7.6
  *
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA
@@ -65,8 +65,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.4',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.4',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.6',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.6',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
     userCacheTTL: 7,
     networkResilient: {
@@ -203,6 +203,60 @@ const CONFIG = {
     }
 };
 
+/* 
+ * 🚧 SBARRAMENTO LOGICO IN CASCATA 🚧
+ * ❄️ DEEP FREEZE:
+ * Ciclo ricorsivo di congelamento profondo.
+ * Blocca CONFIG e qualsiasi sotto-oggetto presente o futuro.
+ *
+ * anti-Prototype Pollution 
+ * Hijacking a runtime
+ */
+const deepFreeze = (obj) => {
+    if (obj && typeof obj === 'object') {
+        Object.freeze(obj);
+        for (const key of Object.getOwnPropertyNames(obj)) {
+            const prop = obj[key];
+            if (prop !== null && typeof prop === 'object' && !Object.isFrozen(prop)) {
+                deepFreeze(prop);
+            }
+        }
+    }
+};
+Object.freeze(deepFreeze);
+deepFreeze(CONFIG);
+
+/**
+ * 🛡⏱️ SHIELD TEMPORALE (ANTI-TIMING ATTACK)
+ * Livella il tempo di computazione percepito dall'esterno su una baseline fissa,
+ * 🎲 aggiungendo un jitter stocastico per distruggere i profili statistici del 🔴 Red Team.
+ * * PARAMETRI OPERATIVI DI INGRESSO:
+ * @param {number} startTime - Marcatore temporale ad alta precisione (generato tramite performance.now()) 
+ * acquisito all'inizio della sessione di scansione o transito di rete.
+ * @param {number} targetBaselineMs - Finestra temporale minima nominale (espressa in millisecondi) 
+ * garantita per l'uniformazione della latenza verso l'esterno.
+ */
+const injectTimingNoise = async (startTime, targetBaselineMs = 45) => {
+    try {
+        const elapsed = performance.now() - startTime;
+        
+        if (elapsed < targetBaselineMs) {
+            const padding = targetBaselineMs - elapsed;
+            const jitter = Math.random() * (25 - 5) + 5;
+            const totalShieldTime = Math.ceil(padding + jitter);
+            
+            await sleep(totalShieldTime);
+        } else {
+            const microJitter = Math.random() * (5 - 1) + 1;
+            await sleep(Math.ceil(microJitter));
+        }
+    } catch (e) {
+        // Fail-safe asettico...
+    }
+};
+Object.freeze(injectTimingNoise);
+
+
 /**
  * ⏳ Generatore di ritardo temporizzato isolato.
  * Blocca l'esecuzione sequenziale asincrona del ciclo per i secondi di resilienza configurati.
@@ -210,6 +264,7 @@ const CONFIG = {
  * @returns {Promise<void>} Promessa risolta al termine del timeout.
  */
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+Object.freeze(sleep);
 
 /**
  * ⏳💤 Ottimizzatore adattivo del respiro della CPU per Service Worker.
@@ -236,7 +291,7 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
         }, ATTESA_TEST_MS);
     });
 };
-
+Object.freeze(waitTillIdle);
 
 /**
  * 🔍🧬 SW Forensics & DNA Check.
@@ -250,6 +305,9 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
  * @returns {Promise<{valid: boolean, blob: Blob|null}>} Esito della validazione con istanza blob pulita.
  */
 const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = false, signals = null) => {
+    // ⏱️ Marcatore iniziale:
+    const startForensicTime = performance.now();
+    
     let signal = signals || null;
     let blob;
     let encoding = null;
@@ -262,11 +320,19 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         finalContentType = contentType || input.headers.get('Content-Type') || '';
         try {
             blob = await input.blob();
-        } catch (e) { return result; }
+        } catch (e) { 
+            // 🪝🛡️⏱️ INNESTO:
+            await injectTimingNoise(startForensicTime, 50);
+            return result;
+        }
     } else {
         blob = input;
     }
-    if (!blob || !(blob instanceof Blob)) return result;
+    if (!blob || !(blob instanceof Blob)) {
+        // 🪝🛡️⏱️ INNESTO:
+        await injectTimingNoise(startForensicTime, 50);
+        return result;
+    }
 
     const mainType = finalContentType.split('/')[0];
     const subType = finalContentType.split('/')[1]?.split(';')[0] || '';
@@ -281,6 +347,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     }
     if (isEncrypted || isTransformed) minSize = CONFIG.minSizeMap.universal.minAbsoluteByte;
     if (blob.size < minSize) {
+        // 🪝🛡️⏱️ INNESTO:
+        await injectTimingNoise(startForensicTime, 50);
         console.log(`⚠️ SW Forensics: Asset scartato (${blob.size}b < Min: ${Math.round(minSize)}b) -> ${finalContentType}`);
         return result;
     }
@@ -300,13 +368,17 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             const hasValidSig = section.magicNumbers.header.some(sig => headerHex.includes(sig.toUpperCase()));
             if (!hasValidSig) {
                 if (!(subType === 'webp' && headerHex.startsWith('52494646') && headerHex.includes('57454250'))) {
-                    console.log(`🛡️ SW Security: Firma testa fallita per ${finalContentType}. DNA: ${headerHex}`);
+                    // 🪝🛡️⏱️ INNESTO:
+                    await injectTimingNoise(startForensicTime, 50);
+                    console.log(`🛡️ SW Security: Firma [ TESTA ] fallita per ${finalContentType}.\nDNA  🧬: ${headerHex}`);
                     if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
                     return result;
                 }
             }
         } catch (e) { 
             if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+            // 🪝🛡️⏱️ INNESTO:
+            await injectTimingNoise(startForensicTime, 50);
             return result; 
         }
     }
@@ -326,19 +398,21 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             
             const hasValidFooter = section.magicNumbers.footer.some(foot => tailHex.includes(foot.toUpperCase()));
             if (!hasValidFooter) {
-                console.log(`🛡️ SW Security: Firma coda fallita o corrotta per ${finalContentType}. TAIL DNA: ${tailHex}`);
+                console.log(`🛡️ SW Security: Firma [ CODA ] fallita o corrotta per ${finalContentType}.\n👣 TAIL DNA 🧬: ${tailHex}`);
                 if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
                 if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
                 return result;
             }
         } catch (e) {
+             // 🪝🛡️⏱️ INNESTO:
+            await injectTimingNoise(startForensicTime, 50);
             if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
             if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
             return result;
         }
     }
 
-    // --- 🛡️ FASE 3: ANALISI EURISTICA ANTI-SCRIPT (SPECIFICA PER PDF CON ESCUDO TERMICO CPU) ---
+    // --- 🛡️ FASE 3: ANALISI EURISTICA ANTI-SCRIPT (SPECIFICA PER PDF) ---
     if (!isEncrypted && !isTransformed && mainType === 'pdf' && section?.pdfMaliciousPatterns) {
         try {
             if (signal?.aborted) {
@@ -346,6 +420,10 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
                 return result;
             }
+            
+            // 🔐 HARDENING OPERATIVO:
+            const localPatterns = [...(section.pdfMaliciousPatterns || [])];
+            Object.freeze(localPatterns);
             
             // ⏳💤 Attivazione dell'ottimizzatore adattivo del respiro prima del carico computazionale pesante
             if (typeof waitTillIdle === 'function') {
@@ -355,9 +433,11 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             fullBuffer = await blob.arrayBuffer();
             const pdfTextContent = new TextDecoder('utf-8').decode(new Uint8Array(fullBuffer));
 
-            for (const pattern of section.pdfMaliciousPatterns) {
+            for (const pattern of localPatterns) {
                 if (pdfTextContent.includes(pattern)) {
-                    console.log(`🛡️ SW,  Vettore malevolo intercettato nel codice del PDF [${pattern}]. Blocco.`);
+                    // 🪝🛡️⏱️ INNESTO:
+                    await injectTimingNoise(startForensicTime, 50);
+                    console.log(`🛡️ SW Security: Blocco [ CORPO ] per ${finalContentType}.\n DNA 🧬: Vettore Malevolo Rilevato -> ${pattern}\n 📄🚨 Il [ PDF ] e Rigettato d'ufficio !`);
                     if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
                     if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
                     if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
@@ -365,6 +445,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 }
             }
         } catch (e) {
+            // 🪝🛡️⏱️ INNESTO:
+            await injectTimingNoise(startForensicTime, 50);
             if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
             if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
             if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
@@ -382,21 +464,26 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         }
         await blob.slice(-5).arrayBuffer();
     } catch (e) { 
+        // 🪝🛡️⏱️ INNESTO:
+        await injectTimingNoise(startForensicTime, 50);
         if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
         if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
         if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
         return result; 
     }
 
-    // --- 🧼 BONIFICA DELLA RAM
+    // 🧼 BONIFICA DELLA RAM
     if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
     if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
     if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
 
     result.valid = true;
     result.blob = blob;
+    // 🔐 HARDENING ESITO:
+    Object.freeze(result);
     return result;
 };
+Object.freeze(isValidBlob);
 
 /**
  * 🧲 SONDA TECNICA HEAD: Pre-ispezione preventiva delle risorse (Anti-MIME Sniffing).
@@ -407,7 +494,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
  * @param {boolean} rules.useHeadProbe - Flag di abilitazione per l'attivazione della sonda HEAD.
  * @returns {Promise<{ok: boolean, size: number, type: string}>} Struttura di audit contenente lo stato del server, la dimensione in byte (-1 se assente) e il Content-Type.
  */
-async function performProbe(url, rules) {
+const performProbe = async (url, rules) => {
 
     if (!rules || rules.useHeadProbe === false) {
         return { ok: true, size: 0, type: '' };
@@ -452,7 +539,8 @@ async function performProbe(url, rules) {
         size: 0,
         type: ''
     };
-}
+};
+Object.freeze(performProbe);
 
 /**
  * 🔗 FLUSSI: Normalizzatore Strict degli URI Telematici.
@@ -486,6 +574,7 @@ const normalize = (url) => {
         return url.split('?')[0].replace(/\/+/g, '/');
     }
 };
+Object.freeze(normalize);
 
 /**
  * 📥🚀 Smart Download Differito con Profilazione Dinamica.
@@ -498,7 +587,9 @@ const normalize = (url) => {
  * @param {number} [probeSize=0] - Dimensione preventiva ricavata da sonda HEAD.
  * @returns {Promise<string|boolean>} Stato finale dell'operazione ("DOWNLOADED", "ALREADY_OK", "variant_new" o false).
  */
-async function smartDownload(url, cache, isCore = false, version = '', probeSize = 0) {
+const smartDownload = async (url, cache, isCore = false, version = '', probeSize = 0) => {
+    // ⏱️ Marcatore di rete.
+    const startNetworkTime = performance.now();
     const cleanKey = normalize(url);
     let isEncrypted = false;
     const isVaultReady = await verifyVaultIntegrity();
@@ -517,7 +608,10 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
                 if (await isValidBlob(blob, existing.headers.get('Content-Type'), 0, isEncrypted, syncAbortController?.signal)) {
                     return "ALREADY_OK";
                 }
-            } catch (e) {  }
+            } catch (e) {
+                // 🛡️⏱️ INNESTO: 🪝
+                await injectTimingNoise(startNetworkTime, 50);
+            }
         }
 
         if (isCore) {
@@ -548,7 +642,8 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
                     return "ALREADY_OK";
                 }
             } catch (e) {
-
+                // 🛡️⏱️ INNESTO: 🪝
+                await injectTimingNoise(startNetworkTime, 50);
                 return "ALREADY_OK";
             }
         }
@@ -560,6 +655,8 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
     const rules = CONFIG.minSizeMap[ext] ||
                   (CONFIG.extensions.includes(ext) ? CONFIG.minSizeMap[ext === 'pdf' ? 'pdf' : 'image'] : null) ||
                   CONFIG.minSizeMap.universal;
+    // 🔐 HARDENING LIVELLO INTERNO:
+    if (rules) Object.freeze(rules);
 
     let finalProbeSize = probeSize;
     if (finalProbeSize === 0) {
@@ -601,8 +698,25 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
 
                         const check = await isValidBlob(r, contentType, expectedSize, isEncrypted, fetchSignal);
                         if (!check.valid) {
-                            throw new Error(`Integrità/DNA Fallito per ${targetUrl}`);
+                            // 🧼 BONIFICA DISTRUTTIVA: Polverizzazione immediata del payload malevolo in RAM prima del crash controllato
+                            try {
+                                const badBlob = check.blob || (r.clone ? await r.clone().blob() : null);
+                                if (badBlob) {
+                                    const badBuffer = await badBlob.arrayBuffer();
+            new Uint8Array(badBuffer).fill(0);
+                                }
+                            } catch (clearErr) {
+                                // 🛡️⏱️ INNESTO: 🪝
+                                await injectTimingNoise(startNetworkTime, 50);
+                                console.warn("🔬⚠️ SW Forensic: Errore durante la bonifica d'emergenza 🧼🚨", clearErr);
+                            }
+                            // 🏴‍☠️ ANTI-PROFILING: Lancio di un errore asettico privo di Stack Trace per accecare l'attaccante
+                            const cleanError = new Error(`Integrità/DNA Fallito per ${targetUrl}`);
+                            Object.defineProperty(cleanError, 'stack', { value: undefined, configurable: false, writable: false });
+                            Object.freeze(cleanError);
+                            throw cleanError;
                         }
+
 
 						let finalBlob = check.blob;
 						const newHeaders = new Headers(r.headers);
@@ -628,15 +742,30 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
 									await cache.put(cleanKey, new Response(finalBlob, { status: 200, headers: newHeaders }));
 									console.info(`📦🛡️ SW: Risorsa salvata con successo dopo 🧹 pulizia: ${targetUrl}`);
 								} catch (retryError) {
-									console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", retryError);
-									throw retryError;
+								    // 🪝🛡️⏱️ INNESTO:
+								    await injectTimingNoise(startNetworkTime, 50);
+									// 🏴‍☠️ ACCECAMENTO SUL RETRY:
+									const cleanRetryErr = {};
+									Object.defineProperties(cleanRetryErr, {
+										name: { value: "FatalCacheStorageError", enumerable: true },
+										message: { value: "Saturazione persistente o violazione del perimetro di archiviazione", enumerable: true },
+										stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+									});
+									Object.freeze(cleanRetryErr);
+									
+									console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", cleanRetryErr);
+									throw cleanRetryErr;
 								}
 							} else {
+							    // 🪝🛡️⏱️ INNESTO:
+							    await injectTimingNoise(startNetworkTime, 50);
 								throw cacheError;
 							}
 						} finally {
 							if (bufferToClear) {
 								bufferToClear.fill(0);
+								// 🪝🛡️⏱️ INNESTO:
+								await injectTimingNoise(startNetworkTime, 50);
 								console.log(`🛡🧹️ SW: Bonifica RAM eseguita per: ${targetUrl}`);
 							}
 						}
@@ -646,12 +775,16 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
 
                         return "DOWNLOADED";
                     } catch (e) {
+                        // 🛡️⏱️ INNESTO: 🪝
+                        await injectTimingNoise(startNetworkTime, 50);
                         console.info(`🔍⚠️ SW: Scarto tecnico su ${targetUrl} -> ${e.message}`);
                         return false;
                     }
                 }
                 if (r.status === 404) break;
             } catch (e) {
+                // 🛡️⏱️ INNESTO: 🪝
+                await injectTimingNoise(startNetworkTime, 50);
                 clearTimeout(timeoutId);
 
                 if (!(await checkRealOnline('sync'))) {
@@ -661,6 +794,8 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
         }
         return false;
     };
+    // 🔐 HARDENING LIVELLO INTERNO:
+    Object.freeze(tryDL);
 
     const res = await tryDL(url, true, finalProbeSize);
     if (res === "DOWNLOADED") return "DOWNLOADED";
@@ -681,7 +816,8 @@ async function smartDownload(url, cache, isCore = false, version = '', probeSize
 		}
 	}
     return false;
-}
+};
+Object.freeze(smartDownload);
 
 /**
  * 📡 Calcolo empirico del profilo del canale.
@@ -726,13 +862,14 @@ const getNetworkProfile = (nav) => {
 
     return profiles[status] || profiles['Medium'];
 };
+Object.freeze(getNetworkProfile);
 
 /**
  * 🔀 VERIFICA CONNETTIVITÀ: Controllo di soglia reale (Anti-Lie-Fi).
  * Interroga un endpoint tramite richiesta HEAD leggera per assicurarsi che internet sia operativo.
  * @returns {Promise<boolean>} Esito formale dello stato di connettività reale.
  */
-async function checkRealOnline(mode = 'fetch') {
+const checkRealOnline = async (mode = 'fetch') => {
     const netProfile = getNetworkProfile(self.navigator);
     const profiles = CONFIG.networkResilient.profiles;
     const profileName = Object.keys(profiles).find(key =>
@@ -764,7 +901,8 @@ async function checkRealOnline(mode = 'fetch') {
         console.log(`🌐❌ SW: Offline in ${mode} (Profilo: ${profileName})`);
         return false;
     }
-}
+};
+Object.freeze(checkRealOnline);
 
 /**
  * 📡 REGISTRO DI CANALE: Canale di Comunicazione Inter-Processo (IPC / PostMessage).
@@ -776,7 +914,8 @@ async function checkRealOnline(mode = 'fetch') {
 let isNewInstallation = false;
 let isSyncing = false;
 self.addEventListener('message', (event) => {
-    if (event.data?.type === 'INIT_DB') {
+    const eventDataSnapshot = event.data;
+    if (eventDataSnapshot?.type === 'INIT_DB') {
 
         if (isSyncing) {
             if (syncAbortController) {
@@ -796,10 +935,12 @@ self.addEventListener('message', (event) => {
 		};
 
         isSyncing = true;
-        const currentVersion = event.data?.version;
+        const currentVersion = eventDataSnapshot?.version;
         isLogicEnabled = true;
 
         const performSync = async (event) => {
+                // ⏱️ Marcatore di rete.
+                const startNetworkTime = performance.now();
             let hasActuallyChanged = false;
             let realServerVersion = currentVersion;
             const clients = await self.clients.matchAll();
@@ -859,7 +1000,15 @@ self.addEventListener('message', (event) => {
 						}
 					}
 				} catch (e) {
-					console.info("⚠️ SW: Fallimento..., procedo con Sync standard.", e);
+					// 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dell'errore di parsing del Manifest
+					const cleanManifestErr = {};
+					Object.defineProperties(cleanManifestErr, {
+						name: { value: "ManifestProcessorError", enumerable: true },
+						message: { value: "Procedura di sincronizzazione degradata a standard", enumerable: true },
+						stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+					});
+					Object.freeze(cleanManifestErr);
+					console.warn("⚠️ SW: Fallimento..., procedo con Sync standard.", cleanManifestErr);
 				}
 			}
 
@@ -952,7 +1101,7 @@ self.addEventListener('message', (event) => {
 					throw new Error("ASSETS_MANIFEST_CORRUPTED");
 				}
 
-                const db = event.data.data;
+                const db = eventDataSnapshot?.data;
                 const scanSet = new Set();
                 const knownDirs = new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
@@ -1042,6 +1191,8 @@ self.addEventListener('message', (event) => {
                         }
                     }
                 };
+                // 🔐 HARDENING LIVELLO INTERNO:
+                Object.freeze(universalScanner);
                 console.info("️🧠🧬 SW: Avvio Universal Scanner...");
                 await universalScanner(db);
                 console.info(`🎯🏁 SW: Analisi terminata. Asset extra trovati: ${scanSet.size}`);
@@ -1158,12 +1309,29 @@ self.addEventListener('message', (event) => {
                 }
 
 		} catch (err) {
-                console.warn("🔄⚠️ SW: Errore Sync", err);
-				if (syncAbortController) syncAbortController.abort();
-				const isIntegritaError = err.message && err.message.includes('Integrità');
-				if (isIntegritaError) {
-					console.error("🚨 SW: Errore di Integrità rilevato su un asset.", err);
-				}
+		    // 🪝🛡️⏱️ INNESTO:
+		    await injectTimingNoise(startNetworkTime, 50);
+		    // Interruzione immediata e atomica delle pipeline di rete pendenti
+		    if (syncAbortController) syncAbortController.abort();
+		    // Estrazione preventiva dei metadati dell'errore prima della sterilizzazione
+		    const errorMessage = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
+		    const isIntegritaError = errorMessage.includes('Integrità');
+		    
+		    // 🏴‍☠️ ANTI-PROFILING: Generazione di un clone d'errore asettico e privo di Stack Trace
+		    const cleanError = {};
+		    Object.defineProperties(cleanError, {
+		        name: { value: "SyncError", enumerable: true },
+		        message: { value: isIntegritaError ? "Errore di Integrità rilevato su un asset" : "Errore operativo durante il Sync", enumerable: true },
+		        stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+		    });
+		    Object.freeze(cleanError);
+		    
+		    // Ispezione forense e logging differenziato in base alla severità
+		    if (isIntegritaError) {
+		        console.error("🚨 SW: Errore di Integrità critico rilevato su un asset.", cleanError);
+		    } else {
+		        console.warn("🔄⚠️ SW: Errore Sync", cleanError);
+		    }
 		} finally {
 				console.info(`✅ SW: SYNC Completata. Total file Download: ${completed} - Exclud(IsBunker): ${completed_ok}`);
 				isNewInstallation = false;
@@ -1190,6 +1358,8 @@ self.addEventListener('message', (event) => {
                 });
             }
         };
+        // 🔐 HARDENING LIVELLO INTERNO:
+        Object.freeze(performSync);
         event.waitUntil(performSync(event));
     }
 });
@@ -1202,7 +1372,7 @@ self.addEventListener('message', (event) => {
  * @param {WorkerNavigator} [nav=self.navigator] - Interfaccia di profilazione delle metriche hardware di rete.
  * @returns {string} Stringa di comando identificativa della strategia strategica ('NetworkFirst' | 'SWR').
  */
-function assegnaFlussoPolimorfo(hasCache, nav = self.navigator) {
+const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
 	const netProfile = getNetworkProfile(nav);
 	const profiles = CONFIG?.networkResilient?.profiles;
 	const profileName = Object.keys(profiles).find(key =>
@@ -1231,7 +1401,7 @@ const CORE_ASSETS_SET = new Set(
         return normalize(asset);
     })
 );
-
+Object.freeze(assegnaFlussoPolimorfo);
 
 /**
  * 🚦 SMITIZZAZIONE E INTERCETTAZIONE: Vigile Urbano e Gateway di Sicurezza Net-Layer.
@@ -1243,6 +1413,8 @@ const CORE_ASSETS_SET = new Set(
  */
 const BROKEN_IMAGE_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="21" x2="21" y2="3"/><path d="M9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="M21 15l-5-5L5 21"/></svg>`;
 const GLOBAL_BROKEN_BLOB = new Blob([BROKEN_IMAGE_SVG_STRING], { type: 'image/svg+xml' });
+Object.freeze(GLOBAL_BROKEN_BLOB);
+
 let globalPlaceholderBlob = null;
 
 self.addEventListener('fetch', (event) => {
@@ -1253,6 +1425,8 @@ self.addEventListener('fetch', (event) => {
     if (url.origin !== self.location.origin) return;
     const cleanPath = normalize(url.pathname);
     event.respondWith((async () => {
+        // ⏱️ Marcatore iniziale:
+        const startFetchTime = performance.now();
         let finalPath = cleanPath;
 
 		if (finalPath === normalize(BASE_PATH) || finalPath.endsWith('/')) {
@@ -1338,7 +1512,15 @@ self.addEventListener('fetch', (event) => {
 									}));
 									console.info(`✅🔄💾 SW: [ ${targetCache} ], Aggiornamento - File: ${finalPath}`);
 								} catch (cacheError) {
-									console.log(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`);
+								    // 🏴‍☠️ ACCECAMENTO INTERMEDIO:
+									const cleanCacheErr = {};
+									Object.defineProperties(cleanCacheErr, {
+										name: { value: "CacheWriteError", enumerable: true },
+										message: { value: "Impossibile allocare la risorsa nel segmento isolato", enumerable: true },
+										stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+									});
+									Object.freeze(cleanCacheErr);
+									console.error(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`, cleanCacheErr);
 									if (await QuotaExceeded_User_Assets(cacheError) !== false) {
 										try {
 											await targetCacheObj.put(finalPath, new Response(finalBlob, {
@@ -1348,12 +1530,20 @@ self.addEventListener('fetch', (event) => {
 											}));
 											console.info(`✅🔄💾 SW: [ ${targetCache} ], Salvataggio riuscito dopo pulizia: ${finalPath}`);
 										} catch (retryError) {
-											console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", retryError);
-											throw retryError;
+										    // 🏴‍☠️ ACCECAMENTO SUL RETRY: Distruzione dello Stack Trace sul fallimento definitivo
+											const cleanRetryErr = {};
+										Object.defineProperties(cleanRetryErr, {
+										    name: { value: "FatalCacheStorageError", enumerable: true }, 
+										  message: { value: "Saturazione persistente o violazione del perimetro di archiviazione", enumerable: true },
+										    stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+											});
+										Object.freeze(cleanRetryErr);
+										console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", cleanRetryErr);
+											throw cleanRetryErr; // Rilanciamo l'errore già accecato verso il catch superiore
 										}
 									} else {
-										console.log("📦⚠️ SW: Update cache fallito:", cacheError);
-										throw cacheError;
+										console.warn("📦⚠️ SW: Update cache fallito:", cleanCacheErr);
+										throw cleanCacheErr; // Rilanciamo l'errore già accecato verso il catch superiore
 									}
 								} finally {
 									if (bufferToClear) {
@@ -1365,7 +1555,18 @@ self.addEventListener('fetch', (event) => {
 								throw new Error(`Integrità/DNA Fallito per ${finalPath}`);
 							}
 						} catch (err) {
-							console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", err);
+						    // 🪝🛡️⏱️ INNESTO TEMPORALE ANTI-PROFILING NELLA PIPELINE DI BACKGROUND
+							if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 30);
+							
+							// 🏴‍☠️ ACCECAMENTO: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
+							const cleanErr = {};
+							Object.defineProperties(cleanErr, {
+								name: { value: "ForensicValidationError", enumerable: true },
+								message: { value: err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault", enumerable: true },
+								stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+							});
+							Object.freeze(cleanErr);
+							console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", cleanErr);
 						}
 					})());
                     console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${(finalStrategy === 'SWR' && cached) ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
@@ -1382,7 +1583,10 @@ self.addEventListener('fetch', (event) => {
                         return networkResponse;
                     }
                 }
-            } catch (e) { }
+            } catch (e) { 
+                // 🪝🛡️⏱️ INNESTO TEMPORALE IN CASO DI CRASH DURANTE IL FETCH DI RETE
+				if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 25);
+            }
         }
 		if (cached) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA (CACHE HIT LAYER)
@@ -1419,8 +1623,27 @@ self.addEventListener('fetch', (event) => {
 					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                     return outResponse;
                 } catch (err) {
+                    	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
+					if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 40);
+					 // 🛡🧼 BONIFICA DI EMERGENZA RAM:
+                    if (typeof buffer !== 'undefined' && buffer instanceof ArrayBuffer) {
+                        new Uint8Array(buffer).fill(0);
+                    }
+                    if (typeof decrypted !== 'undefined' && decrypted instanceof ArrayBuffer) {
+                        new Uint8Array(decrypted).fill(0);
+                    }
+                    decrypted = null;
+
+					// 🏴‍☠️ ACCECAMENTO: Rimozione totale delle tracce crittografiche dall'oggetto errore
+					const cleanDecryptErr = {};
+					const isVaultError = err && err.message && err.message.includes('VAULT');
+					Object.defineProperties(cleanDecryptErr, {
+						name: { value: "CryptoShieldError", enumerable: true },
+						message: { value: isVaultError ? "VAULT_LOCKED_NO_KEY" : "Decryption integrity violation", enumerable: true },
+						stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+					});
+					Object.freeze(cleanDecryptErr);
                     console.error("❌🔑 SW: Decrittazione fallita per:", finalPath);
-                    const isVaultError = err.message && err.message.includes('VAULT');
                     if (isVaultError) {
 						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
                         return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
@@ -1431,7 +1654,7 @@ self.addEventListener('fetch', (event) => {
                             return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
                         }
                     }
-                    throw err;
+                    throw cleanDecryptErr; // Rilancia l'errore completamente sterilizzato e ibernato
                 }
             } else {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
@@ -1633,7 +1856,7 @@ self.addEventListener('online', () => {
  * @param {Error} e - L'oggetto errore catturato che ha scatenato la procedura.
  * @returns {Promise<boolean|Error>} - True se l'errore è stato gestito, False se l'errore non era di quota, Error in caso di fallimento.
  */
-async function QuotaExceeded_User_Assets(e) {
+const QuotaExceeded_User_Assets = async (e) => {
 	if (e.name === 'QuotaExceededError') {
 		console.log("🚨 SW: Storage Pieno!\n Emergency !\n🧹 cleanUserCache !");
 		try {
@@ -1647,7 +1870,8 @@ async function QuotaExceeded_User_Assets(e) {
 	} else {
 		return false;
 	}
-}
+};
+Object.freeze(QuotaExceeded_User_Assets);
 
 /**
  * 🗑️ EVACUAZIONE E AGGIORNAMENTO: Purga mirata dei file d'infrastruttura critica.
@@ -1658,7 +1882,7 @@ async function QuotaExceeded_User_Assets(e) {
  * @returns {Promise<void>}
  */
 let lastReloadCommandTime = 0;
-async function CoreAssets_Destroy_Caches(serverV = null) {
+const CoreAssets_Destroy_Caches = async (serverV = null) => {
 	const now = Date.now();
 	if (now - lastReloadCommandTime < 20000) { return; }
 	lastReloadCommandTime = now;
@@ -1678,9 +1902,18 @@ async function CoreAssets_Destroy_Caches(serverV = null) {
 			});
 		});
 	} catch (err) {
-		console.error("🚫 SW: Fallimento Distruzione dei file core dalla cache.", err);
+	    // 🏴‍☠️ ANTI-PROFILING:
+	    const cleanErr = {};
+		Object.defineProperties(cleanErr, {
+			name: { value: "CacheEvacuationError", enumerable: true },
+			message: { value: "Fallimento procedura di emergenza evacuazione", enumerable: true },
+			stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+		});
+		Object.freeze(cleanErr);
+		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", cleanErr);
 	}
-}
+};
+Object.freeze(CoreAssets_Destroy_Caches);
 
 /**
  * 💣🔥 PROCEDURA DISTRUTTIVA D'URGENZA: Tabula Rasa dei DATI.
@@ -1689,7 +1922,7 @@ async function CoreAssets_Destroy_Caches(serverV = null) {
  * @param {string} reason - Verbale motivazionale che ha scatenato la purga di sistema.
  * @returns {Promise<boolean>} Conferma di avvenuta cancellazione dei registri locali.
  */
-async function Destroy_ALL_Caches(err = null) {
+const Destroy_ALL_Caches = async (err = null) => {
 	globalAbortController.abort();
     globalAbortController = new AbortController();
 	console.error("💣 SW: Errore critico rilevato, Avvio Distruzione Totale!", err);
@@ -1699,7 +1932,8 @@ async function Destroy_ALL_Caches(err = null) {
 	allClients.forEach(client => {
 		client.postMessage({ type: 'CORE_UPDATE_RELOAD', msg: 'DESTROY_ALL_CACHE', msg_err: err });
 	});
-}
+};
+Object.freeze(Destroy_ALL_Caches);
 
 /**
  * 🗄🐺️🐤 WATCHDOG DI SICUREZZA: Ispezione Forense dell'Integrità Crittografica.
@@ -1707,7 +1941,7 @@ async function Destroy_ALL_Caches(err = null) {
  * Integra una gara asincrona adattiva (Thermal Shield Race via waitTillIdle) per isolare falsi positivi di I/O.
  * @throws {Error} VAULT_COMPROMISED_AND_CLEANED - Se viene rilevata una violazione strutturale dei dati.
  */
-async function deepVaultValidation() {
+const deepVaultValidation = async () => {
     let db = null;
     try {
         let realKey = null;
@@ -1807,10 +2041,11 @@ async function deepVaultValidation() {
             encryptionKey = null;
             throw new Error("VAULT_COMPROMISED_AND_CLEANED");
         }
-        console.error("🗄️⚠️ SW: Accesso Vault: (" + err.message + ")");
+        console.error("🗄️⚠️ SW: Accesso Vault -> (Security Violation)");
         throw new Error("VAULT_TEMPORARILY_LOCKED");
     }
-}
+};
+Object.freeze(deepVaultValidation);
 
 
 /**
@@ -1821,7 +2056,7 @@ async function deepVaultValidation() {
 let lastVaultCheck = 0;
 let isCanaryLock = false;
 const CHECK_INTERVAL = 300000;
-async function verifyVaultIntegrity() {
+const verifyVaultIntegrity = async () => {
     const now = Date.now();
     if (encryptionKey !== null && (now - lastVaultCheck < CHECK_INTERVAL)) return true;
     // 🛡️ CONTROLLO ADATTIVO ANTI-CONCORRENZA
@@ -1852,14 +2087,15 @@ async function verifyVaultIntegrity() {
         console.warn("🗄🐺️⚠️ SW: Validazione temporaneamente fallita: ", err.message);
         return false;
     }
-}
+};
+Object.freeze(verifyVaultIntegrity);
 
 /**
  * 🔑 GESTIONE STORAGE CHIAVI: Estrazione e Clonazione Strutturata.
  * Recupera l'oggetto CryptoKey opaco da IndexedDB o provvede alla generazione univoca via Web Crypto API.
  * @returns {Promise<CryptoKey|null>} L'istanza della chiave simmetrica non esportabile (extractable: false).
  */
-async function getStoredKey() {
+const getStoredKey = async () => {
     if (encryptionKey !== null) return encryptionKey;
     return new Promise(async (resolve) => {
         try {
@@ -1907,16 +2143,27 @@ async function getStoredKey() {
                 };
             };
             request.onerror = (err) => {
-                console.info("❌ SW: Errore apertura IndexedDB Vault", err);
+                // 🏴‍☠️ ANTI-PROFILING:
+                if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 40);
+                console.info("❌ SW: Errore apertura IndexedDB Vault");
                 resolve(null);
             };
         } catch (criticalErr) {
-            console.error("❌ SW: Fallimento critico sistema Vault", criticalErr);
+            // 🏴‍☠️ ANTI-PROFILING:
+            const cleanErr = {};
+            Object.defineProperties(cleanErr, {
+			name: { value: "Vault-Critical-Error", enumerable: true },
+			message: { value: "Fallimento Critico Apertura del Vault", enumerable: true },
+			stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+            });
+            Object.freeze(cleanErr);
+            console.error("❌ SW: Fallimento critico sistema Vault", cleanErr);
             encryptionKey = null;
             resolve(null);
         }
     });
-}
+};
+Object.freeze(getStoredKey);
 
 /**
  * 🔐 ARCHITETTURA BUNKER: Cifratura asincrona dei flussi di memoria.
@@ -1924,7 +2171,7 @@ async function getStoredKey() {
  * @param {Blob} blob - Il file binario grezzo da sottoporre a cifratura.
  * @returns {Promise<Blob>} Il pacchetto protetto unificato contenente [12B IV + Ciphertext].
  */
-async function encryptBlob(blob) {
+const encryptBlob = async (blob) => {
     if (!encryptionKey) {
        throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
     }
@@ -1959,7 +2206,8 @@ async function encryptBlob(blob) {
         if (combined instanceof Uint8Array) combined.fill(0);
         throw err;
     }
-}
+};
+Object.freeze(encryptBlob);
 
 /**
  * 🔓 DISPOSITIVO DECRITTAZIONE: Ripristino Flussi protetti estratti da Bunker.
@@ -1967,7 +2215,7 @@ async function encryptBlob(blob) {
  * @param {ArrayBuffer} buffer - Il blocco binario grezzo estratto dalla stiva cache.
  * @returns {Promise<ArrayBuffer>} Il buffer plaintext decifrato pronto per l'erogazione sterile al frontend.
  */
-async function decryptBuffer(buffer) {
+const decryptBuffer = async (buffer) => {
     if (!encryptionKey) {
         throw new Error("CRYPTO_KEY_UNAVAILABLE_IN_RAM");
     }
@@ -1987,11 +2235,12 @@ async function decryptBuffer(buffer) {
 
         return decrypted;
     } catch (err) {
-        console.error("❌🛡️ SW: Fallimento decrittazione. Dati non integri o chiave errata.");
+        console.error("❌🛡️ SW: Fallimento decrittazione.\nDati non integri o chiave errata.");
         if (data) data.fill(0);
         throw new Error("VAULT_LOCKED_DECRYPTION", { cause: err });
     }
-}
+};
+Object.freeze(decryptBuffer);
 
 /**
  * 🧬 INTEGRITÀ FORENSE: Calcolo dell'Impronta Digitale (Checksum).
@@ -2001,7 +2250,7 @@ async function decryptBuffer(buffer) {
  * @param {string} [algo='SHA-256'] - Algoritmo di hashing normato standard per il calcolo ('SHA-256' | 'SHA-384' | 'SHA-512').
  * @returns {Promise<string|null>} Stringa esadecimale rappresentante il checksum dell'asset, o null in caso di fallimento critico.
  */
-async function getHash(blob, algo = 'SHA-256') {
+const getHash = async (blob, algo = 'SHA-256') => {
     let buffer = null;
     let hashBuffer = null;
     try {
@@ -2018,11 +2267,20 @@ async function getHash(blob, algo = 'SHA-256') {
 
         return hashHex;
     } catch (err) {
-        console.error(`🧬❌ SW: Errore calcolo hash (${algo}):`, err);
+        // 🏴‍☠️ ANTI-PROFILING:
+        const cleanHashErr = {};
+        Object.defineProperties(cleanHashErr, {
+            name: { value: "HashCalculationError", enumerable: true },
+            message: { value: "Impossibile processare impronta digitale", enumerable: true },
+            stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+        });
+        Object.freeze(cleanHashErr);
+        console.error("🧬❌ SW: Errore calcolo Hash:", cleanHashErr);
         if (buffer instanceof ArrayBuffer) new Uint8Array(buffer).fill(0);
         return null;
     }
-}
+};
+Object.freeze(getHash);
 
 /**
  * 🧹 MANUTENZIONE ORDINARIA: Purga selettiva e monitoraggio dello spazio di archiviazione (TTL).
@@ -2031,7 +2289,7 @@ async function getHash(blob, algo = 'SHA-256') {
  * @param {boolean} [forceAll=false] - Se impostato su true, forza l'azzeramento perentorio e immediato di tutto il Magazzino senza controlli temporali.
  * @returns {Promise<void>}
  */
-async function cleanUserCache(forceAll = false) {
+const cleanUserCache = async (forceAll = false) => {
     const cache = await caches.open(CONFIG.userCacheName);
     const requests = await cache.keys();
     const now = Date.now();
@@ -2053,7 +2311,8 @@ async function cleanUserCache(forceAll = false) {
     if (forceAll) {
         console.info("🧹 SW: UserCache svuotata, recupera spazio critico.");
     }
-}
+};
+Object.freeze(cleanUserCache);
 
 /**
  * 🖥️🚨 INTERFACCIA DI CORTESIA: Generatore Statico Fallback Digitale (503).
@@ -2062,8 +2321,7 @@ async function cleanUserCache(forceAll = false) {
  * @param {string} failedPath - URI telematico della risorsa che ha generato il blocco.
  * @returns {Promise<Response>} Flusso HTML di cortesia iniettato con header di sicurezza.
  */
-async function generateErrorPage(logoBlob, failedPath) {
-
+const generateErrorPage = async(logoBlob, failedPath) => {
     const svgNewLogo = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmY0NDQ0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjxsaW5lIHgxPSIxMiIgeTE9IjgiIHgyPSIxMiIgeTI9IjEyIi8+PGxpbmUgeDE9IjEyIiB5MT0iMTYiIHgyPSIxMi4wMSIgeTI9IjE2Ii8+PC9zdmc+";
     let imgContent = svgNewLogo;
 
@@ -2075,10 +2333,19 @@ async function generateErrorPage(logoBlob, failedPath) {
                 r.readAsDataURL(logoBlob);
             });
         } catch (e) {
-			console.warn("⚠️ SW: ErrorPage B64 Not Blob...", e);
+			// 🏴‍☠️ ANTI-PROFILING:
+			const cleanAssetErr = {};
+			Object.defineProperties(cleanAssetErr, {
+				name: { value: "AssetLoadingError", enumerable: true },
+				message: { value: "Fallimento decodifica risorsa grafica di fallback", enumerable: true },
+				stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+			});
+			Object.freeze(cleanAssetErr);
+			console.warn("⚠️ SW: ErrorPage B64 Not Blob...", cleanAssetErr);
 		}
     }
     const p = decodeURIComponent(failedPath || '???');
 	const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#000;font-family:sans-serif;color:#fff;overflow:hidden}.box{width:95vw;height:95vh;border:2px solid red;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-sizing:border-box;padding:20px}h2{color:#ff4444;margin:5px 0;font-size:1.2rem}p{color:#bbb;font-style:italic;margin:2px 0;font-size:0.9rem}small{color:#aaa;margin-top:25px;font-size:0.65rem;word-break:break-all;max-width:90%;border-top:1px solid #222;padding-top:10px}img{max-width:140px;max-height:30vh;margin-bottom:20px;object-fit:contain}</style></head><body><div class="box"><img src="${imgContent}"><h2>Risorsa non disponibile &#x1F4E1;&#x274C;</h2><h2>Resource not available &#x1F4E1;&#x274C;</h2><small>&#x1F4C4;&#x274C; ${p}</small></div></body></html>`;
     return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' }});
-}
+};
+Object.freeze(generateErrorPage);
