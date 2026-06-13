@@ -4,56 +4,40 @@
 ---
 
 # 🍕 PIZZA ENGINE - PWA Resiliente ad Alta Sicurezza
-( ⚙️🪖 Motore Panzer v7+ )
-  - Un'architettura software sovrana per Progressive Web App (**PWA**) in modalità *Zero Trust*, progettata per la massima resilienza informatica, l'immunità forense ai guasti hardware e la conformità stringente alle linee guida tecniche **AgID** e al **Codice dell'Amministrazione Digitale (CAD)** per la Pubblica Amministrazione.
+( ⚙️🪖 **Motore Panzer v7+** )
+  - **Proof of Concept** (*PoC*) di un'architettura software sovrana per Progressive Web App (**PWA**) nel settore della ristorazione, progettata in modalità *🔐 Zero-Trust*. Il sistema garantisce **massima resilienza informatica**, immunità forense ai guasti hardware e piena conformità alle linee guida tecniche **AgID** e al **Codice dell'Amministrazione Digitale** (*CAD*).
 
 ## 🚀 Obiettivi del Progetto
-- Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili della PA rimangano protetti e operativi anche in condizioni di rete degradata (Lie-Fi), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
+- Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata (Lie-Fi), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
-## 🛠️ Caratteristiche Core: ( ⚙️🪖 v7.5 )
-- Il cuore del sistema è un **Service Worker (`sw.js`)** ad altissima specializzazione con scope globale sulla root, operante come entità autonoma e autosufficiente tramite i seguenti moduli nativi:
+## 🛠️ Caratteristiche Core: ( ⚙️🪖 v7.6 )
+- Il cuore del sistema è un **Service Worker (`sw.js`)** ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi:
 
-- **🔐🌡️🛡️ Jittered Thermal Shield Race (Watchdog di Sicurezza):** Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona in tempo reale 🏁 (`Promise.race`) tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo con Jittering 🎲** (`waitTillIdle`). Il sistema calcola dinamicamente un'entropia temporale casuale (es. tra `250ms` e `600ms`) per scavalcare e mitigare i *Timing Attacks* statistici, isolando con certezza matematica i **falsi positivi di 1️⃣/0️⃣** (disco saturo o rallentamento hardware) dai reali tentativi dolosi di rimozione della chiave crittografica (`master_key`) eseguiti **tramite DevTools o Malware.**
+- **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening:** Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** (`waitTillIdle`).
+  - **🪖 NOVITÀ v7.6:** Integrazione di protocolli **🏴‍☠️ Anti-Profiling**: ogni punto di errore è stato convertito in un "*Black Hole*" informativo; la **sterilizzazione degli stack trace e l'iniezione di rumore temporale** previene attacchi di tipo *side-channel* e la profilazione del **🏴‍☠️🔴 Red Team.**
 
-- **🔄🌐🛡️🔗 Dynamic Adaptive Network Resiliency:** Algoritmo proprietario che calcola lo stato di salute della CPU e adatta dinamicamente i timeout di rete (fino a 120s) e i tentativi di recupero (max 5 retries) basandosi su 5 profili telemetrici hardware di velocità della connessione (da *Ultrafast* a *Verylow*).
+- **🔄🌐🛡️🔗 Dynamic Adaptive Network Resiliency:** Algoritmo proprietario che adatta dinamicamente i timeout di rete basandosi su 5 profili telemetrici hardware di velocità della connessione.
 
-- **🌐➡️💾 Network-First Predittivo con Cache Fallback:** Intercettazione condizionale degli eventi di fetch. Il sistema garantisce la freschezza dei dati di business interpellando la rete attiva; in caso di latenza degradata o Lie-Fi, interrompe atomicamente la richiesta lato server tramite `AbortController` e rilascia all'istante la risorsa locale cifrata, avviando un aggiornamento silente in background (*Hot Update*) non appena i canali telematici tornano stabili.
+- **🌐➡️💾 Network-First Predittivo con Cache Fallback:** Intercettazione condizionale degli eventi di fetch con abort atomico delle richieste in caso di latenza degradata e rilascio immediato della risorsa cifrata locale.
   
-- **🔬🧬 SW Forensics (DNA Check & Binary Validation):** Controllo biometrico sequenziale del payload in transito su tre scomparti stagni per prevenire attacchi di *Cache Poisoning*:
-  - *FASE 1 (Testa):* Validazione strict dei *Magic Numbers* (firme esadecimali immutabili come `52494646` per WebP o `FFD8FF` per JPEG) contro il MIME-sniffing.
-  - *FASE 2 (Coda):* Verifica geometrica dei marcatori strutturali (*Footer*) contro attacchi di tipo append.
-  - *FASE 3 (Corpo):* Analisi euristica stringente anti-script per intercettare ed eradicare vettori malevoli annidati nei file PDF.
-  - *Abbinamento:* Mappatura delle dimensioni minime strutturali (`minSizeMap`) per il blocco immediato di file corrotti.
+- **🔬🧬 SW Forensics (DNA Check & Binary Validation):** Controllo biometrico sequenziale (Testa, Coda, Corpo) per prevenire attacchi di *Cache Poisoning* ed eradicare vettori malevoli (Anti-PDF Scripting).
 
-- **🛡️📴 Offline Bunker Mode & Emergency Wipe:** In assenza totale di rete o in caso di violazione dell'integrità crittografica, il Panzer si isola autonomamente. Se il Watchdog rileva una manomissione a canale stabile, attiva all'istante una contromisura distruttiva di emergenza (*Tabula Rasa*): pialla completamente il `Cache Storage` tramite `Destroy_ALL_Caches` ed esegue il drop nucleare del database locale (`indexedDB.deleteDatabase`), stroncando la sessione in un errore blindato di **HTTP 403 Forbidden**.
+- **🛡️📴 Offline Bunker Mode & Emergency Wipe:** In caso di violazione rilevata, il Panzer attiva contromisure distruttive (*Tabula Rasa*): pialla il `Cache Storage` e il database locale (`indexedDB.deleteDatabase`), isolando il sistema per proteggere il dato sensibile.
 
-- **🔀📡 Architettura di Instradamento a 5 Sezioni (Fetch Strict Layer):** Il ciclo di vita di ogni singola richiesta telematica all'interno dell'evento `fetch` è compartimentato in cinque perimetri operativi rigidi per superare i capitolati di ispezione AgID:
-  - *Sezione I (Normalizzazione & Filtraggio):* Depurazione degli URI telematici, rimozione dei parametri di query e sbarramento preventivo dei metodi HTTP non ammessi.
-  - *Sezione II (Online Gateway):* Instradamento dinamico su rete attiva basato sul profilo hardware rilevato a runtime.
-  - *Sezione III (Cache Hit Layer):* Intercettazione locale e re-routing verso il modulo di decrittazione asincrona nativa AES-GCM a 256-bit per gli asset protetti nel Bunker Core.
-  - *Sezione IV (Filtro Multimediale & Graphic Resilience):* Gestione flessibile delle immagini tramite re-routing automatico sulle estensioni varianti e iniezione del vettore statico sterile in formato Base64 (`CONFIG.fallbackImage`) in caso di blackout del server.
-  - *Sezione V (Critical Fallback Block):* Dispositivo di isolamento post-avaria per l'erogazione automatica dell'interfaccia di cortesia a tolleranza di guasto (Errore 503).
+- **🔀📡 Architettura di Instradamento a 5 Sezioni (Fetch Strict Layer):** Ciclo di vita della richiesta compartimentato in perimetri rigidi per superare i capitolati di ispezione AgID (Normalizzazione, Online Gateway, Cache Hit, Filtro Multimediale, Critical Fallback).
 
-- **✉️↔️📬 Canale IPC PostMessage:** Ascoltatore formale per l'evento `message` deputato alla ricezione sicura dei comandi dal frontend, all'attivazione dei cicli di Smart Sync e al transito in RAM della chiave di cifratura non esportabile, isolata tramite l'algoritmo di clonazione strutturata della `Structured Clone API`.
+- **✉️↔️📬 Canale IPC PostMessage:** Ricezione sicura dei comandi dal frontend con isolamento della chiave in RAM tramite `Structured Clone API`.
 
-- **🎖️ Conformità Costituzionale e Normativa PA:** Sviluppato interamente in pura architettura **Vanilla JS** (Zero Framework, Zero Dipendenze esterne, 100% Codice Nativo sul ferro) per garantire la massima efficienza, l'assenza totale di debiti tecnici e la piena rispondenza ai requisiti di digitalizzazione, accessibilità, censimento su Developers Italia e riuso software tra Pubbliche Amministrazioni previsto dall'**Art. 69 del CAD**.
+- **🎖️ Conformità Costituzionale e Normativa PA:** Sviluppato interamente in **🍦 Vanilla JS** (Zero-Dipendenze), garantendo assenza di debiti tecnici e rispondenza all'**Art. 69 del CAD**.
 
 ## 👤 Autore
 **Valentino Aglianò**
 - Perito Industriale **Informatico** *(2013)*
 - Istruttore Informatico: qualificatosi *Idoneo nel Concorso Nazionale ASMEL 2025* per **Profili IT della Pubblica Amministrazione.**
-
-- Specialista nello sviluppo di soluzioni software ad alta resilienza ed ingegneria difensiva per **Enti Locali, Comuni e ASP**, con focus verticale su architetture PWA in Bunker Mode, gestione database nativi e ottimizzazione prestazionale client-side del codice telematico.
-
-- 🛡️ Esperienza Operativa e Cyber Security:
-- **🟣 Purple Team:** Specialista in sicurezza applicativa con competenze bilaterali.
-- Unisce la mentalità offensiva del **🔴 Red Team** (analisi forense, individuazione di vettori di attacco e logiche difensive del **🔵 Blue Team** (blindatura dei sistemi, cifratura locale e mitigazione dei rischi telematici).
-- **(2018/2019) Esperienza sul Campo (PA/Sanità):** Ha collaborato a livello tecnico-operativo e *ufficioso* per strutture sanitarie locali (**ASP8**), maturando un forte orientamento alla **protezione del dato sensibile in ambienti critici.** *uso di ( SQLite.dll crypted )*
-
-- **Focus Tecnologico:** Sviluppo di architetture PWA difensive basate sul ferro (Vanilla JS), **crittografia client-side**, gestione **database (DB)** nativi e aderenza rigida ai capitolati di riuso e accessibilità **AgID.**
+- Specialista in ingegneria difensiva, architetture PWA in Bunker Mode e cyber security applicata<br>( 🟣 Purple Team: bilanciamento tra mentalità offensiva Red team 🔴, e blindatura il Blue Team 🔵 ).
 
 ## ⚖️ Licenza
-- Questo progetto è rilasciato sotto licenza internazionale **EUPL 1.2 (European Union Public Licence)**, garantendo la piena *legalità del riuso*, la *trasparenza del codice sorgente* e la conformità ai **framework normativi dell'Unione Europea**. Consulta il file [`LICENSE`](LICENSE.md) per maggiori dettagli.
+- Progetto rilasciato sotto licenza **EUPL 1.2**. La legalità del riuso, la trasparenza del codice e la conformità ai framework normativi dell'Unione Europea sono garantiti. Consulta il file [`LICENSE`](LICENSE.md).
 
 ## 📚 Documentazione Ufficiale
-- Per **l'analisi dei vettori crittografici**, le metriche forensi di stabilità del disco, i diagrammi di flusso dei moduli e gli scenari applicativi d'uso sul campo per **Comuni e Aziende Sanitarie**, consulta la nostra [🌐 Wiki Ufficiale](../../wiki).
+- Per l'analisi dei vettori crittografici, le metriche forensi di stabilità e gli scenari applicativi per Enti e Pubblica Amministrazione, consulta la nostra [🌐 Wiki Ufficiale](../../wiki).
