@@ -50,7 +50,7 @@
  * Sovrascrittura fisica e azzeramento dei buffer binari di transito (headBuffer, tailBuffer, fullBuffer), tramite metodo nativo 'Uint8Array.prototype.fill(0)' immediatamente post-elaborazione.
  *
  */
- 
+
 let encryptionKey = null;
 
  let isLogicEnabled = false;
@@ -61,7 +61,7 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
  * 📊 CONFIGURAZIONE GLOBALE (Dizionario dei Vincoli Operativi)
  * Definisce i parametri strutturali per la resilienza di rete, crittografia e tolleranza ai guasti.
  */
- 
+
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
@@ -138,7 +138,7 @@ const CONFIG = {
             'css': 100,
             'js': 100,
             'json': 10,
-            // Lasciati vuoti per garantire 0  falsi positivi nella PA
+            // Lasciati vuoti per garantire 0 falsi positivi nella PA
             'magicNumbers': {
                 'header': [],
                 'footer': []
@@ -203,13 +203,13 @@ const CONFIG = {
     }
 };
 
-/* 
+/*
  * 🚧 SBARRAMENTO LOGICO IN CASCATA 🚧
  * ❄️ DEEP FREEZE:
  * Ciclo ricorsivo di congelamento profondo.
  * Blocca CONFIG e qualsiasi sotto-oggetto presente o futuro.
  *
- * anti-Prototype Pollution 
+ * anti-Prototype Pollution
  * Hijacking a runtime
  */
 const deepFreeze = (obj) => {
@@ -231,20 +231,20 @@ deepFreeze(CONFIG);
  * Livella il tempo di computazione percepito dall'esterno su una baseline fissa,
  * 🎲 aggiungendo un jitter stocastico per distruggere i profili statistici del 🔴 Red Team.
  * * PARAMETRI OPERATIVI DI INGRESSO:
- * @param {number} startTime - Marcatore temporale ad alta precisione (generato tramite performance.now()) 
+ * @param {number} startTime - Marcatore temporale ad alta precisione (generato tramite performance.now())
  * acquisito all'inizio della sessione di scansione o transito di rete.
- * @param {number} targetBaselineMs - Finestra temporale minima nominale (espressa in millisecondi) 
+ * @param {number} targetBaselineMs - Finestra temporale minima nominale (espressa in millisecondi)
  * garantita per l'uniformazione della latenza verso l'esterno.
  */
 const injectTimingNoise = async (startTime, targetBaselineMs = 45) => {
     try {
         const elapsed = performance.now() - startTime;
-        
+
         if (elapsed < targetBaselineMs) {
             const padding = targetBaselineMs - elapsed;
             const jitter = Math.random() * (25 - 5) + 5;
             const totalShieldTime = Math.ceil(padding + jitter);
-            
+
             await sleep(totalShieldTime);
         } else {
             const microJitter = Math.random() * (5 - 1) + 1;
@@ -307,7 +307,7 @@ Object.freeze(waitTillIdle);
 const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = false, signals = null) => {
     // ⏱️ Marcatore iniziale:
     const startForensicTime = performance.now();
-    
+
     let signal = signals || null;
     let blob;
     let encoding = null;
@@ -320,7 +320,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         finalContentType = contentType || input.headers.get('Content-Type') || '';
         try {
             blob = await input.blob();
-        } catch (e) { 
+        } catch (e) {
             // 🪝🛡️⏱️ INNESTO:
             await injectTimingNoise(startForensicTime, 50);
             return result;
@@ -341,6 +341,9 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     const isTransformed = encoding !== null && encoding !== 'identity';
     let minSize = CONFIG.minSizeMap.universal.minAbsoluteByte;
     if (section) {
+		// 🔐 HARDENING OPERATIVO: Protezione dell'oggetto di configurazione interna.
+		Object.freeze(section);
+
         const tolerance = section.tolerance || CONFIG.minSizeMap.universal.tolerance;
         const baseMin = section[subType] || section.defaultMin || section.default || 0;
         minSize = (expectedSize > 0) ? (expectedSize * (1 - tolerance)) : baseMin;
@@ -375,11 +378,11 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     return result;
                 }
             }
-        } catch (e) { 
+        } catch (e) {
             if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
             // 🪝🛡️⏱️ INNESTO:
             await injectTimingNoise(startForensicTime, 50);
-            return result; 
+            return result;
         }
     }
 
@@ -395,7 +398,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             const tailHex = Array.from(new Uint8Array(tailBuffer))
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('').toUpperCase();
-            
+
             const hasValidFooter = section.magicNumbers.footer.some(foot => tailHex.includes(foot.toUpperCase()));
             if (!hasValidFooter) {
                 console.log(`🛡️ SW Security: Firma [ CODA ] fallita o corrotta per ${finalContentType}.\n👣 TAIL DNA 🧬: ${tailHex}`);
@@ -413,18 +416,19 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     }
 
     // --- 🛡️ FASE 3: ANALISI EURISTICA ANTI-SCRIPT (SPECIFICA PER PDF) ---
-    if (!isEncrypted && !isTransformed && mainType === 'pdf' && section?.pdfMaliciousPatterns) {
+	const isPdf = mainType.toLowerCase().includes('pdf');
+	if (!isEncrypted && !isTransformed && isPdf && section?.pdfMaliciousPatterns) {
         try {
             if (signal?.aborted) {
                 if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
                 if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
                 return result;
             }
-            
+
             // 🔐 HARDENING OPERATIVO:
             const localPatterns = [...(section.pdfMaliciousPatterns || [])];
             Object.freeze(localPatterns);
-            
+
             // ⏳💤 Attivazione dell'ottimizzatore adattivo del respiro prima del carico computazionale pesante
             if (typeof waitTillIdle === 'function') {
                 await waitTillIdle(200, 8000);
@@ -463,13 +467,13 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             return result;
         }
         await blob.slice(-5).arrayBuffer();
-    } catch (e) { 
+    } catch (e) {
         // 🪝🛡️⏱️ INNESTO:
         await injectTimingNoise(startForensicTime, 50);
         if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
         if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
         if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
-        return result; 
+        return result;
     }
 
     // 🧼 BONIFICA DELLA RAM
@@ -752,7 +756,7 @@ const smartDownload = async (url, cache, isCore = false, version = '', probeSize
 										stack: { value: undefined, configurable: false, writable: false, enumerable: false }
 									});
 									Object.freeze(cleanRetryErr);
-									
+
 									console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", cleanRetryErr);
 									throw cleanRetryErr;
 								}
@@ -939,8 +943,8 @@ self.addEventListener('message', (event) => {
         isLogicEnabled = true;
 
         const performSync = async (event) => {
-                // ⏱️ Marcatore di rete.
-                const startNetworkTime = performance.now();
+			// ⏱️ Marcatore di rete.
+			const startNetworkTime = performance.now();
             let hasActuallyChanged = false;
             let realServerVersion = currentVersion;
             const clients = await self.clients.matchAll();
@@ -958,59 +962,59 @@ self.addEventListener('message', (event) => {
 			const isCriticalLow = (netProfile.limit === CONFIG.networkResilient.profiles['Verylow'].limit);
 				broadcast({ type: 'SYNC_START' });
 		try {
-			if ((!await checkRealOnline('sync')) || isCriticalLow) {
-				console.log("📡❌ SW: Rete assente al decollo. Abort !");
-				if (syncAbortController) syncAbortController.abort();
-				isSyncing = false;
-				broadcast({ type: 'SYNC_RETRY' });
-				return;
-			}
-			const cache = await caches.open(CONFIG.cacheName);
-
-			const cacheKeys = await cache.keys();
-			const isCacheEmpty = cacheKeys.length === 0;
-
-			let IsCFUD = false;
-			const mainEntry = CONFIG.coreAssets.find(a => a.toLowerCase().includes('.html'));
-			if (mainEntry && !isNewInstallation && !isCacheEmpty) {
-				try {
-
-					const radarRes = await fetch(mainEntry + '?t=' + Date.now(), {
-							cache: 'no-store',
-							signal: syncAbortController?.signal
-						});
-					if (radarRes.ok && radarRes.status === 200) {
-						const radarText = await radarRes.text();
-						const match = radarText.match(/ver_site\s*:\s*['"]([^'"]+)['"]/i);
-						const serverV = match ? match[1] : null;
-						if (serverV && serverV !== currentVersion) {
-							const vServer = serverV.split('.');
-							const vLocal = currentVersion.split('.');
-
-							if (vServer[0] !== vLocal[0] || vServer[1] !== vLocal[1]) {
-								console.info(`💥 SW Radar: Rilevato Major Update (${currentVersion} -> ${serverV}). Tabula Rasa Core File !`);
-								CoreAssets_Destroy_Caches(serverV);
-								return;
-							}
-
-							console.info(`⚙️🎯 SW Radar: Patch rilevata (${serverV})`);
-							realServerVersion = serverV;
-							IsCFUD = true;
-							hasActuallyChanged = true;
-						}
-					}
-				} catch (e) {
-					// 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dell'errore di parsing del Manifest
-					const cleanManifestErr = {};
-					Object.defineProperties(cleanManifestErr, {
-						name: { value: "ManifestProcessorError", enumerable: true },
-						message: { value: "Procedura di sincronizzazione degradata a standard", enumerable: true },
-						stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-					});
-					Object.freeze(cleanManifestErr);
-					console.warn("⚠️ SW: Fallimento..., procedo con Sync standard.", cleanManifestErr);
+				if ((!await checkRealOnline('sync')) || isCriticalLow) {
+					console.log("📡❌ SW: Rete assente al decollo. Abort !");
+					if (syncAbortController) syncAbortController.abort();
+					isSyncing = false;
+					broadcast({ type: 'SYNC_RETRY' });
+					return;
 				}
-			}
+				const cache = await caches.open(CONFIG.cacheName);
+
+				const cacheKeys = await cache.keys();
+				const isCacheEmpty = cacheKeys.length === 0;
+
+				let IsCFUD = false;
+				const mainEntry = CONFIG.coreAssets.find(a => a.toLowerCase().includes('.html'));
+				if (mainEntry && !isNewInstallation && !isCacheEmpty) {
+					try {
+
+						const radarRes = await fetch(mainEntry + '?t=' + Date.now(), {
+								cache: 'no-store',
+								signal: syncAbortController?.signal
+							});
+						if (radarRes.ok && radarRes.status === 200) {
+							const radarText = await radarRes.text();
+							const match = radarText.match(/ver_site\s*:\s*['"]([^'"]+)['"]/i);
+							const serverV = match ? match[1] : null;
+							if (serverV && serverV !== currentVersion) {
+								const vServer = serverV.split('.');
+								const vLocal = currentVersion.split('.');
+
+								if (vServer[0] !== vLocal[0] || vServer[1] !== vLocal[1]) {
+									console.info(`💥 SW Radar: Rilevato Major Update (${currentVersion} -> ${serverV}). Tabula Rasa Core File !`);
+									CoreAssets_Destroy_Caches(serverV);
+									return;
+								}
+
+								console.info(`⚙️🎯 SW Radar: Patch rilevata (${serverV})`);
+								realServerVersion = serverV;
+								IsCFUD = true;
+								hasActuallyChanged = true;
+							}
+						}
+					} catch (e) {
+						// 🏴‍☠️ ANTI-PROFILING:
+						const cleanManifestErr = {};
+						Object.defineProperties(cleanManifestErr, {
+							name: { value: "CoreFileError", enumerable: true },
+							message: { value: "Procedura di sincronizzazione degradata a standard", enumerable: true },
+							stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+						});
+						Object.freeze(cleanManifestErr);
+						console.warn("⚠️ SW: Fallimento..., procedo con Sync standard.", cleanManifestErr);
+					}
+				}
 
 				console.info(`⚙️📥 SW: Avvio download file core...`);
 				broadcast({ type: 'SYNC_PROGRESS' });
@@ -1186,13 +1190,17 @@ self.addEventListener('message', (event) => {
                                             }
                                         }
                                     }
-                                } catch (e) {}
+                                } catch (e) {
+									// 🪝🛡️⏱️ INNESTO:
+									await injectTimingNoise(startNetworkTime, 45);
+								}
                             }));
                         }
                     }
                 };
                 // 🔐 HARDENING LIVELLO INTERNO:
                 Object.freeze(universalScanner);
+
                 console.info("️🧠🧬 SW: Avvio Universal Scanner...");
                 await universalScanner(db);
                 console.info(`🎯🏁 SW: Analisi terminata. Asset extra trovati: ${scanSet.size}`);
@@ -1316,7 +1324,7 @@ self.addEventListener('message', (event) => {
 		    // Estrazione preventiva dei metadati dell'errore prima della sterilizzazione
 		    const errorMessage = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
 		    const isIntegritaError = errorMessage.includes('Integrità');
-		    
+
 		    // 🏴‍☠️ ANTI-PROFILING: Generazione di un clone d'errore asettico e privo di Stack Trace
 		    const cleanError = {};
 		    Object.defineProperties(cleanError, {
@@ -1325,7 +1333,7 @@ self.addEventListener('message', (event) => {
 		        stack: { value: undefined, configurable: false, writable: false, enumerable: false }
 		    });
 		    Object.freeze(cleanError);
-		    
+
 		    // Ispezione forense e logging differenziato in base alla severità
 		    if (isIntegritaError) {
 		        console.error("🚨 SW: Errore di Integrità critico rilevato su un asset.", cleanError);
@@ -1533,7 +1541,7 @@ self.addEventListener('fetch', (event) => {
 										    // 🏴‍☠️ ACCECAMENTO SUL RETRY: Distruzione dello Stack Trace sul fallimento definitivo
 											const cleanRetryErr = {};
 										Object.defineProperties(cleanRetryErr, {
-										    name: { value: "FatalCacheStorageError", enumerable: true }, 
+										    name: { value: "FatalCacheStorageError", enumerable: true },
 										  message: { value: "Saturazione persistente o violazione del perimetro di archiviazione", enumerable: true },
 										    stack: { value: undefined, configurable: false, writable: false, enumerable: false }
 											});
@@ -1557,7 +1565,7 @@ self.addEventListener('fetch', (event) => {
 						} catch (err) {
 						    // 🪝🛡️⏱️ INNESTO TEMPORALE ANTI-PROFILING NELLA PIPELINE DI BACKGROUND
 							if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 30);
-							
+
 							// 🏴‍☠️ ACCECAMENTO: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
 							const cleanErr = {};
 							Object.defineProperties(cleanErr, {
@@ -1583,7 +1591,7 @@ self.addEventListener('fetch', (event) => {
                         return networkResponse;
                     }
                 }
-            } catch (e) { 
+            } catch (e) {
                 // 🪝🛡️⏱️ INNESTO TEMPORALE IN CASO DI CRASH DURANTE IL FETCH DI RETE
 				if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 25);
             }
@@ -1654,7 +1662,7 @@ self.addEventListener('fetch', (event) => {
                             return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
                         }
                     }
-                    throw cleanDecryptErr; // Rilancia l'errore completamente sterilizzato e ibernato
+                    throw cleanDecryptErr; // Rilancia l'errore sterilizzato
                 }
             } else {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
@@ -1948,7 +1956,7 @@ const deepVaultValidation = async () => {
         let isIOStable = false;
          // 🎲 JITTERING: Calcola un tempo casuale tra 250ms e 600ms
         const randomTimeoutMs = Math.random() * (600 - 250) + 250;
-        
+
         // ⏳💤  Il Timeout si adatta dinamicamente allo stress attuale dell'Event Loop
         const thermalShieldRace = (async () => {
             await waitTillIdle(200, Math.ceil(randomTimeoutMs));
@@ -2022,7 +2030,12 @@ const deepVaultValidation = async () => {
 
     } catch (err) {
         if (db) {
-            try { db.close(); } catch(e){}
+            try {
+				db.close();
+			} catch(e){
+				// 🏴‍☠️ ANTI-PROFILING:
+				if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 35);
+			}
         }
         if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
             // 💣 EMERGENCY WIPE
@@ -2136,13 +2149,15 @@ const getStoredKey = async () => {
                     transaction.oncomplete = () => db.close();
                     resolve(key);
                 };
-                getReq.onerror = () => {
+                getReq.onerror = async () => {
+					// 🏴‍☠️ ANTI-PROFILING:
+					if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 40);
                     console.info("❌ SW: Errore lettura store chiavi");
                     db.close();
                     resolve(null);
                 };
             };
-            request.onerror = (err) => {
+            request.onerror = async (err) => {
                 // 🏴‍☠️ ANTI-PROFILING:
                 if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 40);
                 console.info("❌ SW: Errore apertura IndexedDB Vault");
@@ -2150,6 +2165,7 @@ const getStoredKey = async () => {
             };
         } catch (criticalErr) {
             // 🏴‍☠️ ANTI-PROFILING:
+			if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 40);
             const cleanErr = {};
             Object.defineProperties(cleanErr, {
 			name: { value: "Vault-Critical-Error", enumerable: true },
@@ -2268,6 +2284,7 @@ const getHash = async (blob, algo = 'SHA-256') => {
         return hashHex;
     } catch (err) {
         // 🏴‍☠️ ANTI-PROFILING:
+		if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 35);
         const cleanHashErr = {};
         Object.defineProperties(cleanHashErr, {
             name: { value: "HashCalculationError", enumerable: true },
