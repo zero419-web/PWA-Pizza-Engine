@@ -10,7 +10,7 @@
 ## 🚀 Obiettivi del Progetto
 - Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata (Lie-Fi), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
-## 🛠️ Caratteristiche Core: ( ⚙️🪖 v7.6 )
+## 🛠️ Caratteristiche Core:<br>( ⚙️🪖 v7.6 )
 - Il cuore del sistema è un **Service Worker (`sw.js`)** ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi:
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening:** Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** (`waitTillIdle`).
