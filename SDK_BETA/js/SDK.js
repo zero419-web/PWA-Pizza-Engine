@@ -12,7 +12,7 @@ export class PanzerSDK {
         this.scope = options.scope || '/';
         this.coreAssets = [
             '/index.html',
-            '/assets-manifest.json',
+            '/Res-PA-manifest.json',
             '/PWA.webmanifest',
             '/sw.js',
             '/js/SDK.js',
