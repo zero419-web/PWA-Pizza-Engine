@@ -2,8 +2,8 @@
 publiccodeYmlVersion: "0.5"
 name: "PWA-Pizza-Engine"
 applicationSuite: ""
-softwareVersion: "3.2.3.7"
-releaseDate: "2026-07-17"
+softwareVersion: "3.2.3.8"
+releaseDate: "2026-07-30"
 platforms:
   - web
 categories:
