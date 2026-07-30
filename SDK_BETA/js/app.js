@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        '/SDK_BETA/',
+        '/SDK_BETA',
         '/SDK_BETA/index.html',
         '/SDK_BETA/js/app.js',
         '/SDK_BETA/js/SDK.js',
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 📦 Caricamento Manifesto
     try {
-        logToTerminal('info', '📦 Recupero file /SDK_BETA/Res-PA-manifest.json...');
+        logToTerminal('info', '📦 Recupero file [ ./Res-PA-manifest.json ] ...');
         const res = await fetch('./Res-PA-manifest.json');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderStorageTable();
 
     } catch (err) {
-        logToTerminal('error', `❌ Errore caricamento assets-manifest.json: ${err.message}`);
+        logToTerminal('error', `❌ Errore caricamento Res-PA-manifest.json: ${err.message}`);
         setStatusBadge('🚨 Errore Manifesto', 'badge-error');
     }
 
