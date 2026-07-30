@@ -8,16 +8,16 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
-        this.swPath = options.swPath || '/sw.js';
-        this.scope =  '/SDK_BETA/' || options.scope;
-        this.coreAssets = [
+        this.swPath = options.swPath || '/SW.js';
+        this.scope = options.scope || '/SDK_BETA/';
+        this.coreAssets = options.coreAssets || [
             '/index.html',
             '/Res-PA-manifest.json',
             '/PWA.webmanifest',
             '/sw.js',
             '/js/SDK.js',
             '/js/app.js'
-        ] || options.coreAssets;
+        ];
 
         // ⚙️ Hook di callback UI e Telemetria
         this.onProgress = options.onProgress || (() => {});
