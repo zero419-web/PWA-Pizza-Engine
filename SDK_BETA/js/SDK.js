@@ -9,14 +9,14 @@
 export class PanzerSDK {
     constructor(options = {}) {
         this.swPath = options.swPath || '/SW.js';
-        this.scope = options.scope || '/SDK_BETA/';
+        this.scope = options.scope || '/SDK_BETA';
         this.coreAssets = options.coreAssets || [
-            '/index.html',
-            '/Res-PA-manifest.json',
-            '/PWA.webmanifest',
-            '/sw.js',
-            '/js/SDK.js',
-            '/js/app.js'
+            './index.html',
+            './Res-PA-manifest.json',
+            './PWA.webmanifest',
+            './sw.js',
+            './js/SDK.js',
+            './js/app.js'
         ];
 
         // ⚙️ Hook di callback UI e Telemetria
