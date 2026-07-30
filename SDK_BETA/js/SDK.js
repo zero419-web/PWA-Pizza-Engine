@@ -8,8 +8,8 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
-        this.swPath = options.swPath || '/PWA-Pizza-Engine/SDK_BETA/ServiceWorker.js';
-        this.scope = options.scope || '/PWA-Pizza-Engine/SDK_BETA/';
+        this.swPath = options.swPath || './ServiceWorker.js';
+        this.scope = options.scope || './';
         this.coreAssets = options.coreAssets || [
             './index.html',
             './Res-PA-manifest.json',
