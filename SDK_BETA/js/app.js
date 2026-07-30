@@ -219,8 +219,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
-        swPath: './ServiceWorker.js',
-        scope: './SDK_BETA/',
+        swPath: './PWA-Pizza-Engine/SDK_BETA/ServiceWorker.js',
+        scope: './PWA-Pizza-Engine/SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
         
         onLogMessage: (level, msg) => logToTerminal(level, msg),
