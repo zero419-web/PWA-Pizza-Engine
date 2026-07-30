@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
         swPath: './SW.js',
-        scope: '/SDK_BETA',
+        scope: '../',
         coreAssets: getDefinedCoreAssets(),
         
         onLogMessage: (level, msg) => logToTerminal(level, msg),
