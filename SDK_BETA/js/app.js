@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
-        swPath: '/sw.js',
+        swPath: '/SDK_BETA/SW.js',
         coreAssets: getDefinedCoreAssets(),
         
         onLogMessage: (level, msg) => logToTerminal(level, msg),
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 📦 Caricamento Manifesto
     try {
         logToTerminal('info', '📦 Recupero file assets-manifest.json...');
-        const res = await fetch('/assets-manifest.json');
+        const res = await fetch('/SDK_BETA/Res-PA-manifest.json');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
         manifestCache = await res.json();
