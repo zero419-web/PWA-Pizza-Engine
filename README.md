@@ -1,6 +1,6 @@
 ![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.0-1f4e79)
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_X_PA-af0000)
-![LOGO](https://img.shields.io/badge/File:_sw.js-Framework_CORE_PANZE_v7.6+_Include_!-9f9f00)
+![LOGO](https://img.shields.io/badge/File:_📜_sw.js-⚙️🪖_Framework_CORE_PANZE_v7.6+-4f4f00)
 > [!NOTE]
 >​ 🧪 **Integrazione nel progetto di un esempio :**
 > 
