@@ -8,7 +8,7 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
-        this.swPath = options.swPath || '/SW.js';
+        this.swPath = options.swPath || './js/ServiceWorker.js';
         this.scope = options.scope || '../';
         this.coreAssets = options.coreAssets || [
             './index.html',
