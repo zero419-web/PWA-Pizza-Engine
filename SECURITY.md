@@ -3,7 +3,7 @@
 ## 🐞 Segnalazione <br> Bug Standard
 Per bug comuni, errori di compilazione o refusi, puoi aprire tranquillamente una **Issue pubblica** sul repository.
 
-## 🐞🚨 Errori Gravi <br> e <br> Vulnerabilità
+## 🐞🚨 Errori Gravi e <br> Vulnerabilità
 Se trovi una **vulnerabilità grave**, una **falla di sicurezza o un bug critico** che potrebbe compromettere l'applicazione:
 
 1. **Apri una Issue pubblica.**
