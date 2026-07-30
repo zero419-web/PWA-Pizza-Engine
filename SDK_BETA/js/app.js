@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         '/js/SDK.js',
         '/sw.js',
         '/PWA.webmanifest',
-        '/assets-manifest.json'
+        '/Res-PA-manifest.json'
     ];
 
     const logToTerminal = (level, text) => {
