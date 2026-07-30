@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         '/SDK_BETA/index.html',
         '/SDK_BETA/js/app.js',
         '/SDK_BETA/js/SDK.js',
-        '/SDK_BETA/sw.js',
+        '/SDK_BETA/SW.js',
         '/SDK_BETA/PWA.webmanifest',
         '/SDK_BETA/Res-PA-manifest.json'
     ];
@@ -370,8 +370,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 📦 Caricamento Manifesto
     try {
-        logToTerminal('info', '📦 Recupero file assets-manifest.json...');
-        const res = await fetch('/SDK_BETA/Res-PA-manifest.json');
+        logToTerminal('info', '📦 Recupero file /SDK_BETA/Res-PA-manifest.json...');
+        const res = await fetch('SDK_BETA/Res-PA-manifest.json');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
         manifestCache = await res.json();
