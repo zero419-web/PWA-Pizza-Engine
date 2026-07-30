@@ -55,7 +55,9 @@ let encryptionKey = null;
 
  let isLogicEnabled = false;
  let syncAbortController = null;
-const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, '/');
+const BASE_PATH = self.location.pathname.replace(/(.*\/SDK_BETA\/).*/i, "$1").replace(/\/+/g, '/');
+
+
 
 /**
  * 📊 CONFIGURAZIONE GLOBALE (Dizionario dei Vincoli Operativi)
