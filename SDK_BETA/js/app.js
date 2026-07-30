@@ -38,13 +38,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        './',
-        './index.html',
-        './js/app.js',
-        './js/SDK.js',
-        './ServiceWorker.js',
-        './PWA.webmanifest',
-        './Res-PA-manifest.json'
+        '/PWA-Pizza-Engine/SDK_BETA/',
+        '/PWA-Pizza-Engine/SDK_BETA/index.html',
+        '/PWA-Pizza-Engine/SDK_BETA/js/app.js',
+        '/PWA-Pizza-Engine/SDK_BETA/js/SDK.js',
+        '/PWA-Pizza-Engine/SDK_BETA/ServiceWorker.js',
+        '/PWA-Pizza-Engine/SDK_BETA/PWA.webmanifest',
+        '/PWA-Pizza-Engine/SDK_BETA/Res-PA-manifest.json'
     ];
 
     const logToTerminal = (level, text) => {
