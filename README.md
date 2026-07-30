@@ -8,6 +8,9 @@
 All'interno è incluso il <br> 📄 `file sw.js` **=** Framework Core Panzer v7.6+ ⚙️🪖.
 >
 > 👁️‍🗨️ [**DEMO on-line**](https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/)
+>
+
+---
 
 ![LOGO](https://img.shields.io/badge/Logo-CORE_PANZER_v7+-1f4e79)
 <p align="center"><img src="https://raw.githubusercontent.com/zero419-web/PWA-Pizza-Engine/main/sw_logo.svg" width="200" alt="Panzer v7+ Core Logo"></p>
