@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        '/SDK_BETA',
+        '/SDK_BETA/',
         '/SDK_BETA/index.html',
         '/SDK_BETA/js/app.js',
         '/SDK_BETA/js/SDK.js',
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
-        swPath: './SW.js',
+        swPath: '../ServiceWorker.js',
         scope: '/SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
         
