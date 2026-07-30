@@ -38,13 +38,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        '/SDK_BETA/',
-        '/SDK_BETA/index.html',
-        '/SDK_BETA/js/app.js',
-        '/SDK_BETA/js/SDK.js',
-        '/SDK_BETA/ServiceWorker.js',
-        '/SDK_BETA/PWA.webmanifest',
-        '/SDK_BETA/Res-PA-manifest.json'
+        './',
+        './index.html',
+        './js/app.js',
+        './js/SDK.js',
+        './ServiceWorker.js',
+        './PWA.webmanifest',
+        './Res-PA-manifest.json'
     ];
 
     const logToTerminal = (level, text) => {
