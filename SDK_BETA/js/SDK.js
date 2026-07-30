@@ -9,7 +9,7 @@
 export class PanzerSDK {
     constructor(options = {}) {
         this.swPath = options.swPath || '/sw.js';
-        this.scope = options.scope || '/';
+        this.scope =  '/SDK_BETA/' || options.scope;
         this.coreAssets = [
             '/index.html',
             '/Res-PA-manifest.json',
