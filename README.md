@@ -4,7 +4,7 @@
 > [!NOTE]
 >​ 🧪 **Integrazione nel progetto di un esempio :**
 > 
-> - 🏗️ **SDK** <br> ( *Software Development Kit* ) <br> Nel 📁 `file.zip` è presente un esempio di **Dashboard** per la **PA.**
+> - 🏗️ **SDK** <br> ( *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è presente un esempio di **Dashboard** per la **PA.**
 All'interno è incluso il <br> 📄 `file sw.js` **=** Framework Core Panzer v7.6+ ⚙️🪖.
 >
 > 👁️‍🗨️ [**DEMO on-line**](https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/)
