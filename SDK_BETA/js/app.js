@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         '/PWA-Pizza-Engine/SDK_BETA/js/SDK.js',
         '/PWA-Pizza-Engine/SDK_BETA/ServiceWorker.js',
         '/PWA-Pizza-Engine/SDK_BETA/PA_PWA.webmanifest',
+        '/PWA-Pizza-Engine/SDK_BETA/icon.png',
         '/PWA-Pizza-Engine/SDK_BETA/Res-PA-manifest.json'
     ];
 
