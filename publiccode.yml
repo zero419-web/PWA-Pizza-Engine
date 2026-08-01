@@ -2,8 +2,8 @@
 publiccodeYmlVersion: "0.5"
 name: "PWA-Pizza-Engine"
 applicationSuite: ""
-softwareVersion: "3.2.3.8"
-releaseDate: "2026-07-30"
+softwareVersion: "3.2.4.0"
+releaseDate: "2026-08-01"
 platforms:
   - web
 categories:
@@ -18,16 +18,16 @@ description:
   it:
   shortDescription: "PWA ad alta resilienza con architettura Zero-Trust per la gestione digitale di servizi di ristorazione."
 longDescription: |
-  Proof of Concept (PoC) di un'architettura Progressive Web App (PWA) progettata per il settore della ristorazione professionale, basata sul core engine Panzer v7.6+ con paradigma Zero-Trust.
+  Proof of Concept ( PoC ) di un'architettura Progressive Web App ( PWA ) progettata per il settore della ristorazione professionale, basata sul core engine Panzer v7.6+ con paradigma Zero-Trust.
   Il sistema garantisce continuità operativa in scenari di connettività degradata, implementando logiche di Network Resiliency adattiva.
-  La sicurezza è blindata da validazione crittografica binaria (Magic Numbers), cifratura AES-GCM 256-bit e protocolli di protezione dell'integrità del Vault (DeepVaultValidation).
-  L'infrastruttura integra protocolli di Hardening Anti-Profiling (sterilizzazione degli errori, iniezione di rumore temporale) per prevenire attacchi di tipo side-channel.
-  Il PoC è ottimizzato per prevenire memory leak tramite bonifiche atomiche di RAM (Zero-Trust) e purga automatizzata (Tabula Rasa), garantendo un ambiente protetto per la gestione di ordini e servizi digitali.
+  La sicurezza è blindata da validazione crittografica binaria ( Magic Numbers ), cifratura AES-GCM 256-bit e protocolli di protezione dell'integrità del Vault ( DeepVaultValidation ).
+  L'infrastruttura integra protocolli di Hardening Anti-Profiling ( sterilizzazione degli errori, iniezione di rumore temporale ) per prevenire attacchi di tipo side-channel.
+  Il PoC è ottimizzato per prevenire memory leak tramite bonifiche atomiche di RAM ( Zero-Trust ) e purga automatizzata ( Tabula Rasa ), garantendo un ambiente protetto per la gestione di ordini e servizi digitali.
 features:
-  - "Architettura Zero-Trust con cifratura AES-GCM 256-bit (Web Crypto API)."
+  - "Architettura Zero-Trust con cifratura AES-GCM 256-bit ( Web Crypto API )."
   - "Motore Service Worker Panzer v7.6+ con logica di resilienza adattiva e gestione asincrona."
-  - "Ispezione forense biometrica (DNA Check) degli asset tramite firma Magic Numbers."
-  - "Protocolli di auto-protezione, bonifica RAM (Zero-Trust) e purga atomica (Tabula Rasa)."
+  - "Ispezione forense biometrica ( DNA Check ) degli asset tramite firma Magic Numbers."
+  - "Protocolli di auto-protezione, bonifica RAM ( Zero-Trust ) e purga atomica ( Tabula Rasa )."
   - "Hardening operativo: Anti-Profiling, sterilizzazione stack trace e livellamento temporale RTT."
 legal:
   license: "EUPL-1.2"
