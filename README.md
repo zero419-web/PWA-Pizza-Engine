@@ -26,22 +26,22 @@ All'interno è incluso il <br> 📄 `file sw.js` **=** Framework Core Panzer v7.
 ## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.6+ )
 🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
 
-- **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** (`waitTillIdle`).
-  - **🪖 NOVITÀ v7.6+ :** <br> Integrazione di protocolli **🏴‍☠️ Anti-Profiling :** <br>Ogni punto di errore è stato convertito in un " 🕳️ *Black Hole* " informativo; la **sterilizzazione degli stack trace e l'iniezione di rumore temporale 💉⏱️** previene attacchi di tipo *side-channel* e la profilazione del **🏴‍☠️🔴 Red Team.**
+- **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
+  - **🪖 NOVITÀ v7.6+ :** <br> Integrazione di protocolli <br> **🏴‍☠️ Anti-Profiling :** <br>Ogni punto di errore è stato convertito in un " 🕳️ *Black Hole* " informativo; la **sterilizzazione degli stack trace e l'iniezione di rumore temporale 💉⏱️** previene attacchi di tipo *side-channel* e la profilazione del **🏴‍☠️🔴 Red Team.**
 
 - **🔄🌐🛡️🔗 Dynamic Adaptive Network Resiliency :** <br> Algoritmo proprietario che adatta dinamicamente i timeout di rete basandosi su 5 profili telemetrici hardware di velocità della connessione.
 
 - **🌐➡️💾 Network-First Predittivo con Cache Fallback :** <br> Intercettazione condizionale degli eventi di fetch con abort atomico delle richieste in caso di latenza degradata e rilascio immediato della risorsa cifrata locale.
   
-- **🔬🧬 SW Forensics ( DNA Check & Binary Validation ) :** <br> Controllo biometrico sequenziale (Testa, Coda, Corpo) per prevenire attacchi di *Cache Poisoning* ed eradicare vettori malevoli (Anti-PDF Scripting).
+- **🔬🧬 SW Forensics ( DNA Check & Binary Validation ) :** <br> Controllo biometrico sequenziale ( 🤯 Testa, 👣 Coda, 🪵 Corpo ) per prevenire attacchi di ☠️ *Cache Poisoning* ed eradicare vettori malevoli ( Anti-PDF Scripting ❌📜 ).
 
-- **🛡️📴 Offline Bunker Mode & Emergency Wipe :** <br> In caso di violazione rilevata, il Panzer attiva contromisure distruttive (*Tabula Rasa*): pialla il `Cache Storage` e il database locale (`indexedDB.deleteDatabase`), isolando il sistema per proteggere il dato sensibile.
+- **🛡️📴 Offline Bunker Mode & Emergency Wipe :** <br> In caso di violazione rilevata, il Panzer attiva contromisure distruttive ( *Tabula Rasa* ☢️ ): pialla il `Cache Storage` e il database locale ( `indexedDB.deleteDatabase` ), isolando il sistema per proteggere il dato sensibile.
 
-- **🔀📡 Architettura di Instradamento a 5 Sezioni ( Fetch Strict Layer ) :** <br> Ciclo di vita della richiesta compartimentato in perimetri rigidi per superare i capitolati di ispezione AgID (Normalizzazione, Online Gateway, Cache Hit, Filtro Multimediale, Critical Fallback).
+- **🔀📡 Architettura di Instradamento a 5 Sezioni ( Fetch Strict Layer 🚥 ) :** <br> Ciclo di vita della richiesta compartimentato in perimetri rigidi per superare i capitolati di ispezione AgID ( `Normalizzazione, Online Gateway, Cache Hit, Filtro Multimediale, Critical Fallback` ).
 
 - **✉️↔️📬 Canale IPC PostMessage :** <br> Ricezione sicura dei comandi dal frontend con isolamento della chiave in RAM tramite `Structured Clone API`.
 
-- **🎖️ Conformità Costituzionale e Normativa PA:** <br> Sviluppato interamente in **🍦 Vanilla JS** (Zero-Dipendenze), garantendo assenza di debiti tecnici e rispondenza all'**Art. 69 del CAD**.
+- **🎖️ Conformità Costituzionale e Normativa PA:** <br> Sviluppato interamente in **🍦 Vanilla JS** ( *Zero-Dipendenze* ), garantendo assenza di debiti tecnici e rispondenza all'**Art. 69 del CAD**.
 
 ## 👤 Autore : <br> **Valentino Aglianò**
 - 📌 Perito Industriale <br> **Informatico** ( *2013* )
