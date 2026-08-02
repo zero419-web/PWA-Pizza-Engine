@@ -175,16 +175,28 @@ export class PanzerSDK {
         const cfg = this.incognitoBlocker;
         if (document.getElementById(cfg.ID)) return;
         
-        // 🔒 Blocca lo scroll del body per impedire la visione di parti scoperte
+        // 🔒 Blocca lo scroll della pagina su tutti i livelli
         document.body.style.overflow = 'hidden';
+        if (document.documentElement) {
+            document.documentElement.style.overflow = 'hidden';
+        }
 
         const blocker = document.createElement('div');
         blocker.id = cfg.ID || 'panzer-incognito-blocker';
         blocker.style.cssText = `
             position: fixed !important;
             inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            transform: none !important;
+            filter: none !important;
+            perspective: none !important;
             background: ${cfg.overlayBg} !important;
             z-index: 2147483647 !important;
             display: flex !important;
@@ -193,8 +205,6 @@ export class PanzerSDK {
             padding: 16px !important;
             box-sizing: border-box !important;
             margin: 0 !important;
-            top: 0 !important;
-            left: 0 !important;
         `;
 
         const card = document.createElement('div');
@@ -205,7 +215,7 @@ export class PanzerSDK {
             border: 1px solid ${cfg.borderColor} !important;
             border-radius: 12px !important;
             padding: 24px !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
             box-sizing: border-box !important;
             margin: auto !important;
             text-align: center !important;
@@ -234,7 +244,10 @@ export class PanzerSDK {
             box-sizing: border-box !important;
         `;
         button.onclick = () => {
-            document.body.style.overflow = ''; // Ripristina lo scroll prima di ricaricare
+            document.body.style.overflow = '';
+            if (document.documentElement) {
+                document.documentElement.style.overflow = '';
+            }
             if (typeof cfg.buttonAction === 'function') {
                 cfg.buttonAction();
             } else {
@@ -244,7 +257,10 @@ export class PanzerSDK {
 
         card.appendChild(button);
         blocker.appendChild(card);
-        document.body.appendChild(blocker);
+
+        // 🚀 Inserimento diretto sul nodo radice (html) per aggirare qualsiasi blocco di layout dei container interni
+        const targetRoot = document.documentElement || document.body;
+        targetRoot.appendChild(blocker);
     }
     
     /**
