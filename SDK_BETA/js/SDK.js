@@ -178,18 +178,36 @@ export class PanzerSDK {
         const blocker = document.createElement('div');
         blocker.id = cfg.ID || 'panzer-incognito-blocker';
         blocker.style.cssText = `
-            position: fixed; inset: 0; width: 100vw; height: 100dvh;
-            background: ${cfg.overlayBg}; z-index: 999999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; text-align: center; 
-            padding: 16px; box-sizing: border-box; overflow-y: auto;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: ${cfg.overlayBg};
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            margin: 0;
+            -webkit-overflow-scrolling: touch;
         `;
 
         const card = document.createElement('div');
         card.style.cssText = `
-            width: 100%; max-width: 480px; background: ${cfg.cardBg}; border: 1px solid ${cfg.borderColor}; 
-            border-radius: 12px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            box-sizing: border-box; margin: auto; text-align: center;
+            width: 100%;
+            max-width: 480px;
+            background: ${cfg.cardBg};
+            border: 1px solid ${cfg.borderColor};
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            box-sizing: border-box;
+            margin: auto;
+            text-align: center;
         `;
 
         card.innerHTML = `
@@ -203,8 +221,15 @@ export class PanzerSDK {
         const button = document.createElement('button');
         button.textContent = cfg.buttonText;
         button.style.cssText = `
-            width: 100%; background: ${cfg.buttonBg}; color: ${cfg.buttonTextCol}; border: none; 
-            padding: 12px 20px; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;
+            width: 100%;
+            background: ${cfg.buttonBg};
+            color: ${cfg.buttonTextCol};
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
             box-sizing: border-box;
         `;
         button.onclick = () => {
@@ -219,10 +244,10 @@ export class PanzerSDK {
         blocker.appendChild(card);
         document.body.appendChild(blocker);
     }
-
+    
     /**
-     * 🧬 UTILITY PROFILO: Recupero dettagliato dei Client Hints del browser
-     */
+      * 🧬 UTILITY PROFILO: Recupero dettagliato dei Client Hints del browser
+     **/
     async _getFullBrowserProfile() {
         let profile = { userAgent: navigator.userAgent, isHighEntropyDataAvailable: false, details: {} };
         if (navigator.userAgentData) {
