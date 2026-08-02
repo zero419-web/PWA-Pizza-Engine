@@ -1,5 +1,7 @@
 /**
- * 🛡️ PanzerSDK - Client Bridge v1.0 (Bunker Mode 🛡️📦)
+ * 🛡️ PanzerSDK - Beta v1.0
+ * 
+ * Client Bridge v1.2 ( Bunker Mode 🛡️📦 )
  * 
  * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -27,6 +29,21 @@ export class PanzerSDK {
             mobileMin: 2000,
             mobileMax: 2400,
             desktopMax: 5000
+        };
+
+        // 🛑 Configurazione dinamica personalizzabile per l'overlay Anti-Incognito (Contenuto, Colori e Azioni)
+        this.incognitoBlocker = {
+            title: options.incognitoBlocker?.title || "Modalità Incognito Rilevata",
+            message: options.incognitoBlocker?.message || "Il motore di sicurezza e la stiva resiliente <strong>PANZER SDK</strong> non possono operare in ambienti di navigazione in incognito o sandbox restrittive su Chromium a causa delle limitazioni di persistenza dei dati.<br><br>Per utilizzare correttamente l'applicazione e garantire la continuità operativa, <strong>apri questa pagina in una finestra di navigazione normale</strong>.",
+            buttonText: options.incognitoBlocker?.buttonText || "Ho capito, ricarica in modalità normale",
+            buttonAction: options.incognitoBlocker?.buttonAction || (() => window.location.reload()),
+            overlayBg: options.incognitoBlocker?.overlayBg || "rgba(15, 23, 42, 0.95)",
+            cardBg: options.incognitoBlocker?.cardBg || "#1e293b",
+            borderColor: options.incognitoBlocker?.borderColor || "#334155",
+            titleColor: options.incognitoBlocker?.titleColor || "#f87171",
+            textColor: options.incognitoBlocker?.textColor || "#94a3b8",
+            buttonBg: options.incognitoBlocker?.buttonBg || "#3b82f6",
+            buttonTextCol: options.incognitoBlocker?.buttonTextCol || "#ffffff"
         };
 
         // ⚙️ Hook di callback UI e Telemetria
@@ -149,34 +166,49 @@ export class PanzerSDK {
     }
 
     /**
-     * 🛑 INTERFACCIA VISIVA DI BLOCCO (Anti-Incognito Overlay)
+     * 🛑 INTERFACCIA VISIVA DI BLOCCO (Anti-Incognito Overlay personalizzabile)
      */
     _showIncognitoBlocker() {
         if (document.getElementById('panzer-incognito-blocker')) return;
 
+        const cfg = this.incognitoBlocker;
         const blocker = document.createElement('div');
         blocker.id = 'panzer-incognito-blocker';
         blocker.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.95); z-index: 999999;
+            background: ${cfg.overlayBg}; z-index: 999999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 20px;
         `;
 
-        blocker.innerHTML = `
-            <div style="max-width: 500px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
-                <div style="font-size: 48px; margin-bottom: 16px;">🕵️‍♂️⚠️</div>
-                <h2 style="color: #f87171; margin-bottom: 12px; font-size: 22px;">Modalità Incognito Rilevata</h2>
-                <p style="color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-                    Il motore di sicurezza e la stiva resiliente <strong>PANZER SDK</strong> non possono operare in ambienti di navigazione in incognito o sandbox restrittive su Chromium a causa delle limitazioni di persistenza dei dati.<br><br>
-                    Per utilizzare correttamente l'applicazione e garantire la continuità operativa, <strong>apri questa pagina in una finestra di navigazione normale</strong>.
-                </p>
-                <button onclick="window.location.reload()" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                    Ho capito, ricarica in modalità normale
-                </button>
-            </div>
+        const card = document.createElement('div');
+        card.style.cssText = `
+            max-width: 500px; background: ${cfg.cardBg}; border: 1px solid ${cfg.borderColor}; border-radius: 12px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         `;
 
+        card.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 16px;">🕵️‍♂️⚠️</div>
+            <h2 style="color: ${cfg.titleColor}; margin-bottom: 12px; font-size: 22px;">${cfg.title}</h2>
+            <p style="color: ${cfg.textColor}; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+                ${cfg.message}
+            </p>
+        `;
+
+        const button = document.createElement('button');
+        button.textContent = cfg.buttonText;
+        button.style.cssText = `
+            background: ${cfg.buttonBg}; color: ${cfg.buttonTextCol}; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;
+        `;
+        button.onclick = () => {
+            if (typeof cfg.buttonAction === 'function') {
+                cfg.buttonAction();
+            } else {
+                window.location.reload();
+            }
+        };
+
+        card.appendChild(button);
+        blocker.appendChild(card);
         document.body.appendChild(blocker);
     }
 
