@@ -188,7 +188,7 @@ export class PanzerSDK {
         `;
 
         card.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 16px;">${`cfg.Icons`}</div>
+            <div style="font-size: 48px; margin-bottom: 16px;">${cfg.Icons}</div>
             <h2 style="color: ${cfg.titleColor}; margin-bottom: 12px; font-size: 22px;">${cfg.title}</h2>
             <p style="color: ${cfg.textColor}; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
                 ${cfg.message}
