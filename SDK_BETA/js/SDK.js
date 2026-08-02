@@ -33,7 +33,7 @@ export class PanzerSDK {
 
         // 🛑 Configurazione dinamica personalizzabile per l'overlay Anti-Incognito (Contenuto, Colori e Azioni)
         this.incognitoBlocker = {
-            Icons: options.incognitoBlocker?.CardIcon || '🕵️⚠️',
+            Icons: options.incognitoBlocker?.Icons || options.incognitoBlocker?.CardIcon || '🕵️⚠️',
             ID: options.incognitoBlocker?.blockerID || 'panzer-incognito-blocker',
             title: options.incognitoBlocker?.title || "Modalità Incognito Rilevata",
             message: options.incognitoBlocker?.message || "Il motore di sicurezza e la stiva resiliente <strong>PANZER SDK</strong> non possono operare in ambienti di navigazione in incognito o sandbox restrittive su Chromium a causa delle limitazioni di persistenza dei dati.<br><br>Per utilizzare correttamente l'applicazione e garantire la continuità operativa, <strong>apri questa pagina in una finestra di navigazione normale</strong>.",
