@@ -172,9 +172,9 @@ export class PanzerSDK {
      */
     _showIncognitoBlocker() {
         const cfg = this.incognitoBlocker;
+        if (document.getElementById(cfg.blockerID)) return;
         const blocker = document.createElement('div');
         blocker.id = ${cfg.blockerID};
-        if (document.getElementById(blocker.id)) return;
         blocker.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: ${cfg.overlayBg}; z-index: 999999;
