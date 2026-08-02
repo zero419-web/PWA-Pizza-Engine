@@ -3,6 +3,8 @@
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.6+-4f4f00)
 
 > [!Important]
+> 🌀🧪 **Questo SDK + DashBoard e un PoC**
+> 
 > 📦 **FameWork Panzer SDK BETA v1.0 :**
 > 
 > - 🏗️ **SDK** <br> ( *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'SDK aggiornata con il **🐺 Watchdog Anti-Incognito ❌🕵️**, le soglie di quota dinamiche e il timeout adattivo.
