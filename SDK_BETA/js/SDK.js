@@ -1,7 +1,7 @@
 /**
  * 🛡️ PanzerSDK - Beta v1.0
  * 
- * Client Bridge v1.3 ( Bunker Mode 🛡️📦 )
+ * Client Bridge v1.4 ( Bunker Mode 🛡️📦 )
  * 
  * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -168,29 +168,34 @@ export class PanzerSDK {
     }
 
     /**
-     * 🛑 INTERFACCIA VISIVA DI BLOCCO (Anti-Incognito Overlay personalizzabile)
-     */
+      * 🛑 INTERFACCIA VISIVA DI BLOCCO
+      * ( Anti-Incognito Overlay personalizzabile e responsive )
+     **/
     _showIncognitoBlocker() {
         const cfg = this.incognitoBlocker;
         if (document.getElementById(cfg.ID)) return;
+        
         const blocker = document.createElement('div');
-        blocker.id = cfg.ID;
+        blocker.id = cfg.ID || 'panzer-incognito-blocker';
         blocker.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            position: fixed; inset: 0; width: 100vw; height: 100dvh;
             background: ${cfg.overlayBg}; z-index: 999999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 20px;
+            color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; text-align: center; 
+            padding: 16px; box-sizing: border-box; overflow-y: auto;
         `;
 
         const card = document.createElement('div');
         card.style.cssText = `
-            max-width: 500px; background: ${cfg.cardBg}; border: 1px solid ${cfg.borderColor}; border-radius: 12px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            width: 100%; max-width: 480px; background: ${cfg.cardBg}; border: 1px solid ${cfg.borderColor}; 
+            border-radius: 12px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box; margin: auto; text-align: center;
         `;
 
         card.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 16px;">${cfg.Icons}</div>
-            <h2 style="color: ${cfg.titleColor}; margin-bottom: 12px; font-size: 22px;">${cfg.title}</h2>
-            <p style="color: ${cfg.textColor}; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+            <div style="font-size: 42px; margin-bottom: 12px;">${cfg.Icons}</div>
+            <h2 style="color: ${cfg.titleColor}; margin-bottom: 12px; font-size: 20px;">${cfg.title}</h2>
+            <p style="color: ${cfg.textColor}; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
                 ${cfg.message}
             </p>
         `;
@@ -198,7 +203,9 @@ export class PanzerSDK {
         const button = document.createElement('button');
         button.textContent = cfg.buttonText;
         button.style.cssText = `
-            background: ${cfg.buttonBg}; color: ${cfg.buttonTextCol}; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;
+            width: 100%; background: ${cfg.buttonBg}; color: ${cfg.buttonTextCol}; border: none; 
+            padding: 12px 20px; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer;
+            box-sizing: border-box;
         `;
         button.onclick = () => {
             if (typeof cfg.buttonAction === 'function') {
