@@ -223,6 +223,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         swPath: '/PWA-Pizza-Engine/SDK_BETA/ServiceWorker.js',
         scope: '/PWA-Pizza-Engine/SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
+
+    // ⏱️ Timeout personalizzato per il 🐺 Watchdog (es. 4000ms)
+    checkTimeout: 4000,
+
+    // 🎛️ Soglie di quota storage personalizzate
+    quotaLimits: {
+        mobileMin: 1800,
+        mobileMax: 2200,
+        desktopMax: 5000
+    },
+
+    // 🛑 Personalizzazione completa dell'overlay Anti-Incognito (Testi, Colori e Azioni)
+    incognitoBlocker: {
+        title: "Modalità Protetta Richiesta",
+        message: "Il sistema di sicurezza <strong>🪖 PANZER SDK</strong> richiede una sessione di navigazione standard per garantire la persistenza dei documenti della Pubblica Amministrazione.<br><br>Ti invitiamo ad aprire l'applicazione in una <strong>finestra di navigazione normale</strong>.",
+        buttonText: "🔄 Ricarica in modalità normale",
+        buttonAction: () => {
+            // Azione personalizzata eseguita al click del pulsante
+            localStorage.removeItem('pwa_check_point');
+            window.location.reload();
+        },
+        // Palette cromatica personalizzata della modale
+        overlayBg: "rgba(15, 23, 42, 0.98)",
+        cardBg: "#1e293b",
+        borderColor: "#475569",
+        titleColor: "#f87171",
+        textColor: "#cbd5e1",
+        buttonBg: "#2563eb",
+        buttonTextCol: "#ffffff"
+    },
         
         onLogMessage: (level, msg) => logToTerminal(level, msg),
         
