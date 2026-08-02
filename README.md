@@ -3,6 +3,8 @@
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.6+-4f4f00)
 
 > [!Important]
+> 🔃 **Last Update :** `v1.3`
+> 
 > 🌀🧪 **Questo SDK + DashBoard e un PoC**
 > 
 > 📦 **FameWork Panzer SDK BETA v1.0 :**
