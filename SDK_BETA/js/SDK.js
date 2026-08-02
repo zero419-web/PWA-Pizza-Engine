@@ -175,39 +175,40 @@ export class PanzerSDK {
         const cfg = this.incognitoBlocker;
         if (document.getElementById(cfg.ID)) return;
         
+        // 🔒 Blocca lo scroll del body per impedire la visione di parti scoperte
+        document.body.style.overflow = 'hidden';
+
         const blocker = document.createElement('div');
         blocker.id = cfg.ID || 'panzer-incognito-blocker';
         blocker.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            background: ${cfg.overlayBg};
-            z-index: 999999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            box-sizing: border-box;
-            overflow-y: auto;
-            margin: 0;
-            -webkit-overflow-scrolling: touch;
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: ${cfg.overlayBg} !important;
+            z-index: 2147483647 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
         `;
 
         const card = document.createElement('div');
         card.style.cssText = `
-            width: 100%;
-            max-width: 480px;
-            background: ${cfg.cardBg};
-            border: 1px solid ${cfg.borderColor};
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            box-sizing: border-box;
-            margin: auto;
-            text-align: center;
+            width: 100% !important;
+            max-width: 480px !important;
+            background: ${cfg.cardBg} !important;
+            border: 1px solid ${cfg.borderColor} !important;
+            border-radius: 12px !important;
+            padding: 24px !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+            box-sizing: border-box !important;
+            margin: auto !important;
+            text-align: center !important;
         `;
 
         card.innerHTML = `
@@ -221,18 +222,19 @@ export class PanzerSDK {
         const button = document.createElement('button');
         button.textContent = cfg.buttonText;
         button.style.cssText = `
-            width: 100%;
-            background: ${cfg.buttonBg};
-            color: ${cfg.buttonTextCol};
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            box-sizing: border-box;
+            width: 100% !important;
+            background: ${cfg.buttonBg} !important;
+            color: ${cfg.buttonTextCol} !important;
+            border: none !important;
+            padding: 12px 20px !important;
+            border-radius: 6px !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            cursor: pointer !important;
+            box-sizing: border-box !important;
         `;
         button.onclick = () => {
+            document.body.style.overflow = ''; // Ripristina lo scroll prima di ricaricare
             if (typeof cfg.buttonAction === 'function') {
                 cfg.buttonAction();
             } else {
