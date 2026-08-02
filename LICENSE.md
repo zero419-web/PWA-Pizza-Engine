@@ -1,6 +1,6 @@
 # ℹ️ ( EUPL v1.2 ) <br> European Union Public Licence
 
-**🔹 Copyright © 2026 Valentino Aglianò**
+**🔹 Copyright © 2026 Valentino Aglianò 👤**
 
 ---
 
@@ -17,4 +17,5 @@ Il testo completo e ufficiale della licenza, **disponibile in tutte le lingue uf
 ---
 
 > [!NOTE]
-> **per i contributori:** I diritti d'autore sulle modifiche o sulle opere derivate restano dei rispettivi autori, fermo restando **l'obbligo di rilasciare l'opera complessiva sotto la medesima licenza EUPL.**
+> 👥 **per i contributori:**
+> 👤 I diritti d'autore sulle modifiche o sulle opere derivate restano dei rispettivi autori 👥, fermo restando **l'obbligo di rilasciare l'opera complessiva sotto la medesima licenza EUPL.**
