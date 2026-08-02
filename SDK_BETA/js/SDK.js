@@ -1,7 +1,7 @@
 /**
  * 🛡️ PanzerSDK - Beta v1.0
  * 
- * Client Bridge v1.2 ( Bunker Mode 🛡️📦 )
+ * Client Bridge v1.3 ( Bunker Mode 🛡️📦 )
  * 
  * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -33,6 +33,8 @@ export class PanzerSDK {
 
         // 🛑 Configurazione dinamica personalizzabile per l'overlay Anti-Incognito (Contenuto, Colori e Azioni)
         this.incognitoBlocker = {
+            Icons: options.incognitoBlocker?.CardIcon || '🕵️⚠️',
+            ID: options.incognitoBlocker?.blockerID || 'panzer-incognito-blocker',
             title: options.incognitoBlocker?.title || "Modalità Incognito Rilevata",
             message: options.incognitoBlocker?.message || "Il motore di sicurezza e la stiva resiliente <strong>PANZER SDK</strong> non possono operare in ambienti di navigazione in incognito o sandbox restrittive su Chromium a causa delle limitazioni di persistenza dei dati.<br><br>Per utilizzare correttamente l'applicazione e garantire la continuità operativa, <strong>apri questa pagina in una finestra di navigazione normale</strong>.",
             buttonText: options.incognitoBlocker?.buttonText || "Ho capito, ricarica in modalità normale",
@@ -169,11 +171,10 @@ export class PanzerSDK {
      * 🛑 INTERFACCIA VISIVA DI BLOCCO (Anti-Incognito Overlay personalizzabile)
      */
     _showIncognitoBlocker() {
-        if (document.getElementById('panzer-incognito-blocker')) return;
-
         const cfg = this.incognitoBlocker;
         const blocker = document.createElement('div');
-        blocker.id = 'panzer-incognito-blocker';
+        blocker.id = ${cfg.blockerID};
+        if (document.getElementById(blocker.id)) return;
         blocker.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: ${cfg.overlayBg}; z-index: 999999;
@@ -187,7 +188,7 @@ export class PanzerSDK {
         `;
 
         card.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 16px;">🕵️‍♂️⚠️</div>
+            <div style="font-size: 48px; margin-bottom: 16px;">${cfg.CardIcon}</div>
             <h2 style="color: ${cfg.titleColor}; margin-bottom: 12px; font-size: 22px;">${cfg.title}</h2>
             <p style="color: ${cfg.textColor}; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
                 ${cfg.message}
