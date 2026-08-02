@@ -1,5 +1,7 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
+ * v1.3
+ *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
  * * 📜 License: EUPL-1.2
@@ -236,6 +238,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🛑 Personalizzazione completa dell'overlay Anti-Incognito (Testi, Colori e Azioni)
     incognitoBlocker: {
+        Icons: "⚠️ - ❌🕵️",
+        ID: "PA_popup_Incognite",
         title: "Modalità Protetta Richiesta",
         message: "Il sistema di sicurezza <strong>🪖 PANZER SDK</strong> richiede una sessione di navigazione standard per garantire la persistenza dei documenti della Pubblica Amministrazione.<br><br>Ti invitiamo ad aprire l'applicazione in una <strong>finestra di navigazione normale</strong>.",
         buttonText: "🔄 Ricarica in modalità normale",
