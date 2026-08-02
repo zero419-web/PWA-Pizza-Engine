@@ -1,14 +1,18 @@
 ![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.0-1f4e79)
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_X_PA-af0000)
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.6+-4f4f00)
-> [!NOTE]
->​ 🧪 **Integrazione nel progetto di un esempio :**
+
+> [!Important]
+> 📦 **FameWork Panzer SDK BETA v1.0 :**
 > 
-> - 🏗️ **SDK** <br> ( *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è presente un esempio di **Dashboard** per la **PA.**
-All'interno è incluso il <br> 📄 `file sw.js` **=** Framework Core Panzer v7.6+ ⚙️🪖.
+> - 🏗️ **SDK** <br> ( *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'SDK aggiornata con il **🐺 Watchdog Anti-Incognito ❌🕵️**, le soglie di quota dinamiche e il timeout adattivo.
+> 
+> - 📊 **Dashboard PoC per la PA** <br> Un esempio pratico di dashboard sviluppata per la Pubblica Amministrazione orientata alla consultazione sicura in modalità "Bunker".
+> 
+> - 📄 **Framework Core Panzer v7.6+** <br> All'interno è presente il file `sw.js` ⚙️🪖 per la gestione della stiva resiliente e della cache cifrata.
 >
 > 👁️‍🗨️ [**DEMO on-line**](https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/)
->
+> 
 
 ---
 
