@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.7
+ * v1.8
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let manifestCache = null;
     let activeObjectUrl = null;
-    let currentZoom = 1.0; // 🔍 Livello di zoom iniziale del visore
+    let currentZoom = 1.0; // 🔍 Zoom iniziale fissato al 100%
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
@@ -125,10 +125,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox CSP con PDF.js, Scroll Bidirezionale & Ottimizzazione Touch Mobile/Desktop
+    // 🔒 Visore Sandbox CSP con PDF.js a 100% di default, Scroll Bidirezionale & Ottimizzazione Touch
     const openInSandbox = async (url, fileName) => {
         try {
-            currentZoom = 1.0; // Reset zoom all'apertura
+            currentZoom = 1.0; // Reset rigoroso al 100% all'apertura
             logToTerminal('vault', `🔒 Isolamento Sandbox CSP Ultra-Restrittivo avviato per: ${fileName || url}`);
             let response = ('caches' in window) ? await caches.match(url) : null;
             if (!response) response = await fetch(url);
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // Rendering PDF Universale tramite PDF.js con Scroll Bidirezionale Fluido e Touch Ottimizzato
+                // Rendering PDF Universale tramite PDF.js (Default Scale 1.0 -> 100%) con Scroll Bidirezionale
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                                        const page = await pdfDoc.getPage(pageNum);
-                                       const scale = 1.5; 
+                                       const scale = 1.0; // 🔍 SCALA BASE IMPOSTATA A 1.0 (100% REALE)
                                        const viewport = page.getViewport({ scale: scale });
 
                                        const canvas = document.createElement('canvas');
@@ -290,9 +290,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxTitle.textContent = `🔒 Visore Cifrato Read-Only — ${fileName || url}`;
             
             sandboxModal.classList.add('active');
-            // Mantenuta la pagina principale completamente immutata (nessuna modifica all'overflow del body principale)
 
-            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con supporto touch e scroll bidirezionale.`);
+            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente al 100% di default con supporto touch e scroll bidirezionale.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
         }
@@ -302,7 +301,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         sandboxModal.classList.remove('active');
         sandboxFrame.srcdoc = '';
         sandboxFrame.src = 'about:blank';
-        // Pagina principale preservata e immutata
         
         if (activeObjectUrl) {
             URL.revokeObjectURL(activeObjectUrl);
