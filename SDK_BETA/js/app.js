@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.5
+ * v1.6
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = `badge-status ${badgeClass}`;
     };
 
-    // 🔍 Funzione per applicare lo zoom dinamico con supporto scroll orizzontale e verticale
+    // 🔍 Funzione per applicare lo zoom dinamico con supporto scroll bidirezionale (orizzontale e verticale)
     const applyZoom = () => {
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}% (Scroll Orizzontale e Verticale attivo)`);
+            logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}% (Scroll bidirezionale attivo)`);
         } catch (e) {
             console.warn("Zoom custom limitato da policy restrittive dell'iframe nativo.", e);
         }
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox CSP con PDF.js, Scroll Orizzontale/Verticale & Zoom
+    // 🔒 Visore Sandbox CSP con PDF.js, Scroll Bidirezionale & Zoom
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0; // Reset zoom all'apertura
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let renderedContentHtml = '';
 
             if (mimeType.startsWith('image/')) {
-                // Rendering Immagine Protetta con Scroll Orizzontale/Verticale
+                // Rendering Immagine Protetta con Scroll Bidirezionale
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
                             body, html { width:100%; height:100%; background:#000; overflow:auto; -webkit-overflow-scrolling: touch; }
-                            #img-container { display:flex; justify-content:center; align-items:center; min-width:100%; min-height:100%; padding:20px; }
+                            #img-container { display:flex; justify-content:center; align-items:center; min-width:100%; min-height:100%; width:max-content; margin:0 auto; padding:40px 50vw; }
                             img { max-width:100%; height:auto; object-fit:contain; pointer-events:none; -webkit-touch-callout:none; flex-shrink: 0; }
                         </style>
                     </head>
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // Rendering PDF Universale tramite PDF.js con Scroll Orizzontale e Verticale Fluido
+                // Rendering PDF Universale tramite PDF.js con Scroll Orizzontale (entrambe le direzioni) e Verticale
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -177,8 +177,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
                             body, html { width:100%; height:100%; background:#111; overflow:auto; font-family:sans-serif; -webkit-overflow-scrolling: touch; }
-                            #pdf-container { display:flex; flex-direction:column; align-items:center; padding:20px; gap:20px; min-width:100%; min-height:100%; }
-                            canvas { max-width:none; height:auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); background:#fff; border-radius:4px; pointer-events:none; -webkit-touch-callout:none; flex-shrink: 0; }
+                            #pdf-container { 
+                                display: flex; 
+                                flex-direction: column; 
+                                align-items: center; 
+                                padding: 40px 50vw; 
+                                min-width: 100%; 
+                                min-height: 100%; 
+                                width: max-content; 
+                                margin: 0 auto; 
+                                gap: 20px; 
+                            }
+                            canvas { 
+                                max-width: none; 
+                                height: auto; 
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.8); 
+                                background: #fff; 
+                                border-radius: 4px; 
+                                pointer-events: none; 
+                                -webkit-touch-callout: none; 
+                                flex-shrink: 0; 
+                            }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
                         </style>
                         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
@@ -207,7 +226,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                        canvas.height = viewport.height;
                                        canvas.width = viewport.width;
 
-                                       // Memorizziamo le dimensioni base per permettere lo zoom con scroll orizzontale e verticale
                                        canvas.dataset.baseWidth = viewport.width;
                                        canvas.dataset.baseHeight = viewport.height;
                                        canvas.style.width = viewport.width + 'px';
@@ -241,7 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; }
                             body, html { width:100%; height:100%; background:#111; overflow:auto; -webkit-overflow-scrolling: touch; }
-                            #pdf-container { width:100%; height:100%; min-width:100%; min-height:100%; display:flex; justify-content:center; align-items:center; padding:20px; }
+                            #pdf-container { width:max-content; min-width:100%; min-height:100%; margin:0 auto; display:flex; justify-content:center; align-items:center; padding:40px 50vw; }
                             iframe, object { width:100%; height:100%; border:none; flex-shrink: 0; }
                         </style>
                     </head>
@@ -263,9 +281,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxTitle.textContent = `🔒 Visore Cifrato Read-Only — ${fileName || url}`;
             
             sandboxModal.classList.add('active');
-            document.body.style.overflow = 'hidden'; 
+            // Nota: nessuna modifica a document.body.style.overflow per mantenere la pagina principale immutata.
 
-            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con supporto scroll orizzontale e verticale.`);
+            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con supporto scroll bidirezionale.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
         }
@@ -275,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sandboxModal.classList.remove('active');
         sandboxFrame.srcdoc = '';
         sandboxFrame.src = 'about:blank';
-        document.body.style.overflow = ''; 
+        // Nessuna modifica allo stile del body per preservare l'immutabilità della pagina.
         
         if (activeObjectUrl) {
             URL.revokeObjectURL(activeObjectUrl);
