@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.6
+ * v1.7
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = `badge-status ${badgeClass}`;
     };
 
-    // 🔍 Funzione per applicare lo zoom dinamico con supporto scroll bidirezionale (orizzontale e verticale)
+    // 🔍 Funzione per applicare lo zoom dinamico responsive (Mobile & Desktop)
     const applyZoom = () => {
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox CSP con PDF.js, Scroll Bidirezionale & Zoom
+    // 🔒 Visore Sandbox CSP con PDF.js, Scroll Bidirezionale & Ottimizzazione Touch Mobile/Desktop
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0; // Reset zoom all'apertura
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let renderedContentHtml = '';
 
             if (mimeType.startsWith('image/')) {
-                // Rendering Immagine Protetta con Scroll Bidirezionale
+                // Rendering Immagine Protetta con Scroll Bidirezionale e Touch Panning
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -154,9 +154,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; style-src 'unsafe-inline';">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body, html { width:100%; height:100%; background:#000; overflow:auto; -webkit-overflow-scrolling: touch; }
-                            #img-container { display:flex; justify-content:center; align-items:center; min-width:100%; min-height:100%; width:max-content; margin:0 auto; padding:40px 50vw; }
-                            img { max-width:100%; height:auto; object-fit:contain; pointer-events:none; -webkit-touch-callout:none; flex-shrink: 0; }
+                            body, html { width:100%; height:100%; background:#000; overflow:auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+                            #img-container { display:flex; justify-content:center; align-items:center; min-width:100%; min-height:100%; width:max-content; margin:0 auto; padding:40px 50vw; touch-action: pan-x pan-y; }
+                            img { max-width:100%; height:auto; object-fit:contain; -webkit-touch-callout:none; touch-action: pan-x pan-y; flex-shrink: 0; }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // Rendering PDF Universale tramite PDF.js con Scroll Orizzontale (entrambe le direzioni) e Verticale
+                // Rendering PDF Universale tramite PDF.js con Scroll Bidirezionale Fluido e Touch Ottimizzato
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -176,7 +176,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; connect-src blob: data:;">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body, html { width:100%; height:100%; background:#111; overflow:auto; font-family:sans-serif; -webkit-overflow-scrolling: touch; }
+                            body, html { 
+                                width: 100%; 
+                                height: 100%; 
+                                background: #111; 
+                                overflow: auto; 
+                                font-family: sans-serif; 
+                                -webkit-overflow-scrolling: touch; 
+                                touch-action: pan-x pan-y; 
+                            }
                             #pdf-container { 
                                 display: flex; 
                                 flex-direction: column; 
@@ -187,6 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 width: max-content; 
                                 margin: 0 auto; 
                                 gap: 20px; 
+                                touch-action: pan-x pan-y; 
                             }
                             canvas { 
                                 max-width: none; 
@@ -194,8 +203,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 box-shadow: 0 4px 15px rgba(0,0,0,0.8); 
                                 background: #fff; 
                                 border-radius: 4px; 
-                                pointer-events: none; 
                                 -webkit-touch-callout: none; 
+                                touch-action: pan-x pan-y; 
                                 flex-shrink: 0; 
                             }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
@@ -258,9 +267,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; frame-src blob:; object-src blob:;">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width:100%; height:100%; background:#111; overflow:auto; -webkit-overflow-scrolling: touch; }
-                            #pdf-container { width:max-content; min-width:100%; min-height:100%; margin:0 auto; display:flex; justify-content:center; align-items:center; padding:40px 50vw; }
-                            iframe, object { width:100%; height:100%; border:none; flex-shrink: 0; }
+                            body, html { width:100%; height:100%; background:#111; overflow:auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+                            #pdf-container { width:max-content; min-width:100%; min-height:100%; margin:0 auto; display:flex; justify-content:center; align-items:center; padding:40px 50vw; touch-action: pan-x pan-y; }
+                            iframe, object { width:100%; height:100%; border:none; touch-action: pan-x pan-y; flex-shrink: 0; }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
@@ -281,9 +290,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxTitle.textContent = `🔒 Visore Cifrato Read-Only — ${fileName || url}`;
             
             sandboxModal.classList.add('active');
-            // Nota: nessuna modifica a document.body.style.overflow per mantenere la pagina principale immutata.
+            // Mantenuta la pagina principale completamente immutata (nessuna modifica all'overflow del body principale)
 
-            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con supporto scroll bidirezionale.`);
+            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con supporto touch e scroll bidirezionale.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
         }
@@ -293,7 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sandboxModal.classList.remove('active');
         sandboxFrame.srcdoc = '';
         sandboxFrame.src = 'about:blank';
-        // Nessuna modifica allo stile del body per preservare l'immutabilità della pagina.
+        // Pagina principale preservata e immutata
         
         if (activeObjectUrl) {
             URL.revokeObjectURL(activeObjectUrl);
