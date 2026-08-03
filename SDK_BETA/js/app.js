@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.3
+ * v1.4
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -29,14 +29,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const storageSearch = document.getElementById('PA-storage-search');
     const toggleCoreAssets = document.getElementById('PA-toggle-core-assets');
 
-    // 🔒 Modal Sandbox CSP
+    // 🔒 Modal Sandbox CSP & Zoom
     const sandboxModal = document.getElementById('PA-sandbox-modal');
     const sandboxFrame = document.getElementById('PA-sandbox-frame');
     const sandboxTitle = document.getElementById('PA-sandbox-title');
     const btnCloseSandbox = document.getElementById('PA-btn-close-sandbox');
+    const btnZoomIn = document.getElementById('PA-btn-zoom-in');
+    const btnZoomOut = document.getElementById('PA-btn-zoom-out');
 
     let manifestCache = null;
     let activeObjectUrl = null;
+    let currentZoom = 1.0; // 🔍 Livello di zoom iniziale del visore
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
@@ -72,9 +75,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = `badge-status ${badgeClass}`;
     };
 
-    // 🔒 Visore Sandbox CSP con PDF.js e Scroll abilitato
+    // 🔍 Funzione per applicare lo zoom all'interno dell'iframe sandbox
+    const applyZoom = () => {
+        try {
+            const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
+            const targetElement = iframeDoc.getElementById('pdf-container') || iframeDoc.body;
+            if (targetElement) {
+                targetElement.style.transform = `scale(${currentZoom})`;
+                targetElement.style.transformOrigin = 'top center';
+                targetElement.style.transition = 'transform 0.15s ease-out';
+                logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}%`);
+            }
+        } catch (e) {
+            console.warn("Zoom custom limitato da policy restrittive dell'iframe nativo.");
+        }
+    };
+
+    // Gestori eventi Zoom
+    btnZoomIn.addEventListener('click', () => {
+        currentZoom = Math.min(currentZoom + 0.25, 3.0); // Zoom massimo al 300%
+        applyZoom();
+    });
+
+    btnZoomOut.addEventListener('click', () => {
+        currentZoom = Math.max(currentZoom - 0.25, 0.5); // Zoom minimo al 50%
+        applyZoom();
+    });
+
+    // 🔒 Visore Sandbox CSP con PDF.js, Scroll e Zoom abilitato
     const openInSandbox = async (url, fileName) => {
         try {
+            currentZoom = 1.0; // Reset zoom all'apertura di un nuovo documento
             logToTerminal('vault', `🔒 Isolamento Sandbox CSP Ultra-Restrittivo avviato per: ${fileName || url}`);
             let response = ('caches' in window) ? await caches.match(url) : null;
             if (!response) response = await fetch(url);
@@ -101,16 +132,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
                             body { background:#000; display:flex; justify-content:center; align-items:center; min-height:100vh; overflow:auto; padding:20px; }
+                            #pdf-container { display:flex; justify-content:center; align-items:center; width:100%; height:100%; }
                             img { max-width:100%; height:auto; object-fit:contain; pointer-events:none; -webkit-touch-callout:none; }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
-                        <img src="${activeObjectUrl}" alt="Risorsa Cifrata Protetta" />
+                        <div id="pdf-container">
+                            <img src="${activeObjectUrl}" alt="Risorsa Cifrata Protetta" />
+                        </div>
                     </body>
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // Rendering PDF Universale tramite PDF.js con SCROLL FLUIDO ABILITATO
+                // Rendering PDF Universale tramite PDF.js con SCROLL & ZOOM FLUIDO
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -119,8 +153,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; connect-src blob: data:;">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body, html { width:100%; height:100%; background:#111; overflow-y:auto; overflow-x:hidden; font-family:sans-serif; -webkit-overflow-scrolling: touch; }
-                            #pdf-container { display:flex; flex-direction:column; align-items:center; padding:20px; gap:20px; width:100%; min-height:100%; }
+                            body, html { width:100%; height:100%; background:#111; overflow-y:auto; overflow-x:auto; font-family:sans-serif; -webkit-overflow-scrolling: touch; }
+                            #pdf-container { display:flex; flex-direction:column; align-items:center; padding:20px; gap:20px; width:100%; min-height:100%; transform-origin: top center; }
                             canvas { max-width:100%; height:auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); background:#fff; border-radius:4px; pointer-events:none; -webkit-touch-callout:none; }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
                         </style>
@@ -178,13 +212,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; }
                             body { background:#111; color:#fff; font-family:sans-serif; height:100vh; overflow:auto; padding:20px; }
+                            #pdf-container { width:100%; height:100%; transform-origin: top center; }
                             iframe, object { width:100%; height:100%; border:none; }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
-                        <object data="${activeObjectUrl}" type="${mimeType}">
-                            <p style="color:#aaa; text-align:center;">Impossibile anteporre la risorsa nel visore diretto.</p>
-                        </object>
+                        <div id="pdf-container">
+                            <object data="${activeObjectUrl}" type="${mimeType}">
+                                <p style="color:#aaa; text-align:center;">Impossibile anteporre la risorsa nel visore diretto.</p>
+                            </object>
+                        </div>
                     </body>
                     </html>
                 `;
@@ -199,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxModal.classList.add('active');
             document.body.style.overflow = 'hidden'; 
 
-            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con scroll attivo.`);
+            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con zoom e scroll attivi.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
         }
@@ -226,37 +263,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         scope: '/PWA-Pizza-Engine/SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
 
-    // ⏱️ Timeout personalizzato per il 🐺 Watchdog (es. 4000ms)
-    checkTimeout: 4000,
+        // ⏱️ Timeout personalizzato per il 🐺 Watchdog
+        checkTimeout: 4000,
 
-    // 🎛️ Soglie di quota storage personalizzate
-    quotaLimits: {
-        mobileMin: 1800,
-        mobileMax: 2200,
-        desktopMax: 5000
-    },
-
-    // 🛑 Personalizzazione completa dell'overlay Anti-Incognito (Testi, Colori e Azioni)
-    incognitoBlocker: {
-        Icons: `⚠️ - ❌🕵️`,
-        ID: 'PA_popup_Incognite',
-        title: "Modalità Protetta Richiesta",
-        message: "Il sistema di sicurezza <strong>🪖 PANZER SDK</strong> richiede una sessione di navigazione standard per garantire la persistenza dei documenti della Pubblica Amministrazione.<br><br>Ti invitiamo ad aprire l'applicazione in una <strong>finestra di navigazione normale</strong>.",
-        buttonText: "🔄 Ricarica in modalità normale",
-        buttonAction: () => {
-            // Azione personalizzata eseguita al click del pulsante
-            localStorage.removeItem('pwa_check_point');
-            window.location.reload();
+        // 🎛️ Soglie di quota storage personalizzate
+        quotaLimits: {
+            mobileMin: 1800,
+            mobileMax: 2200,
+            desktopMax: 5000
         },
-        // Palette cromatica personalizzata della modale
-        overlayBg: "rgba(15, 23, 42, 0.98)",
-        cardBg: "#1e293b",
-        borderColor: "#475569",
-        titleColor: "#f87171",
-        textColor: "#cbd5e1",
-        buttonBg: "#2563eb",
-        buttonTextCol: "#ffffff"
-    },
+
+        // 🛑 Personalizzazione completa dell'overlay Anti-Incognito
+        incognitoBlocker: {
+            Icons: `⚠️ - ❌🕵️`,
+            ID: 'PA_popup_Incognite',
+            title: "Modalità Protetta Richiesta",
+            message: "Il sistema di sicurezza <strong>🪖 PANZER SDK</strong> richiede una sessione di navigazione standard per garantire la persistenza dei documenti della Pubblica Amministrazione.<br><br>Ti invitiamo ad aprire l'applicazione in una <strong>finestra di navigazione normale</strong>.",
+            buttonText: "🔄 Ricarica in modalità normale",
+            buttonAction: () => {
+                localStorage.removeItem('pwa_check_point');
+                window.location.reload();
+            },
+            overlayBg: "rgba(15, 23, 42, 0.98)",
+            cardBg: "#1e293b",
+            borderColor: "#475569",
+            titleColor: "#f87171",
+            textColor: "#cbd5e1",
+            buttonBg: "#2563eb",
+            buttonTextCol: "#ffffff"
+        },
         
         onLogMessage: (level, msg) => logToTerminal(level, msg),
         
