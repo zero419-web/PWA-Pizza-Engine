@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="icon.png">
 
     <style>
-        /* 🎨 Stili Grafici della Dashboard PWA */
+        /* 🎨 Stili Grafici della Dashboard PWA & Ottimizzazione Viewport Anti-Overflow */
         :root {
             --bg-color: #0d1117;
             --card-bg: #161b22;
@@ -36,41 +36,81 @@
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.5;
-            padding: 20px;
+            padding: 12px;
+            max-width: 100vw;
+            overflow-x: hidden;
         }
 
-        /* 🖥️ Header Applicativo PA */
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+        }
+
+        /* 🖥️ Header Applicativo PA Responsive */
         .header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 20px;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 15px;
             border-bottom: 1px solid var(--border-color);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding-bottom: 20px;
+                margin-bottom: 25px;
+            }
         }
 
         .header-title h1 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             color: var(--accent-blue);
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .header-title h1 {
+                font-size: 1.5rem;
+            }
         }
 
         .header-title p {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
+        }
+
+        @media (min-width: 768px) {
+            .header-title p {
+                font-size: 0.85rem;
+            }
         }
 
         /* 🏷️ Badge di Stato */
         .badge-status {
             padding: 6px 14px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border: 1px solid transparent;
+            text-align: center;
+            align-self: flex-start;
+        }
+
+        @media (min-width: 768px) {
+            .badge-status {
+                font-size: 0.85rem;
+                align-self: auto;
+            }
         }
 
         .badge-init { background: rgba(210, 153, 34, 0.15); color: var(--accent-orange); border-color: var(--accent-orange); }
@@ -78,18 +118,20 @@
         .badge-sync { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); border-color: var(--accent-blue); }
         .badge-error { background: rgba(218, 54, 51, 0.15); color: var(--accent-red); border-color: var(--accent-red); }
 
-        /* 📐 Grid Layout Responsive */
+        /* 📐 Grid Layout Responsive fluido al 100% */
         .grid-layout {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 15px;
+            width: 100%;
             max-width: 1400px;
             margin: 0 auto;
         }
 
         @media (min-width: 992px) {
             .grid-layout {
-                grid-template-columns: 350px 1fr;
+                grid-template-columns: 340px minmax(0, 1fr);
+                gap: 20px;
             }
         }
 
@@ -97,21 +139,39 @@
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        @media (min-width: 768px) {
+            .card {
+                padding: 20px;
+                gap: 15px;
+            }
         }
 
         .card-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             color: var(--text-main);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+            padding-bottom: 8px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (min-width: 768px) {
+            .card-title {
+                font-size: 1.1rem;
+                padding-bottom: 10px;
+            }
         }
 
         .btn {
@@ -122,13 +182,22 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             text-decoration: none;
+            width: 100%;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .btn {
+                font-size: 0.9rem;
+                width: auto;
+            }
         }
 
         .btn:hover {
@@ -142,7 +211,7 @@
         .btn-danger { background-color: #da3633; color: #fff; border-color: #f85149; }
         .btn-danger:hover { background-color: #b62324; }
 
-        .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+        .btn-sm { padding: 4px 8px; font-size: 0.75rem; width: auto; }
 
         .progress-container {
             display: flex;
@@ -165,26 +234,50 @@
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 8px;
+        }
+
+        @media (min-width: 480px) {
+            .metrics-grid {
+                gap: 10px;
+            }
         }
 
         .metric-card {
             background: #0d1117;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
             text-align: center;
         }
 
+        @media (min-width: 768px) {
+            .metric-card {
+                padding: 12px;
+            }
+        }
+
         .metric-card .value {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--accent-blue);
         }
 
+        @media (min-width: 768px) {
+            .metric-card .value {
+                font-size: 1.4rem;
+            }
+        }
+
         .metric-card .label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
+        }
+
+        @media (min-width: 768px) {
+            .metric-card .label {
+                font-size: 0.75rem;
+            }
         }
 
         /* 💻 Terminale Diagnostico */
@@ -192,14 +285,24 @@
             background-color: var(--term-bg);
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            height: 380px;
+            height: 280px;
             overflow-y: auto;
-            padding: 12px;
+            padding: 10px;
             font-family: var(--font-mono);
-            font-size: 0.82rem;
+            font-size: 0.75rem;
             display: flex;
             flex-direction: column;
             gap: 4px;
+            width: 100%;
+            word-break: break-all;
+        }
+
+        @media (min-width: 768px) {
+            .terminal-container {
+                height: 380px;
+                padding: 12px;
+                font-size: 0.82rem;
+            }
         }
 
         .terminal-line { word-break: break-all; }
@@ -210,17 +313,39 @@
         .log-sync { color: #58a6ff; }
         .log-vault { color: #d2a8ff; }
 
-        /* 📂 Tabella Ispezione Stiva */
+        /* 📂 Tabella Ispezione Stiva Contenuta e Scrollabile localmente */
+        .table-responsive-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
         .storage-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 768px) {
+            .storage-table {
+                font-size: 0.85rem;
+                white-space: normal;
+            }
         }
 
         .storage-table th, .storage-table td {
-            padding: 8px 12px;
+            padding: 8px 10px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 768px) {
+            .storage-table th, .storage-table td {
+                padding: 8px 12px;
+            }
         }
 
         .storage-table th {
@@ -238,7 +363,7 @@
             font-size: 0.85rem;
         }
 
-        /* 🔒 MODAL SANDBOX CSP REAL FULLSCREEN (100dvh x 100vw) CON SCROLL ABILITATO */
+        /* 🔒 MODAL SANDBOX CSP REAL FULLSCREEN (100dvh x 100vw) CON ZOOM & SCROLL ABILITATO */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -276,7 +401,7 @@
             width: 100%;
             height: calc(100% - 50px);
             background: #111;
-            overflow: auto; /* Permette lo scorrimento fluido del contenuto */
+            overflow: auto;
         }
 
         .modal-body-wrapper iframe {
@@ -295,7 +420,7 @@
 
     <header class="header">
         <div class="header-title">
-            <h1>🌀🪖 Beta SDK v1.0 PA <span style="font-size: 0.9rem; color: var(--accent-purple);">[ Bunker Mode 🛡️📦 ]</span></h1>
+            <h1>🌀🪖 Beta SDK v1.0 PA <span style="font-size: 0.85rem; color: var(--accent-purple);">[ Bunker Mode 🛡️📦 ]</span></h1>
             <p>Comune Generico - Console Sincronizzazione Atti, Modulistica e Stiva Cifrata Locale</p>
         </div>
         <div id="PA-status-badge" class="badge-status badge-init">⚡ Inizializzazione...</div>
@@ -303,7 +428,7 @@
 
     <div class="grid-layout">
         
-        <aside style="display: flex; flex-direction: column; gap: 20px;">
+        <aside style="display: flex; flex-direction: column; gap: 15px; min-width: 0;">
             <div class="card">
                 <div class="card-title">
                     <span>🎮 Comandi Stiva PA</span>
@@ -348,7 +473,7 @@
             </div>
         </aside>
 
-        <main style="display: flex; flex-direction: column; gap: 20px;">
+        <main style="display: flex; flex-direction: column; gap: 15px; min-width: 0;">
             
             <div class="card">
                 <div class="card-title">
@@ -366,15 +491,15 @@
                     <button id="PA-btn-refresh-storage" class="btn btn-sm">🔄 Aggiorna Registro</button>
                 </div>
                 
-                <div style="display: flex; gap: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-                    <input type="text" id="PA-storage-search" class="search-input" style="flex: 1; min-width: 250px;" placeholder="Filtra atti per nome, tipo o categoria (es. .pdf, delibere, modulistica)...">
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); white-space: nowrap; user-select: none;">
+                <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%;">
+                    <input type="text" id="PA-storage-search" class="search-input" style="flex: 1; min-width: 220px;" placeholder="Filtra atti per nome, tipo o categoria...">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: var(--text-muted); white-space: nowrap; user-select: none;">
                         <input type="checkbox" id="PA-toggle-core-assets" checked style="cursor: pointer; accent-color: var(--accent-blue);">
-                        <span>⚙️ Mostra File Core (System)</span>
+                        <span>⚙️ Mostra File Core</span>
                     </label>
                 </div>
 
-                <div style="overflow-x: auto;">
+                <div class="table-responsive-wrapper">
                     <table class="storage-table">
                         <thead>
                             <tr>
@@ -382,7 +507,7 @@
                                 <th>Tipo / MIME</th>
                                 <th>Dimensione</th>
                                 <th>Storage Cache</th>
-                                <th style="min-width: 220px;">Azione / Visualizzazione</th>
+                                <th style="min-width: 200px;">Azione / Visualizzazione</th>
                             </tr>
                         </thead>
                         <tbody id="PA-storage-tbody">
@@ -400,12 +525,16 @@
 
     <div id="PA-sandbox-modal" class="modal-overlay">
         <div class="modal-header">
-            <span id="PA-sandbox-title" style="font-weight: 600; color: var(--accent-purple); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70vw;">
+            <span id="PA-sandbox-title" style="font-weight: 600; color: var(--accent-purple); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45vw;">
                 🔒 Visore Documento Sensibile <br> ( Read-Only Restrittivo ❌👁️ )
             </span>
-            <button id="PA-btn-close-sandbox" class="btn btn-sm btn-danger" style="padding: 6px 14px; font-size: 0.85rem; flex-shrink: 0;">❌ Chiudi</button>
+            <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+                <button id="PA-btn-zoom-out" class="btn btn-sm" title="Rimpicciolisci" style="padding: 6px 10px; font-size: 0.8rem;">🔍-</button>
+                <button id="PA-btn-zoom-in" class="btn btn-sm" title="Ingrandisci" style="padding: 6px 10px; font-size: 0.8rem;">🔍+</button>
+                <button id="PA-btn-close-sandbox" class="btn btn-sm btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">❌ Chiudi</button>
+            </div>
         </div>
-        <div class="modal-body-wrapper">
+        <div class="modal-body-wrapper" id="PA-modal-body-wrapper">
             <iframe id="PA-sandbox-frame" title="Isolamento CSP Documento Read-Only"></iframe>
         </div>
     </div>
