@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.4
+ * v1.5
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -75,19 +75,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = `badge-status ${badgeClass}`;
     };
 
-    // 🔍 Funzione per applicare lo zoom all'interno dell'iframe sandbox
+    // 🔍 Funzione per applicare lo zoom dinamico con supporto scroll orizzontale e verticale
     const applyZoom = () => {
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
-            const targetElement = iframeDoc.getElementById('pdf-container') || iframeDoc.body;
-            if (targetElement) {
-                targetElement.style.transform = `scale(${currentZoom})`;
-                targetElement.style.transformOrigin = 'top center';
-                targetElement.style.transition = 'transform 0.15s ease-out';
-                logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}%`);
+            
+            // Gestione zoom per PDF (Canvas)
+            const canvases = iframeDoc.querySelectorAll('canvas');
+            if (canvases.length > 0) {
+                canvases.forEach(canvas => {
+                    const baseW = parseFloat(canvas.dataset.baseWidth);
+                    const baseH = parseFloat(canvas.dataset.baseHeight);
+                    if (baseW && baseH) {
+                        canvas.style.width = (baseW * currentZoom) + 'px';
+                        canvas.style.height = (baseH * currentZoom) + 'px';
+                    }
+                });
             }
+
+            // Gestione zoom per Immagini
+            const img = iframeDoc.querySelector('img');
+            if (img) {
+                if (!img.dataset.naturalWidth && img.naturalWidth) {
+                    img.dataset.naturalWidth = img.naturalWidth;
+                    img.dataset.naturalHeight = img.naturalHeight;
+                }
+                const natW = parseFloat(img.dataset.naturalWidth);
+                if (natW) {
+                    img.style.width = (natW * currentZoom) + 'px';
+                    img.style.maxWidth = 'none';
+                    img.style.height = 'auto';
+                }
+            }
+
+            logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}% (Scroll Orizzontale e Verticale attivo)`);
         } catch (e) {
-            console.warn("Zoom custom limitato da policy restrittive dell'iframe nativo.");
+            console.warn("Zoom custom limitato da policy restrittive dell'iframe nativo.", e);
         }
     };
 
@@ -102,10 +125,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox CSP con PDF.js, Scroll e Zoom abilitato
+    // 🔒 Visore Sandbox CSP con PDF.js, Scroll Orizzontale/Verticale & Zoom
     const openInSandbox = async (url, fileName) => {
         try {
-            currentZoom = 1.0; // Reset zoom all'apertura di un nuovo documento
+            currentZoom = 1.0; // Reset zoom all'apertura
             logToTerminal('vault', `🔒 Isolamento Sandbox CSP Ultra-Restrittivo avviato per: ${fileName || url}`);
             let response = ('caches' in window) ? await caches.match(url) : null;
             if (!response) response = await fetch(url);
@@ -122,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let renderedContentHtml = '';
 
             if (mimeType.startsWith('image/')) {
-                // Rendering Immagine Protetta con Scroll
+                // Rendering Immagine Protetta con Scroll Orizzontale/Verticale
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -131,20 +154,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; style-src 'unsafe-inline';">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body { background:#000; display:flex; justify-content:center; align-items:center; min-height:100vh; overflow:auto; padding:20px; }
-                            #pdf-container { display:flex; justify-content:center; align-items:center; width:100%; height:100%; }
-                            img { max-width:100%; height:auto; object-fit:contain; pointer-events:none; -webkit-touch-callout:none; }
+                            body, html { width:100%; height:100%; background:#000; overflow:auto; -webkit-overflow-scrolling: touch; }
+                            #img-container { display:flex; justify-content:center; align-items:center; min-width:100%; min-height:100%; padding:20px; }
+                            img { max-width:100%; height:auto; object-fit:contain; pointer-events:none; -webkit-touch-callout:none; flex-shrink: 0; }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
-                        <div id="pdf-container">
-                            <img src="${activeObjectUrl}" alt="Risorsa Cifrata Protetta" />
+                        <div id="img-container">
+                            <img src="${activeObjectUrl}" alt="Risorsa Cifrata Protetta" onload="this.dataset.naturalWidth=this.naturalWidth; this.dataset.naturalHeight=this.naturalHeight; this.style.width=this.naturalWidth+'px';" />
                         </div>
                     </body>
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // Rendering PDF Universale tramite PDF.js con SCROLL & ZOOM FLUIDO
+                // Rendering PDF Universale tramite PDF.js con Scroll Orizzontale e Verticale Fluido
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -153,9 +176,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; connect-src blob: data:;">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body, html { width:100%; height:100%; background:#111; overflow-y:auto; overflow-x:auto; font-family:sans-serif; -webkit-overflow-scrolling: touch; }
-                            #pdf-container { display:flex; flex-direction:column; align-items:center; padding:20px; gap:20px; width:100%; min-height:100%; transform-origin: top center; }
-                            canvas { max-width:100%; height:auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); background:#fff; border-radius:4px; pointer-events:none; -webkit-touch-callout:none; }
+                            body, html { width:100%; height:100%; background:#111; overflow:auto; font-family:sans-serif; -webkit-overflow-scrolling: touch; }
+                            #pdf-container { display:flex; flex-direction:column; align-items:center; padding:20px; gap:20px; min-width:100%; min-height:100%; }
+                            canvas { max-width:none; height:auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); background:#fff; border-radius:4px; pointer-events:none; -webkit-touch-callout:none; flex-shrink: 0; }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
                         </style>
                         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
@@ -184,6 +207,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                        canvas.height = viewport.height;
                                        canvas.width = viewport.width;
 
+                                       // Memorizziamo le dimensioni base per permettere lo zoom con scroll orizzontale e verticale
+                                       canvas.dataset.baseWidth = viewport.width;
+                                       canvas.dataset.baseHeight = viewport.height;
+                                       canvas.style.width = viewport.width + 'px';
+                                       canvas.style.height = viewport.height + 'px';
+
                                        container.appendChild(canvas);
 
                                        await page.render({
@@ -211,9 +240,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; frame-src blob:; object-src blob:;">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; }
-                            body { background:#111; color:#fff; font-family:sans-serif; height:100vh; overflow:auto; padding:20px; }
-                            #pdf-container { width:100%; height:100%; transform-origin: top center; }
-                            iframe, object { width:100%; height:100%; border:none; }
+                            body, html { width:100%; height:100%; background:#111; overflow:auto; -webkit-overflow-scrolling: touch; }
+                            #pdf-container { width:100%; height:100%; min-width:100%; min-height:100%; display:flex; justify-content:center; align-items:center; padding:20px; }
+                            iframe, object { width:100%; height:100%; border:none; flex-shrink: 0; }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
@@ -236,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxModal.classList.add('active');
             document.body.style.overflow = 'hidden'; 
 
-            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con zoom e scroll attivi.`);
+            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente nel visore fullscreen con supporto scroll orizzontale e verticale.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
         }
@@ -275,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 🛑 Personalizzazione completa dell'overlay Anti-Incognito
         incognitoBlocker: {
-            Icons: `⚠️ - ❌🕵️`,
+            Icons: `⚠️ ❌🕵️`,
             ID: 'PA_popup_Incognite',
             title: "Modalità Protetta Richiesta",
             message: "Il sistema di sicurezza <strong>🪖 PANZER SDK</strong> richiede una sessione di navigazione standard per garantire la persistenza dei documenti della Pubblica Amministrazione.<br><br>Ti invitiamo ad aprire l'applicazione in una <strong>finestra di navigazione normale</strong>.",
