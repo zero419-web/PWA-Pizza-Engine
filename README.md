@@ -9,11 +9,17 @@
 > 
 > 📦 **FrameWork Panzer <br> SDK BETA v1.0 :**
 > 
-> - 🏗️ **SDK** <br> ( *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'SDK aggiornata con il **🐺 Watchdog Anti-Incognito ❌🕵️**, le soglie di quota dinamiche e il timeout adattivo.
+> - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'**SDK aggiornata con:**
+>    - **🐺 Watchdog Anti-Incognito ❌🕵️**, le soglie di quota dinamiche e il timeout adattivo.
 > 
-> - 📊 **Dashboard PoC per la PA** <br> Un esempio pratico di dashboard sviluppata per la Pubblica Amministrazione orientata alla consultazione sicura in modalità "Bunker".
+> - **📊 Dashboard :**  
+> **🌀 PoC per la PA 🏛️** <br> Un esempio pratico di dashboard sviluppata per la Pubblica Amministrazione orientata alla consultazione sicura in modalità `🛡️ Bunker`.
+>    - **📄 File:** <br>
+> `index.html, app.js, PA_PWA.webmanifest, Res-PA-manifest.json, icon.png`.
+>    - **📂 Dir Resouces del comune:** `RES_DATAS`.
 > 
-> - 📄 **Framework Core Panzer v7.6+** <br> All'interno è presente il file `ServiceWorker.js` ⚙️🪖 per la gestione della stiva resiliente e della cache cifrata.
+> - ⚙️📜 **Framework Core Panzer v7.6+**
+>    - **📄 File:** <br> `ServiceWorker.js ⚙️🪖` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
 >
 > 👁️‍🗨️ [**DEMO on-line**](https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/)
 > 
