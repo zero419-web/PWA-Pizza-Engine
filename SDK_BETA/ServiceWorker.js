@@ -1,7 +1,7 @@
 /*
  * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ
  *
- * ⚙️ CORE: 🪖 PANZER v7.6+
+ * ⚙️ CORE: 🪖 PANZER v7.7+
  *
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA
@@ -15,7 +15,7 @@
  * 3. 🩻🪨 RESILIENZA STRUTTURALE:
  * Meccanismo Smart Sync con campionamento RTT e interruzione atomica via AbortController.
  *
- * 4. 🔬🧬 SW FORENSICS (DNA CHECK):
+ * 4. 🪨🔬🧬 SW FORENSICS (DNA CHECK):
  * Ispezione biometrica sequenziale del payload su tre (3) scomparti stagni:
  * - FASE 1 (TESTA 🤯): Validazione Strict dei Magic Numbers contro attacchi di MIME-sniffing.
  * - FASE 2 (CODA 🚓🚓🚓): Verifica dei marcatori strutturali (Footer 👣) contro attacchi di tipo Append.
@@ -57,8 +57,6 @@ let encryptionKey = null;
  let syncAbortController = null;
 const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, '/');
 
-
-
 /**
  * 📊 CONFIGURAZIONE GLOBALE (Dizionario dei Vincoli Operativi)
  * Definisce i parametri strutturali per la resilienza di rete, crittografia e tolleranza ai guasti.
@@ -67,8 +65,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.6',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.6',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.7',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.7',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
     userCacheTTL: 7,
     networkResilient: {
@@ -336,16 +334,13 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         return result;
     }
 
-    const mainType = finalContentType.split('/')[0];
-    const subType = finalContentType.split('/')[1]?.split(';')[0] || '';
+    const mainType = finalContentType.split('/')[0]?.toLowerCase() || '';
+    const subType = finalContentType.split('/')[1]?.split(';')[0]?.toLowerCase() || '';
     const section = CONFIG.minSizeMap[mainType] || CONFIG.minSizeMap['code'] || null;
 
     const isTransformed = encoding !== null && encoding !== 'identity';
     let minSize = CONFIG.minSizeMap.universal.minAbsoluteByte;
     if (section) {
-		// 🔐 HARDENING OPERATIVO: Protezione dell'oggetto di configurazione interna.
-		Object.freeze(section);
-
         const tolerance = section.tolerance || CONFIG.minSizeMap.universal.tolerance;
         const baseMin = section[subType] || section.defaultMin || section.default || 0;
         minSize = (expectedSize > 0) ? (expectedSize * (1 - tolerance)) : baseMin;
@@ -362,37 +357,46 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     let tailBuffer = null;
     let fullBuffer = null;
 
-    // --- 🛡️ FASE 1: ANALISI DEI MAGIC NUMBERS DI TESTA (HEADER) ---
-    if (!isEncrypted && !isTransformed && section && section.magicNumbers?.header?.length > 0) {
-        try {
-            if (signal?.aborted) return result;
-            headerBuffer = await blob.slice(0, 12).arrayBuffer();
+    // 🧼 Funzione ausiliaria per la bonifica sicura della RAM
+    const wipeRAM = () => {
+        if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+        if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+        if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+    };
+
+    try {
+        // --- 🛡️ FASE 1: ANALISI DEI MAGIC NUMBERS DI TESTA (HEADER) ---
+        if (!isEncrypted && !isTransformed && section && section.magicNumbers?.header?.length > 0) {
+            if (signal?.aborted) {
+                wipeRAM();
+                return result;
+            }
+
+            // Ampliata la finestra di lettura a 512 byte per SVG/XML per superare eventuali prologhi
+            const isSvg = subType === 'svg' || finalContentType.includes('svg');
+            const headerSliceSize = isSvg ? Math.min(blob.size, 512) : Math.min(blob.size, 12);
+
+            headerBuffer = await blob.slice(0, headerSliceSize).arrayBuffer();
             let headerHex = Array.from(new Uint8Array(headerBuffer))
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('').toUpperCase();
+
             const hasValidSig = section.magicNumbers.header.some(sig => headerHex.includes(sig.toUpperCase()));
             if (!hasValidSig) {
                 if (!(subType === 'webp' && headerHex.startsWith('52494646') && headerHex.includes('57454250'))) {
                     // 🪝🛡️⏱️ INNESTO:
                     await injectTimingNoise(startForensicTime, 50);
                     console.log(`🛡️ SW Security: Firma [ TESTA ] fallita per ${finalContentType}.\nDNA  🧬: ${headerHex}`);
-                    if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+                    wipeRAM();
                     return result;
                 }
             }
-        } catch (e) {
-            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-            // 🪝🛡️⏱️ INNESTO:
-            await injectTimingNoise(startForensicTime, 50);
-            return result;
         }
-    }
 
-    // --- 🛡️ FASE 2: ANALISI DEI MARCATORI DI CODA (FOOTER) ---
-    if (!isEncrypted && !isTransformed && section && section.magicNumbers?.footer?.length > 0) {
-        try {
+        // --- 🛡️ FASE 2: ANALISI DEI MARCATORI DI CODA (FOOTER) ---
+        if (!isEncrypted && !isTransformed && section && section.magicNumbers?.footer?.length > 0) {
             if (signal?.aborted) {
-                if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
+                wipeRAM();
                 return result;
             }
             const fetchSize = Math.min(blob.size, 128);
@@ -404,30 +408,20 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             const hasValidFooter = section.magicNumbers.footer.some(foot => tailHex.includes(foot.toUpperCase()));
             if (!hasValidFooter) {
                 console.log(`🛡️ SW Security: Firma [ CODA ] fallita o corrotta per ${finalContentType}.\n👣 TAIL DNA 🧬: ${tailHex}`);
-                if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-                if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+                wipeRAM();
                 return result;
             }
-        } catch (e) {
-             // 🪝🛡️⏱️ INNESTO:
-            await injectTimingNoise(startForensicTime, 50);
-            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-            if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
-            return result;
         }
-    }
 
-    // --- 🛡️ FASE 3: ANALISI EURISTICA ANTI-SCRIPT (SPECIFICA PER PDF) ---
-	const isPdf = mainType.toLowerCase().includes('pdf');
-	if (!isEncrypted && !isTransformed && isPdf && section?.pdfMaliciousPatterns) {
-        try {
+        // --- 🛡️ FASE 3: ANALISI EURISTICA ANTI-SCRIPT (SPECIFICA PER PDF) ---
+        const isPdf = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf');
+        if (!isEncrypted && !isTransformed && isPdf && section?.pdfMaliciousPatterns) {
             if (signal?.aborted) {
-                if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-                if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+                wipeRAM();
                 return result;
             }
 
-            // 🔐 HARDENING OPERATIVO:
+            // 🪨 HARDENING OPERATIVO:
             const localPatterns = [...(section.pdfMaliciousPatterns || [])];
             Object.freeze(localPatterns);
 
@@ -437,55 +431,42 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             }
 
             fullBuffer = await blob.arrayBuffer();
-            const pdfTextContent = new TextDecoder('utf-8').decode(new Uint8Array(fullBuffer));
+            let pdfTextContent = new TextDecoder('utf-8').decode(new Uint8Array(fullBuffer));
+
+            // 🧯 Sanitizzazione sequenze esadecimali obfuscate (es. /Java#53cript -> /JavaScript)
+            pdfTextContent = pdfTextContent.replace(/#([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
 
             for (const pattern of localPatterns) {
                 if (pdfTextContent.includes(pattern)) {
                     // 🪝🛡️⏱️ INNESTO:
                     await injectTimingNoise(startForensicTime, 50);
                     console.log(`🛡️ SW Security: Blocco [ CORPO ] per ${finalContentType}.\n DNA 🧬: Vettore Malevolo Rilevato -> ${pattern}\n 📄🚨 Il [ PDF ] e Rigettato d'ufficio !`);
-                    if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-                    if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
-                    if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+                    wipeRAM();
                     return result;
                 }
             }
-        } catch (e) {
-            // 🪝🛡️⏱️ INNESTO:
-            await injectTimingNoise(startForensicTime, 50);
-            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-            if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
-            if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
-            return result;
         }
-    }
 
-    // Controllo finale di integrità di lettura strutturale del blob originale
-    try {
+        // 🔎✅  Controllo finale di integrità di lettura strutturale del blob originale
         if (signal?.aborted) {
-            if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-            if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
-            if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+            wipeRAM();
             return result;
         }
         await blob.slice(-5).arrayBuffer();
+
     } catch (e) {
         // 🪝🛡️⏱️ INNESTO:
         await injectTimingNoise(startForensicTime, 50);
-        if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-        if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
-        if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+        wipeRAM();
         return result;
     }
 
-    // 🧼 BONIFICA DELLA RAM
-    if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-    if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
-    if (fullBuffer) new Uint8Array(fullBuffer).fill(0);
+    // 🧼 BONIFICA FINALE DELLA RAM
+    wipeRAM();
 
     result.valid = true;
     result.blob = blob;
-    // 🔐 HARDENING ESITO:
+    // 🪨 HARDENING ESITO:
     Object.freeze(result);
     return result;
 };
