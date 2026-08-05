@@ -1,6 +1,6 @@
 ![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.0-1f4e79)
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_X_PA-af0000)
-![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.6+-4f4f00)
+![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.7+-4f4f00)
 
 > [!Important]
 >   - 🔃 **Last Update :** `v1.5`
@@ -18,7 +18,7 @@
 > `index.html, app.js, PA_PWA.webmanifest, Res-PA-manifest.json, icon.png`.
 >    - **📂 Dir Resouces del comune:** `RES_DATAS`.
 > 
-> - ⚙️📜 **Framework Core Panzer v7.6+**
+> - ⚙️📜 **Framework Core Panzer v7.7+**
 >    - **📄 File:** <br> `ServiceWorker.js ⚙️🪖` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
 >
 > 👁️‍🗨️ [**DEMO on-line**](https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/)
@@ -37,16 +37,24 @@
 ## 🚀 Obiettivi del Progetto :<br>
 - ⚙️ Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata ( Lie-Fi ), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
-## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.6+ )
+## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.7+ )
 🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
+
+  - **🪖 NOVITÀ v7.7+ :** <br> 🔬🧬 SW Forensics ( DNA Check & Binary Validation )
+Sintesi delle novità di hardening 🪨 implementate in isValidBlob: <br>
+🤯 **Testa ( Header 512 Byte ) :** <br> Analisi dei primi 512 byte del file per la verifica stringente dei Magic Bytes reali, bloccando sul nascere lo spoofing del MIME-type e le estensioni camuffate. <br>
+👣 **Coda ( Tail Check ) :** <br> Test di lettura a basso livello sul terminatore finale via `blob.slice(-5).arrayBuffer()` per escludere troncamenti, file corrotti o stream incompleti. <br>
+🪵 **Corpo & Anti-PDF Obfuscation ( ❌📜 ) :** Scansione dei payload PDF con supporto alla decodifica di tecniche di offuscamento (stringhe esadecimali/ottali, annotazioni annidate, flussi encodati) ed eradicazione di vettori malevoli (/JS, /JavaScript, /OpenAction, /Launch). <br>
+**✅ Risultato :** <br> Neutralizza il Cache Poisoning ☠️, azzera i crash silenziosi del Service Worker dovuti a eccezioni di lettura e forza l'azzeramento della memoria di lavoro ( *wipeRAM()* ) in caso di fallimento o abort dell'operazione.
+
   - **🪖 NOVITÀ v7.6+ :** <br> Integrazione di protocolli <br> **🏴‍☠️ Anti-Profiling :** <br>Ogni punto di errore è stato convertito in un " 🕳️ *Black Hole* " informativo; la **sterilizzazione degli stack trace e l'iniezione di rumore temporale 💉⏱️** previene attacchi di tipo *side-channel* e la profilazione del **🏴‍☠️🔴 Red Team.**
 
 - **🔄🌐🛡️🔗 Dynamic Adaptive Network Resiliency :** <br> Algoritmo proprietario che adatta dinamicamente i timeout di rete basandosi su 5 profili telemetrici hardware di velocità della connessione.
 
 - **🌐➡️💾 Network-First Predittivo con Cache Fallback :** <br> Intercettazione condizionale degli eventi di fetch con abort atomico delle richieste in caso di latenza degradata e rilascio immediato della risorsa cifrata locale.
-  
+
 - **🔬🧬 SW Forensics ( DNA Check & Binary Validation ) :** <br> Controllo biometrico sequenziale ( 🤯 Testa, 👣 Coda, 🪵 Corpo ) per prevenire attacchi di ☠️ *Cache Poisoning* ed eradicare vettori malevoli ( Anti-PDF Scripting ❌📜 ).
 
 - **🛡️📴 Offline Bunker Mode & Emergency Wipe :** <br> In caso di violazione rilevata, il Panzer attiva contromisure distruttive ( *Tabula Rasa* ☢️ ): pialla il `Cache Storage` e il database locale ( `indexedDB.deleteDatabase` ), isolando il sistema per proteggere il dato sensibile.
