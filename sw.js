@@ -447,7 +447,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             }
         }
 
-        ✅ // Controllo finale di integrità di lettura strutturale del blob originale
+        // 🔎✅ Controllo finale di integrità di lettura strutturale del blob originale
         if (signal?.aborted) {
             wipeRAM();
             return result;
