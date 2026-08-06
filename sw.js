@@ -376,8 +376,8 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
 Object.freeze(waitTillIdle);
 
 /**
- * 🔬🧬 SW Forensics & DNA Check - v3.0
- *      ( 🪨 Hardened 🪖 v7.9+ ).
+ * 🔬🧬 SW Forensics & DNA Check 
+ *      ( 🪨 Hardened 🪖 v7.12+ - Full Input Cloning ).
  * 
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
@@ -429,8 +429,14 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 await injectTimingNoise(startForensicTime, 50);
                 return result;
             }
+        } else if (input instanceof Blob) {
+            if (signal?.aborted) return result;
+            finalContentType = contentType || input.type || '';
+            // 🛡️ FIX: Clonazione/Isolamento del Blob in ingresso tramite slice(0)
+            blob = input.slice(0, input.size, finalContentType);
         } else {
-            blob = input;
+            await injectTimingNoise(startForensicTime, 50);
+            return result;
         }
 
         if (!blob || !(blob instanceof Blob)) {
@@ -693,7 +699,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
         if (signal?.aborted) return result;
 
-        // 🛡️ COSTRUZIONE RISULTATO SICURO (Blob + Response pulita incorporata)
+        // 🛡️ COSTRUZIONE RISULTATO SICURO
+        //  (Blob + Response pulita incorporata)
         result.valid = true;
         result.blob = blob;
         result.response = originalResponse ? new Response(blob, {
