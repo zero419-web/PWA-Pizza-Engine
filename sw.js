@@ -374,8 +374,8 @@ Object.freeze(waitTillIdle);
  * 🔬🧬 SW Forensics & DNA Check 
  *      ( 🪨 Hardened 🪖 v7.9+ ).
  * 
- * Sfrutta dinamicamente CONFIG.pdf, Magic Numbers e supportedSignatures per la validazione
- * di PDF nativi, PAdES e wrapper CAdES (.p7m).
+ * Sfrutta dinamicamente CONFIG.minSizeMap, Magic Numbers e supportedSignatures per la validazione
+ * di PDF nativi, PAdES, wrapper CAdES (.p7m), Immagini e Asset Code/JSON.
  * 
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
@@ -437,16 +437,23 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         const mainType = finalContentType.split('/')[0]?.toLowerCase() || '';
         const subType = finalContentType.split('/')[1]?.split(';')[0]?.toLowerCase() || '';
         const minMap = CONFIG?.minSizeMap || {};
-        const pdfConfig = CONFIG?.pdf || minMap?.pdf || {};
+        const pdfConfig = minMap?.pdf || {};
         const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05 };
         
-        const section = minMap[mainType] || minMap[subType] || minMap['code'] || pdfConfig || null;
+        // Rilevamento accurato del contesto PDF / CAdES / P7M per evitare misclassificazioni sugli asset
+        const isPdfContext = subType === 'pdf' || subType.includes('pkcs7') || subType.includes('p7m') || 
+                             finalContentType.toLowerCase().includes('pdf') || 
+                             finalContentType.toLowerCase().includes('pkcs7') || 
+                             finalContentType.toLowerCase().includes('p7m');
+
+        // Risoluzione sicura della sezione basata sul tipo di asset (gestisce correttamente JSON, immagini, codice e PDF)
+        const section = isPdfContext ? pdfConfig : (minMap[mainType] || minMap[subType] || minMap['code'] || universal);
         const isTransformed = encoding !== null && encoding !== 'identity';
         
-        let minSize = pdfConfig.defaultMin || 2048; 
+        let minSize = section?.defaultMin || pdfConfig.defaultMin || 2048; 
         if (section) {
             const tolerance = section.tolerance || universal.tolerance || 0.1;
-            const baseMin = section[subType] || section.defaultMin || section.default || pdfConfig.defaultMin || 2048;
+            const baseMin = section[subType] || section.defaultMin || section.default || 2048;
             minSize = (expectedSize > 0) ? (expectedSize * (1 - tolerance)) : baseMin;
         }
         if (isEncrypted || isTransformed) minSize = universal.minAbsoluteByte || 64;
@@ -463,7 +470,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         if (!isEncrypted && !isTransformed) {
             const isSvg = subType === 'svg' || finalContentType.includes('svg');
             const isRasterImage = ['image/png', 'image/webp', 'image/jpeg'].some(t => finalContentType.includes(t)) || ['png', 'webp', 'jpg', 'jpeg'].includes(subType);
-            const isPdfContext = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf') || finalContentType.toLowerCase().includes('pkcs7') || finalContentType.toLowerCase().includes('p7m');
 
             // 1.1 Sanitizzazione XML/SVG
             if (isSvg) {
@@ -573,9 +579,12 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 }
             });
 
-            // Nota: Se il file è un .p7m (CAdES puro) incapsulato senza marcatore %%EOF esterno immediato, 
-            // la validazione header CAdES (fase 1) garantisce già la conformità del wrapper crittografico.
-            const isCadesWrapper = headerText.includes('smime.p7m') || headerHex.startsWith('3082') || headerHex.startsWith('3081');
+            // Verifica compatibilità wrapper CAdES (.p7m)
+            const headerBytesCheck = headerBuffer ? new Uint8Array(headerBuffer) : new Uint8Array(0);
+            const headerTextCheck = new TextDecoder('latin1', { fatal: false }).decode(headerBytesCheck);
+            const headerHexCheck = Array.from(headerBytesCheck).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+            const isCadesWrapper = headerTextCheck.includes('smime.p7m') || headerHexCheck.startsWith('3082') || headerHexCheck.startsWith('3081');
+
             if (!hasValidFooter && !isCadesWrapper) {
                 await injectTimingNoise(startForensicTime, 50);
                 console.warn("⚠️ SW Security: Firma footer fallita", createCleanError("FooterCheckFailed", "Mismatch marcatore di coda %%EOF o struttura di chiusura"));
@@ -584,11 +593,10 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         }
 
         // 🛡️ FASE 3: ANALISI PROFONDA PDF:
-        const isPdfOnly = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf');
-        if (!isEncrypted && !isTransformed && isPdfOnly) {
+        if (!isEncrypted && !isTransformed && isPdfContext) {
             if (signal?.aborted) return result;
 
-            const configPdfPatterns = (pdfConfig.pdfMaliciousPatterns || minMap.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
+            const configPdfPatterns = (pdfConfig.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
 
             if (typeof waitTillIdle === 'function') {
                 await waitTillIdle(200, 8000);
