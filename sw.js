@@ -68,7 +68,7 @@ const CONFIG = {
         cacheName:      'PWA_PIZZA_ENGINE_v7.8',
     userCacheName: 'user_PWA_PIZZA_ENGINE_v7.8',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
-	MAX_PATH_LENGTH: 200,
+	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: ['http:', 'https:'],
     ALLOWED_METHODS: ['GET', 'HEAD', 'POST'],
     ALLOWED_IPC_TYPES: ['SKIP_WAITING', 'CLEAN_CACHE', 'PING', 'INIT_DB'],
@@ -968,7 +968,7 @@ Object.freeze(checkRealOnline);
 let isNewInstallation = false;
 let isSyncing = false;
 self.addEventListener('message', (event) => {
-      // 🛡️ ORIGIN GUARD: Rifiuta messaggi originati esternamente al dominio del Service Worker
+    // 🛡️ ORIGIN GUARD: Rifiuta messaggi originati esternamente al dominio del Service Worker
     if (event.origin !== self.origin) return;
 
     // 🔍 PAYLOAD VALIDATION: Verifica struttura, tipo e presenza nei comandi autorizzati
@@ -988,26 +988,28 @@ self.addEventListener('message', (event) => {
             case 'PING':
                 // 📡 Handshake e diagnosi dello stato operativo
                 if (event.ports && event.ports[0]) {
-                    event.ports[0].postMessage({ status: 'PONG', version: CONFIG.VERSION });
+                    event.ports[0].postMessage({ status: 'PONG', version: CONFIG.VERSION || '1.0.0' });
                 }
                 break;
             case 'INIT_DB':
-            event.waitUntil(
-                (async () => {
-                    try {
-                        // Logica di inizializzazione DB e sincronizzazione
-                        if (event.ports && event.ports[0]) {
-                            event.ports[0].postMessage({ type: 'INIT_DB_SUCCESS' });
+                event.waitUntil(
+                    (async () => {
+                        try {
+                            // Logica di inizializzazione DB e sincronizzazione
+                            if (event.ports && event.ports[0]) {
+                                event.ports[0].postMessage({ type: 'INIT_DB_SUCCESS' });
+                            }
+                        } catch (err) {
+                            console.error('[SW] Errore INIT_DB:', err);
+                            if (event.ports && event.ports[0]) {
+                                event.ports[0].postMessage({ type: 'INIT_DB_ERROR', error: err.message });
+                            }
                         }
-                    } catch (err) {
-                        console.error('[SW] Errore INIT_DB:', err);
-                        if (event.ports && event.ports[0]) {
-                            event.ports[0].postMessage({ type: 'INIT_DB_ERROR', error: err.message });
-                        }
-                    }
-                })()
-            );
-            break;
+                    })()
+                );
+                break;
+            default:
+                return;
         }
     } catch (e) {
         // ⚠️🏴‍☠️ LOG ANTI-PROFILING: Segnalazione sterilizzata di errore IPC
@@ -1015,8 +1017,7 @@ self.addEventListener('message', (event) => {
     }
 });
     
-    
-    const eventDataSnapshot = data;
+    const eventDataSnapshot = event.data;
     if (eventDataSnapshot?.type === 'INIT_DB') {
 
         if (isSyncing) {
