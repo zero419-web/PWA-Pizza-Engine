@@ -130,38 +130,55 @@ const CONFIG = {
            'tolerance': 0.30,
            'defaultMin': 500
         },
-        'pdf': {
+       'pdf': {
            'firmato': 5000,
            'default': 10000,
+           'maxHeaderBytes': 4096
+           'maxFooterBytes': 4096,
            'magicNumbers': {
                'header': [
-                   '25504446',
-                   '5044462D'
-                ], // %PDF (Rilevazione universale)
-               'footer': [
-                   '2525454F46',
-                   '2525454F46'
-                ]  // %%EOF (Rilevazione strutturale di coda)
-        },
-        'pdfMaliciousPatterns': [
-           '/javascript',
-           '/js',
-           '/launch',
-           '/embeddedfile',
-           '/openaction',
-           '/submitform',
-           '/importdata',
-           '/richmedia'
-        ],
-        'compressedStreamPatterns': [
-            '/flatedecode', 
-            '/lzwdecode',
-            '/objstm',
-            '/crypt'
-        ],
+                   '25504446', // %PDF (Rilevazione universale PDF standard)
+                   '5044462D', // PDF- (Variante offset iniziale)
+                   '3082',     // ASN.1 DER Sequence per CAdES (.p7m / PKCS#7)
+                   '3081'      // ASN.1 DER Sequence alternativa per .p7m
+                ],
+                'footer': [
+                    '2525454F46', // %%EOF (Rilevazione strutturale di coda PDF)
+                    '3082',       // Supporto per strutture di firma in coda (PAdES / aggiornamenti incrementali)
+                    '3081'
+                    ]
+           },
+           'pdfMaliciousPatterns': [
+               '/javascript',
+               '/js',
+               '/launch',
+               '/embeddedfile',
+               '/openaction',
+               '/submitform',
+               '/importdata',
+               '/richmedia',
+               '/aa',          // Additional Actions (vettori di exploit comuni)
+               '/acroform'     // Intercettazione form interattivi non sicuri
+               ],
+           'compressedStreamPatterns': [
+               '/flatedecode', 
+               '/lzwdecode',
+               '/objstm',
+               '/crypt',
+               '/asciihexdecode',
+               '/asci85decode',
+               '/runlengthdecode'
+            ],
+           'supportedSignatures': [
+               'adbe.pkcs7.detached',
+               'adbe.pkcs7.sha1',
+               'etsi.cades.detached',
+               'application/pkcs7-mime',
+               'smime.p7m'
+            ],
            'useHeadProbe': false,
            'tolerance': 0.30,
-           'defaultMin': 1000
+           'defaultMin': 2048 // ~2 KB
         },
         'code': {
             'html': 100,
@@ -357,9 +374,11 @@ Object.freeze(waitTillIdle);
 
 /**
  * 🔬🧬 SW Forensics & DNA Check 
- *      ( 🪨 Hardened 🪖 v7.9+).
- * Sfrutta dinamicamente la mappa CONFIG.minSizeMap per Magic Numbers, soglie dimensionali
- * e pattern PDF, applicando i controlli di sicurezza FASE 1, 2 e 3.
+ *      ( 🪨 Hardened 🪖 v7.9+ ).
+ * 
+ * Sfrutta dinamicamente CONFIG.pdf, Magic Numbers e supportedSignatures per la validazione
+ * di PDF nativi, PAdES e wrapper CAdES (.p7m).
+ * 
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
  * @param {number} [expectedSize=0] - Dimensione nominale attesa (Content-Length) per verifica tolleranza.
@@ -371,74 +390,90 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     const startForensicTime = performance.now();
 
     let signal = signals || null;
-    let blob;
+    let blob = null;
     let encoding = null;
     let finalContentType = contentType;
-    let result = { valid: false, blob: null };
-
-    if (input instanceof Response) {
-        if (signal?.aborted) return result;
-        encoding = input.headers.get('Content-Encoding');
-        finalContentType = contentType || input.headers.get('Content-Type') || '';
-        try {
-            blob = await input.blob();
-        } catch (e) {
-            await injectTimingNoise(startForensicTime, 50);
-            return result;
-        }
-    } else {
-        blob = input;
-    }
-
-    if (!blob || !(blob instanceof Blob)) {
-        await injectTimingNoise(startForensicTime, 50);
-        return result;
-    }
-
-    const mainType = finalContentType.split('/')[0]?.toLowerCase() || '';
-    const subType = finalContentType.split('/')[1]?.split(';')[0]?.toLowerCase() || '';
-    const minMap = CONFIG?.minSizeMap || {};
-    const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05 };
-    
-    // Fix Risoluzione Sezione: Cerca prima mainType ('image'), poi subType ('pdf'), poi 'code'
-    const section = minMap[mainType] || minMap[subType] || minMap['code'] || null;
-
-    const isTransformed = encoding !== null && encoding !== 'identity';
-    let minSize = universal.minAbsoluteByte || 64;
-    if (section) {
-        const tolerance = section.tolerance || universal.tolerance || 0.1;
-        const baseMin = section[subType] || section.defaultMin || section.default || 0;
-        minSize = (expectedSize > 0) ? (expectedSize * (1 - tolerance)) : baseMin;
-    }
-    if (isEncrypted || isTransformed) minSize = universal.minAbsoluteByte || 64;
-
-    if (blob.size < minSize) {
-        await injectTimingNoise(startForensicTime, 50);
-        console.warn("⚠️ SW Forensics: Asset scartato per dimensione insufficiente", createCleanError("SizeCheckFailed", "Dimensione inferiore alla soglia minima"));
-        return result;
-    }
+    const result = { valid: false, blob: null };
 
     let headerBuffer = null;
     let tailBuffer = null;
+    const activeBuffers = [];
 
     const wipeRAM = () => {
-        if (headerBuffer) new Uint8Array(headerBuffer).fill(0);
-        if (tailBuffer) new Uint8Array(tailBuffer).fill(0);
+        if (headerBuffer) {
+            try { new Uint8Array(headerBuffer).fill(0); } catch (_) {}
+            headerBuffer = null;
+        }
+        if (tailBuffer) {
+            try { new Uint8Array(tailBuffer).fill(0); } catch (_) {}
+            tailBuffer = null;
+        }
+        while (activeBuffers.length > 0) {
+            const buf = activeBuffers.pop();
+            if (buf) {
+                try { new Uint8Array(buf).fill(0); } catch (_) {}
+            }
+        }
     };
 
     try {
-        // --- 🛡️ FASE 1: ANALISI MAGIC NUMBERS, SANITIZZAZIONE SVG & ANTI-POLYGLOT ---
+        if (input instanceof Response) {
+            if (signal?.aborted) return result;
+            encoding = input.headers.get('Content-Encoding');
+            finalContentType = contentType || input.headers.get('Content-Type') || '';
+            try {
+                blob = await input.blob();
+            } catch (e) {
+                await injectTimingNoise(startForensicTime, 50);
+                return result;
+            }
+        } else {
+            blob = input;
+        }
+
+        if (!blob || !(blob instanceof Blob)) {
+            await injectTimingNoise(startForensicTime, 50);
+            return result;
+        }
+
+        const mainType = finalContentType.split('/')[0]?.toLowerCase() || '';
+        const subType = finalContentType.split('/')[1]?.split(';')[0]?.toLowerCase() || '';
+        const minMap = CONFIG?.minSizeMap || {};
+        const pdfConfig = CONFIG?.pdf || minMap?.pdf || {};
+        const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05 };
+        
+        const section = minMap[mainType] || minMap[subType] || minMap['code'] || pdfConfig || null;
+        const isTransformed = encoding !== null && encoding !== 'identity';
+        
+        let minSize = pdfConfig.defaultMin || 2048; 
+        if (section) {
+            const tolerance = section.tolerance || universal.tolerance || 0.1;
+            const baseMin = section[subType] || section.defaultMin || section.default || pdfConfig.defaultMin || 2048;
+            minSize = (expectedSize > 0) ? (expectedSize * (1 - tolerance)) : baseMin;
+        }
+        if (isEncrypted || isTransformed) minSize = universal.minAbsoluteByte || 64;
+
+        if (blob.size < minSize) {
+            await injectTimingNoise(startForensicTime, 50);
+            console.warn("⚠️ SW Forensics: Asset scartato per dimensione insufficiente", createCleanError("SizeCheckFailed", "Dimensione inferiore alla soglia minima"));
+            return result;
+        }
+
+       /* 🛡️ FASE 1: ANALISI MAGIC NUMBERS,
+        *  SIGNATURES & FORMATI PDF/CAdES/PAdES:
+        */
         if (!isEncrypted && !isTransformed) {
             const isSvg = subType === 'svg' || finalContentType.includes('svg');
             const isRasterImage = ['image/png', 'image/webp', 'image/jpeg'].some(t => finalContentType.includes(t)) || ['png', 'webp', 'jpg', 'jpeg'].includes(subType);
+            const isPdfContext = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf') || finalContentType.toLowerCase().includes('pkcs7') || finalContentType.toLowerCase().includes('p7m');
 
-            // 1.1 Sanitizzazione XML/SVG (FASE 1)
+            // 1.1 Sanitizzazione XML/SVG
             if (isSvg) {
                 const svgSliceSize = Math.min(blob.size, 1024 * 64);
                 const svgBuffer = await blob.slice(0, svgSliceSize).arrayBuffer();
+                activeBuffers.push(svgBuffer);
                 const svgArray = new Uint8Array(svgBuffer);
                 const svgText = new TextDecoder('utf-8', { fatal: false }).decode(svgArray).toLowerCase();
-                svgArray.fill(0);
 
                 const forbiddenTags = /<(script|foreignobject|embed|object|iframe)[\s>]/i;
                 const forbiddenEvents = /\son\w+\s*=/i;
@@ -447,84 +482,115 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 if (forbiddenTags.test(svgText) || forbiddenEvents.test(svgText) || forbiddenUri.test(svgText)) {
                     await injectTimingNoise(startForensicTime, 50);
                     console.warn("⚠️ SW Security: Blocco SVG con elementi/handler non sicuri", createCleanError("SvgMalwareDetected", "Tag o evento ostile rilevato nell'SVG"));
-                    wipeRAM();
                     return result;
                 }
             }
 
-            // 1.2 Protezione Anti-Polyglot per Immagini Raster (FASE 1 & 2)
+            // 1.2 Protezione Anti-Polyglot per Immagini Raster
             if (isRasterImage) {
                 const sampleSize = Math.min(blob.size, 1024 * 64);
                 const sampleBuffer = await blob.slice(0, sampleSize).arrayBuffer();
+                activeBuffers.push(sampleBuffer);
                 const sampleArray = new Uint8Array(sampleBuffer);
                 const bodyText = new TextDecoder('utf-8').decode(sampleArray);
-                sampleArray.fill(0);
 
                 const executableSignatures = /<script|javascript:|eval\(|function\s*\(/i;
                 if (executableSignatures.test(bodyText)) {
                     await injectTimingNoise(startForensicTime, 50);
                     console.warn("⚠️ SW Security: Blocco file poliglotta (script embedded in immagine)", createCleanError("PolyglotDetected", "Signature di codice eseguibile nei dati immagine"));
-                    wipeRAM();
                     return result;
                 }
             }
 
-            // 1.3 Controllo Posizionale Magic Numbers di Testa (utilizza CONFIG.minSizeMap)
-            if (section && section.magicNumbers?.header?.length > 0) {
-                if (signal?.aborted) {
-                    wipeRAM();
-                    return result;
-                }
+            // 1.3 Controllo Avanzato Header (Magic Numbers + supportedSignatures per CAdES/PAdES/PDF)
+            const magicSource = section?.magicNumbers || pdfConfig?.magicNumbers;
+            const supportedSignatures = section?.supportedSignatures || pdfConfig?.supportedSignatures || [];
 
-                const headerSliceSize = isSvg ? Math.min(blob.size, 512) : Math.min(blob.size, 12);
+            if (section && (magicSource?.header?.length > 0 || supportedSignatures.length > 0)) {
+                if (signal?.aborted) return result;
 
+                const maxHeaderBytes = pdfConfig.maxHeaderBytes || 4096;
+                const headerSliceSize = isSvg ? Math.min(blob.size, 512) : Math.min(blob.size, maxHeaderBytes);
                 headerBuffer = await blob.slice(0, headerSliceSize).arrayBuffer();
-                const headerHex = Array.from(new Uint8Array(headerBuffer))
+                activeBuffers.push(headerBuffer);
+
+                const headerBytes = new Uint8Array(headerBuffer);
+                const headerText = new TextDecoder('latin1', { fatal: false }).decode(headerBytes);
+                const headerHex = Array.from(headerBytes)
                     .map(b => b.toString(16).padStart(2, '0'))
                     .join('').toUpperCase();
 
-                let hasValidSig = section.magicNumbers.header.some(sig => headerHex.includes(sig.toUpperCase()));
+                // Verifica riscontro tramite Magic Numbers standard
+                let hasValidSig = magicSource?.header?.some(sig => {
+                    const cleanSig = sig.toUpperCase();
+                    if (headerHex.includes(cleanSig)) return true;
+                    try {
+                        const literalStr = cleanSig.match(/.{1,2}/g).map(byte => String.fromCharCode(parseInt(byte, 16))).join('');
+                        return headerText.includes(literalStr);
+                    } catch (_) {
+                        return false;
+                    }
+                }) || false;
+
+                // Se fallisce, verifica tramite le firme supportate esplicite (CAdES / PAdES / MIME string matching)
+                if (!hasValidSig && supportedSignatures.length > 0) {
+                    hasValidSig = supportedSignatures.some(sigPattern => {
+                        const patternLower = sigPattern.toLowerCase();
+                        return headerText.toLowerCase().includes(patternLower) || finalContentType.toLowerCase().includes(patternLower);
+                    });
+                }
 
                 if (!hasValidSig) {
                     await injectTimingNoise(startForensicTime, 50);
-                    console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa"));
-                    wipeRAM();
+                    console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa o pattern firmato non riconosciuto"));
                     return result;
                 }
             }
         }
 
-        // --- 🛡️ FASE 2: ANALISI DEI MARCATORI DI CODA (utilizza CONFIG.minSizeMap) ---
-        if (!isEncrypted && !isTransformed && section && section.magicNumbers?.footer?.length > 0) {
-            if (signal?.aborted) {
-                wipeRAM();
-                return result;
-            }
-            const fetchSize = Math.min(blob.size, 128);
+        // 🛡️ FASE 2: ANALISI MARCATORI DI CODA:
+        const magicSourceFooter = section?.magicNumbers || pdfConfig?.magicNumbers;
+        if (!isEncrypted && !isTransformed && section && magicSourceFooter?.footer?.length > 0) {
+            if (signal?.aborted) return result;
+
+            const maxFooterBytes = pdfConfig.maxFooterBytes || 4096;
+            const fetchSize = Math.min(blob.size, maxFooterBytes);
             tailBuffer = await blob.slice(-fetchSize).arrayBuffer();
-            const tailHex = Array.from(new Uint8Array(tailBuffer))
+            activeBuffers.push(tailBuffer);
+
+            const tailBytes = new Uint8Array(tailBuffer);
+            const tailHex = Array.from(tailBytes)
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('').toUpperCase();
+            const tailText = new TextDecoder('latin1', { fatal: false }).decode(tailBytes);
 
-            const hasValidFooter = section.magicNumbers.footer.some(foot => tailHex.includes(foot.toUpperCase()));
-            if (!hasValidFooter) {
+            const hasValidFooter = magicSourceFooter.footer.some(foot => {
+                const cleanFoot = foot.toUpperCase();
+                if (tailHex.includes(cleanFoot)) return true;
+                try {
+                    const literalFoot = cleanFoot.match(/.{1,2}/g).map(byte => String.fromCharCode(parseInt(byte, 16))).join('');
+                    return tailText.includes(literalFoot);
+                } catch (_) {
+                    return false;
+                }
+            });
+
+            // Nota: Se il file è un .p7m (CAdES puro) incapsulato senza marcatore %%EOF esterno immediato, 
+            // la validazione header CAdES (fase 1) garantisce già la conformità del wrapper crittografico.
+            const isCadesWrapper = headerText.includes('smime.p7m') || headerHex.startsWith('3082') || headerHex.startsWith('3081');
+            if (!hasValidFooter && !isCadesWrapper) {
                 await injectTimingNoise(startForensicTime, 50);
-                console.warn("⚠️ SW Security: Firma footer fallita", createCleanError("FooterCheckFailed", "Mismatch firma binaria di coda"));
-                wipeRAM();
+                console.warn("⚠️ SW Security: Firma footer fallita", createCleanError("FooterCheckFailed", "Mismatch marcatore di coda %%EOF o struttura di chiusura"));
                 return result;
             }
         }
 
-                // --- 🛡️ FASE 3: ANALISI PDF CON ISOLAMENTO STRUTTURALE E MACCHINA A STATI ---
-        const isPdf = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf');
-        if (!isEncrypted && !isTransformed && isPdf) {
-            if (signal?.aborted) {
-                wipeRAM();
-                return result;
-            }
+        // 🛡️ FASE 3: ANALISI PROFONDA PDF:
+        const isPdfOnly = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf');
+        if (!isEncrypted && !isTransformed && isPdfOnly) {
+            if (signal?.aborted) return result;
 
-            // Mappatura corretta direttamente dalla radice di minMap (CONFIG.minSizeMap)
-            const configPdfPatterns = (minMap.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
+            const configPdfPatterns = (pdfConfig.pdfMaliciousPatterns || minMap.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
 
             if (typeof waitTillIdle === 'function') {
                 await waitTillIdle(200, 8000);
@@ -535,18 +601,15 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             let inStream = false;
 
             while (offset < blob.size) {
-                if (signal?.aborted) {
-                    wipeRAM();
-                    return result;
-                }
+                if (signal?.aborted) return result;
 
                 const end = Math.min(offset + CHUNK_SIZE, blob.size);
                 const chunkBuffer = await blob.slice(offset, end).arrayBuffer();
+                activeBuffers.push(chunkBuffer);
                 const chunkArray = new Uint8Array(chunkBuffer);
 
                 const rawChunkText = new TextDecoder('latin1', { fatal: false }).decode(chunkArray);
 
-                // 1. ISOLAMENTO STRUTTURALE INTER-CHUNK (Macchina a stati per stream binari)
                 let pdfStructureOnly = "";
                 let searchPos = 0;
 
@@ -555,9 +618,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                         const endStreamIdx = rawChunkText.toLowerCase().indexOf('endstream', searchPos);
                         if (endStreamIdx !== -1) {
                             inStream = false;
-                            searchPos = endStreamIdx + 9; // Avanza oltre 'endstream'
+                            searchPos = endStreamIdx + 9;
                         } else {
-                            // Lo stream binario di immagini/font prosegue nel chunk successivo
                             break;
                         }
                     } else {
@@ -565,7 +627,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                         if (streamIdx !== -1) {
                             pdfStructureOnly += rawChunkText.substring(searchPos, streamIdx);
                             inStream = true;
-                            searchPos = streamIdx + 6; // Avanza oltre 'stream'
+                            searchPos = streamIdx + 6;
                         } else {
                             pdfStructureOnly += rawChunkText.substring(searchPos);
                             break;
@@ -573,30 +635,29 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     }
                 }
 
-                // Normalizzazione: decodifica esadecimale PDF (#2f -> /), rimozione commenti e preservazione spazi singoli
                 pdfStructureOnly = pdfStructureOnly.toLowerCase();
                 pdfStructureOnly = pdfStructureOnly.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
                 pdfStructureOnly = pdfStructureOnly.replace(/\/\*[\s\S]*?\*\//g, '');
                 pdfStructureOnly = pdfStructureOnly.replace(/\s+/g, ' ');
 
-                // 2. Scansione pattern malevoli solo sui dizionari di struttura del PDF
                 for (const pattern of configPdfPatterns) {
                     if (pdfStructureOnly.includes(pattern)) {
-                        chunkArray.fill(0);
                         await injectTimingNoise(startForensicTime, 50);
                         console.warn("⚠️ SW Security: Pattern ostile rilevato nella struttura del PDF", createCleanError("PdfPatternDetected", `Pattern rilevato: ${pattern}`));
-                        wipeRAM();
                         return result;
                     }
                 }
 
-                // 3. DECOMPRESSIONE PROFONDA DEGLI STREAM /FlateDecode
                 const streamRegex = /stream[\r\n]+([\s\S]*?)[\r\n]+endstream/gi;
                 let match;
                 while ((match = streamRegex.exec(rawChunkText)) !== null) {
                     const streamContext = rawChunkText.substring(Math.max(0, match.index - 300), match.index).toLowerCase();
                     
-                    if (streamContext.includes('/flatedecode') && typeof DecompressionStream !== 'undefined') {
+                    const isCompressedStream = pdfConfig.compressedStreamPatterns ? 
+                        pdfConfig.compressedStreamPatterns.some(p => streamContext.includes(p.toLowerCase())) : 
+                        streamContext.includes('/flatedecode');
+
+                    if (isCompressedStream && typeof DecompressionStream !== 'undefined') {
                         try {
                             const streamStart = match.index + match[0].indexOf(match[1]);
                             const streamBytes = chunkArray.subarray(streamStart, streamStart + match[1].length);
@@ -609,49 +670,42 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                                 writer.close();
 
                                 const decompressedBuffer = await new Response(ds.readable).arrayBuffer();
+                                activeBuffers.push(decompressedBuffer);
                                 let decompText = new TextDecoder('latin1', { fatal: false }).decode(new Uint8Array(decompressedBuffer)).toLowerCase();
                                 decompText = decompText.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
                                 decompText = decompText.replace(/\s+/g, ' ');
 
                                 for (const pattern of configPdfPatterns) {
                                     if (decompText.includes(pattern)) {
-                                        chunkArray.fill(0);
                                         await injectTimingNoise(startForensicTime, 50);
                                         console.warn("⚠️ SW Security: Payload malevolo rilevato nello stream decompresso", createCleanError("PdfPatternDetected", `Pattern decompresso: ${pattern}`));
-                                        wipeRAM();
                                         return result;
                                     }
                                 }
                             }
-                        } catch (e) {
-                            // Ignora errori di decompressione su stream di dati grafici
+                        } catch (_) {
+                            // Ignora errori di decompressione su stream grafici complessi
                         }
                     }
                 }
 
-                chunkArray.fill(0);
                 offset += CHUNK_SIZE;
             }
         }
 
-        if (signal?.aborted) {
-            wipeRAM();
-            return result;
-        }
-        await blob.slice(-5).arrayBuffer();
+        if (signal?.aborted) return result;
+
+        result.valid = true;
+        result.blob = blob;
+        Object.freeze(result);
+        return result;
 
     } catch (e) {
         await injectTimingNoise(startForensicTime, 50);
+        return { valid: false, blob: null };
+    } finally {
         wipeRAM();
-        return result;
     }
-
-    wipeRAM();
-
-    result.valid = true;
-    result.blob = blob;
-    Object.freeze(result);
-    return result;
 };
 Object.freeze(isValidBlob);
 
