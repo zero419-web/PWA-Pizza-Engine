@@ -425,7 +425,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             encoding = input.headers.get('Content-Encoding');
             finalContentType = contentType || input.headers.get('Content-Type') || '';
             try {
-                blob = await input.blob();
+                // 🛡️ FIX:
+                blob = await input.clone().blob();
             } catch (e) {
                 await injectTimingNoise(startForensicTime, 50);
                 return result;
