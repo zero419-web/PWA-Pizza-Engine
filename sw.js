@@ -1,7 +1,7 @@
 /*
  * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ
  *
- * ⚙️ CORE: 🪖 PANZER v7.8+
+ * ⚙️ CORE: 🪖 PANZER v7.9+
  *
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA
@@ -24,29 +24,29 @@
  * 5. 🌡️🛡 ️CPU THERMAL SHIELD:
  * Ottimizzatore adattivo del respiro dell'Event Loop via 'waitTillIdle' per la prevenzione del logoramento hardware.
  *
- * ⚙️️ NUCLEO: SERVICE WORKER (SW) 🪖 "PANZER V7.5"
- * 🎖 MILITARY EDITION (CRYPTOGRAPHIC VAULT AES-GCM 256-BIT)
+ * ⚙️️ NUCLEO: SERVICE WORKER (SW) 🪖 "PANZER V7.x+"
+ * 🎖 MILITARY EDITION ( CRYPTOGRAPHIC VAULT AES-GCM 256-BIT )
  * Licenza di Distribuzione:
- * 🇪🇺📜 EUPL 1.2 (Conforme alle direttive CAD della PA 🏛️)
+ * 🇪🇺📜 EUPL 1.2  (Conforme alle direttive CAD della PA 🏛 ️)
  *
  * Sviluppo Software e Ingegnerizzazione del Protocollo a cura di:
  * 👩‍💻🇮🇹 Valentino Aglianò - Perito Industriale Informatico (2013)
  * [ Istruttore Informatico - Idoneo Nazionale MaxConcorso ASMEL 2025 ]
  *
  *
- * 🛡 ️DIRECTIVE DI SICUREZZA ATTIVA E BONIFICA FORENSE (🔐 ZERO-TRUST POLICY 🚨)
+ * 🛡 ️DIRECTIVE DI SICUREZZA ATTIVA E BONIFICA FORENSE ( 🔐 ZERO-TRUST POLICY 🚨 )
  *
- * [🔑 MASTER KEY]:
+ * [ 🔑 MASTER KEY ]:
  * Istanza crittografica non esportabile (CryptoKey) generata a runtime e isolata in RAM volatile.
- * [🗄️ PWA_VAULT]:
+ * [ 🗄️ PWA_VAUL T]:
  * Persistenza protetta della chiave opaca in IndexedDB ➿ tramite algoritmo di clonazione strutturata (extractable: false).
- * [🫙 SANDBOX CONTENIMENTO]:
+ * [ 🫙 SANDBOX CONTENIMENTO ]:
  * Iniezione perentoria di header CSP restrittivi per l'isolamento dei contenuti erogati a schermo.
- * [🦈 WATCHDOG LOOPBACK]:
+ * [ 🐺 WATCHDOG LOOPBACK ]:
  * Test atomico di cifratura/decrittazione simmetrica a runtime (🐦 vaultCanaryText) per la validazione della memoria.
- * [🚨🧼 EMERGENCY WIPE]:
+ * [ 🚨🧼 EMERGENCY WIPE ]:
  * Tabula rasa immediata, distruzione totale e bonifica delle cache in caso di fallimento strutturale del canarino.
- * [🚧🕵 ️ANTI-MEMORY INSPECTION]:
+ * [ 🚧🕵 ️ANTI-MEMORY INSPECTION ]:
  * Sovrascrittura fisica e azzeramento dei buffer binari di transito (headBuffer, tailBuffer, fullBuffer), tramite metodo nativo 'Uint8Array.prototype.fill(0)' immediatamente post-elaborazione.
  *
  */
@@ -58,7 +58,7 @@ let encryptionKey = null;
 const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, '/');
 
 /**
- * 📊 CONFIGURAZIONE GLOBALE (Dizionario dei Vincoli Operativi)
+ * 📊 CONFIGURAZIONE GLOBALE ( Dizionario dei Vincoli Operativi )
  * Definisce i parametri strutturali per la resilienza di rete, crittografia e tolleranza ai guasti.
  */
 
@@ -71,7 +71,12 @@ const CONFIG = {
 	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: ['http:', 'https:'],
     ALLOWED_METHODS: ['GET', 'HEAD', 'POST'],
-    ALLOWED_IPC_TYPES: ['SKIP_WAITING', 'CLEAN_CACHE', 'PING', 'INIT_DB'],
+    ALLOWED_IPC_TYPES: [
+        'SKIP_WAITING', 
+        'CLEAN_CACHE', 
+        'PING', 
+        'INIT_DB'
+    ],
     userCacheTTL: 7,
     networkResilient: {
         maxRetries: 5,
@@ -146,6 +151,12 @@ const CONFIG = {
                '/ImportData',
                '/RichMedia'
            ],
+           'compressedStreamPatterns': [
+                '/flatedecode', 
+                '/lzwdecode', 
+                '/objstm', 
+                '/crypt'
+            ],
            'useHeadProbe': false,
            'tolerance': 0.30,
            'defaultMin': 1000
@@ -343,10 +354,10 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
 Object.freeze(waitTillIdle);
 
 /**
- * 🔍🧬 SW Forensics & DNA Check (Hardened).
- * Esegue il campionamento dimensionale, l'analisi strutturale dei Magic Numbers (Firme Esadecimali)
- * e la scansione euristica anti-script a finestra scorrevole per intercettare file corrotti,
- * tronchi, camuffati o pacchetti malevoli (MIME-sniffing), tutelando la RAM da saturazione.
+ * 🔬🧬 SW Forensics & DNA Check 
+ *      ( 🪨 Hardened 🪖 v7.9+).
+ * Sfrutta dinamicamente la mappa CONFIG.minSizeMap per Magic Numbers, soglie dimensionali
+ * e pattern PDF, applicando i controlli di sicurezza FASE 1, 2 e 3.
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
  * @param {number} [expectedSize=0] - Dimensione nominale attesa (Content-Length) per verifica tolleranza.
@@ -385,17 +396,19 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     const mainType = finalContentType.split('/')[0]?.toLowerCase() || '';
     const subType = finalContentType.split('/')[1]?.split(';')[0]?.toLowerCase() || '';
     const minMap = CONFIG?.minSizeMap || {};
-    const universal = minMap.universal || { minAbsoluteByte: 0, tolerance: 0.1 };
-    const section = minMap[mainType] || minMap['code'] || null;
+    const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05 };
+    
+    // Fix Risoluzione Sezione: Cerca prima mainType ('image'), poi subType ('pdf'), poi 'code'
+    const section = minMap[mainType] || minMap[subType] || minMap['code'] || null;
 
     const isTransformed = encoding !== null && encoding !== 'identity';
-    let minSize = universal.minAbsoluteByte || 0;
+    let minSize = universal.minAbsoluteByte || 64;
     if (section) {
         const tolerance = section.tolerance || universal.tolerance || 0.1;
         const baseMin = section[subType] || section.defaultMin || section.default || 0;
         minSize = (expectedSize > 0) ? (expectedSize * (1 - tolerance)) : baseMin;
     }
-    if (isEncrypted || isTransformed) minSize = universal.minAbsoluteByte || 0;
+    if (isEncrypted || isTransformed) minSize = universal.minAbsoluteByte || 64;
 
     if (blob.size < minSize) {
         await injectTimingNoise(startForensicTime, 50);
@@ -412,40 +425,74 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     };
 
     try {
-        // --- 🛡️ FASE 1: ANALISI DEI MAGIC NUMBERS DI TESTA (HEADER & ANTI-SPOOFING) ---
-        if (!isEncrypted && !isTransformed && section && section.magicNumbers?.header?.length > 0) {
-            if (signal?.aborted) {
-                wipeRAM();
-                return result;
-            }
-
+        // --- 🛡️ FASE 1: ANALISI MAGIC NUMBERS, SANITIZZAZIONE SVG & ANTI-POLYGLOT ---
+        if (!isEncrypted && !isTransformed) {
             const isSvg = subType === 'svg' || finalContentType.includes('svg');
-            const headerSliceSize = isSvg ? Math.min(blob.size, 512) : Math.min(blob.size, 12);
+            const isRasterImage = ['image/png', 'image/webp', 'image/jpeg'].some(t => finalContentType.includes(t)) || ['png', 'webp', 'jpg', 'jpeg'].includes(subType);
 
-            headerBuffer = await blob.slice(0, headerSliceSize).arrayBuffer();
-            const headerHex = Array.from(new Uint8Array(headerBuffer))
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('').toUpperCase();
+            // 1.1 Sanitizzazione XML/SVG (FASE 1)
+            if (isSvg) {
+                const svgSliceSize = Math.min(blob.size, 1024 * 64);
+                const svgBuffer = await blob.slice(0, svgSliceSize).arrayBuffer();
+                const svgArray = new Uint8Array(svgBuffer);
+                const svgText = new TextDecoder('utf-8', { fatal: false }).decode(svgArray).toLowerCase();
+                svgArray.fill(0);
 
-            let hasValidSig = false;
-            if (subType === 'webp' || finalContentType.includes('webp')) {
-                // Check posizionale rigido WebP: RIFF nei primi 4 byte, WEBP negli offset 8-11 (esadecimale offset 16-23)
-                const isRiff = headerHex.startsWith('52494646');
-                const isWebp = headerHex.substring(16, 24) === '57454250';
-                hasValidSig = isRiff && isWebp;
-            } else {
-                hasValidSig = section.magicNumbers.header.some(sig => headerHex.includes(sig.toUpperCase()));
+                const forbiddenTags = /<(script|foreignobject|embed|object|iframe)[\s>]/i;
+                const forbiddenEvents = /\son\w+\s*=/i;
+                const forbiddenUri = /(href|xlink:href)\s*=\s*["']?\s*(javascript:|data:text\/html)/i;
+
+                if (forbiddenTags.test(svgText) || forbiddenEvents.test(svgText) || forbiddenUri.test(svgText)) {
+                    await injectTimingNoise(startForensicTime, 50);
+                    console.warn("⚠️ SW Security: Blocco SVG con elementi/handler non sicuri", createCleanError("SvgMalwareDetected", "Tag o evento ostile rilevato nell'SVG"));
+                    wipeRAM();
+                    return result;
+                }
             }
 
-            if (!hasValidSig) {
-                await injectTimingNoise(startForensicTime, 50);
-                console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa"));
-                wipeRAM();
-                return result;
+            // 1.2 Protezione Anti-Polyglot per Immagini Raster (FASE 1 & 2)
+            if (isRasterImage) {
+                const sampleSize = Math.min(blob.size, 1024 * 64);
+                const sampleBuffer = await blob.slice(0, sampleSize).arrayBuffer();
+                const sampleArray = new Uint8Array(sampleBuffer);
+                const bodyText = new TextDecoder('utf-8').decode(sampleArray);
+                sampleArray.fill(0);
+
+                const executableSignatures = /<script|javascript:|eval\(|function\s*\(/i;
+                if (executableSignatures.test(bodyText)) {
+                    await injectTimingNoise(startForensicTime, 50);
+                    console.warn("⚠️ SW Security: Blocco file poliglotta (script embedded in immagine)", createCleanError("PolyglotDetected", "Signature di codice eseguibile nei dati immagine"));
+                    wipeRAM();
+                    return result;
+                }
+            }
+
+            // 1.3 Controllo Posizionale Magic Numbers di Testa (utilizza CONFIG.minSizeMap)
+            if (section && section.magicNumbers?.header?.length > 0) {
+                if (signal?.aborted) {
+                    wipeRAM();
+                    return result;
+                }
+
+                const headerSliceSize = isSvg ? Math.min(blob.size, 512) : Math.min(blob.size, 12);
+
+                headerBuffer = await blob.slice(0, headerSliceSize).arrayBuffer();
+                const headerHex = Array.from(new Uint8Array(headerBuffer))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('').toUpperCase();
+
+                let hasValidSig = section.magicNumbers.header.some(sig => headerHex.includes(sig.toUpperCase()));
+
+                if (!hasValidSig) {
+                    await injectTimingNoise(startForensicTime, 50);
+                    console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa"));
+                    wipeRAM();
+                    return result;
+                }
             }
         }
 
-        // --- 🛡️ FASE 2: ANALISI DEI MARCATORI DI CODA (FOOTER) ---
+        // --- 🛡️ FASE 2: ANALISI DEI MARCATORI DI CODA (utilizza CONFIG.minSizeMap) ---
         if (!isEncrypted && !isTransformed && section && section.magicNumbers?.footer?.length > 0) {
             if (signal?.aborted) {
                 wipeRAM();
@@ -466,22 +513,24 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             }
         }
 
-        // --- 🛡️ FASE 3: ANALISI EURISTICA ANTI-SCRIPT PDF (CHUNKED STREAMING IN RAM CON OVERLAP) ---
+        // --- 🛡️ FASE 3: ANALISI PDF CON PATTERN DINAMICI DA CONFIG.pdf.pdfMaliciousPatterns ---
         const isPdf = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf');
-        if (!isEncrypted && !isTransformed && isPdf && section?.pdfMaliciousPatterns) {
+        if (!isEncrypted && !isTransformed && isPdf) {
             if (signal?.aborted) {
                 wipeRAM();
                 return result;
             }
 
-            const localPatterns = [...(section.pdfMaliciousPatterns || [])];
-            Object.freeze(localPatterns);
+            // Estrazione dinamica da CONFIG + pattern di isolamento stream compressi
+            const configPdfPatterns = (minMap.pdf?.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
+            const compressedStreamPatterns = (minMap.pdf?.compressedStreamPatterns || []).map(p => p.toLowerCase());
+            
+            const allPdfPatterns = Array.from(new Set([...configPdfPatterns, ...compressedStreamPatterns]));
 
             if (typeof waitTillIdle === 'function') {
                 await waitTillIdle(200, 8000);
             }
 
-            // Scansione progressiva a blocchi di 1MB con 4KB di sovrapposizione per prevenire evasione tra chunk
             const CHUNK_SIZE = 1024 * 1024;
             const OVERLAP = 4096;
             let offset = 0;
@@ -496,16 +545,20 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 const chunkBuffer = await blob.slice(offset, end).arrayBuffer();
                 const chunkArray = new Uint8Array(chunkBuffer);
 
-                let pdfTextContent = new TextDecoder('utf-8', { fatal: false }).decode(chunkArray);
-                // Sanitizzazione esadecimale obfuscated (es. /Java#53cript -> /JavaScript)
-                pdfTextContent = pdfTextContent.replace(/#([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+                let pdfTextContent = new TextDecoder('latin1', { fatal: false }).decode(chunkArray).toLowerCase();
+                
+                // Normalizzazione Hex (#53 -> s)
+                pdfTextContent = pdfTextContent.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
+                // Strip commenti inline e whitespace
+                pdfTextContent = pdfTextContent.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, '');
 
-                for (const pattern of localPatterns) {
+                // Controllo unificato su tutti i pattern (CONFIG + Stream Compressi)
+                for (const pattern of allPdfPatterns) {
                     if (pdfTextContent.includes(pattern)) {
                         chunkArray.fill(0);
                         pdfTextContent = null;
                         await injectTimingNoise(startForensicTime, 50);
-                        console.warn("⚠️ SW Security: Blocco vettori malevoli in PDF", createCleanError("PdfMalwareDetected", "Pattern ostile rilevato nel PDF"));
+                        console.warn("⚠️ SW Security: Pattern ostile o stream compresso rilevato nel PDF", createCleanError("PdfPatternDetected", `Pattern rilevato: ${pattern}`));
                         wipeRAM();
                         return result;
                     }
@@ -537,7 +590,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     return result;
 };
 Object.freeze(isValidBlob);
-
 
 /**
  * 🧲 SONDA TECNICA HEAD: Pre-ispezione preventiva delle risorse (Anti-MIME Sniffing).
@@ -967,6 +1019,7 @@ Object.freeze(checkRealOnline);
  */
 let isNewInstallation = false;
 let isSyncing = false;
+let isScannerRunning = false;
 self.addEventListener('message', (event) => {
     // 🛡️ ORIGIN GUARD: Rifiuta messaggi originati esternamente al dominio del Service Worker
     if (event.origin !== self.origin) return;
@@ -1170,96 +1223,126 @@ self.addEventListener('message', (event) => {
                 const knownDirs = new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
 /**
- * 🧠🧬 Universal Object Scanner Deep Validation.
+ * 🧠🧬 Universal Object Scanner 
+ * Deep Validation ( 🪨 Hardened 🪖 v7.9+ ).
  * Esegue la scansione ricorsiva polimorfa del database fornito in input il file db.json,
  * isolando chiavi identificative e percorsi per agganciare in modo predittivo gli asset extra correlati.
+ * Mantiene la profondità di 12 livelli con protezione anti-DoS (Cap a 250 nodi, Sanitizzazione Path & Yielding CPU).
  * @param {Object} obj - Il nodo o sotto-albero JSON da sottoporre a ispezione.
  * @param {string} [currentCtx='base'] - Contesto logico di instradamento per l'assegnazione delle directory.
  * @param {string} [parentKey=''] - Identificativo del nodo padre per l'attivazione di logiche speciali.
  * @param {number} [depth=0] - Contatore di profondità per la prevenzione di loop di memoria (Stack Overflow).
+ * @param {Object} [nodeState={ count: 0 }] - Contatore atomico di nodi per il bounding anti-JSON-Bomb.
  */
-                const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth = 0) => {
-                    if (!obj || typeof obj !== 'object' || depth > 12) return;
-					if (syncAbortController?.signal.aborted) return;
-                    for (const [key, val] of Object.entries(obj)) {
-                        if (syncAbortController?.signal.aborted) return;
+const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth = 0, nodeState = { count: 0 }) => {
+    if (!obj || typeof obj !== 'object' || depth > 12) return;
+    if (syncAbortController?.signal.aborted) return;
 
-                        if (typeof val === 'object' && val !== null) {
-                            let nextCtx = currentCtx;
-                            if (parentKey === 'pdf' && (key === 'it' || key === 'en')) nextCtx = `docs_${key}`;
-                            else if (CONFIG.mappingLogic.contexts[key]) nextCtx = key;
-                            await universalScanner(val, nextCtx, key, depth + 1);
-                            continue;
-                        }
-						if (typeof val === 'string') {
-                            const trimmed = val.trim();
-                            if (trimmed.length > 150 || (trimmed.split(' ').length - 1) > 2) {
-                                continue;
+    const MAX_NODES_LIMIT = 250;
+
+    for (const [key, val] of Object.entries(obj)) {
+        if (syncAbortController?.signal.aborted) return;
+
+        // 🛡️ HARDENING 1: Cap del numero totale di nodi per albero (Anti JSON-Bomb / DoS)
+        nodeState.count++;
+        if (nodeState.count > MAX_NODES_LIMIT) {
+            console.warn("⚠️ SW Scanner: Limite massimo nodi superato (Max 250). Scansione interrotta.");
+            return;
+        }
+
+        // 🛡️ HARDENING 2: Sanitizzazione Nomi Chiavi (Anti Path Traversal / Injection)
+        if (typeof key === 'string' && (key.includes('../') || key.includes('..\\') || key.includes('\0'))) {
+            continue;
+        }
+
+        // 🛡️ HARDENING 3: Throttling CPU dell'Event Loop (Micro-pausa ogni 10 nodi per non congelare il worker)
+        if (nodeState.count % 10 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+
+        if (typeof val === 'object' && val !== null) {
+            let nextCtx = currentCtx;
+            if (parentKey === 'pdf' && (key === 'it' || key === 'en')) nextCtx = `docs_${key}`;
+            else if (CONFIG.mappingLogic.contexts[key]) nextCtx = key;
+            await universalScanner(val, nextCtx, key, depth + 1, nodeState);
+            continue;
+        }
+
+        if (typeof val === 'string') {
+            const trimmed = val.trim();
+            if (trimmed.length > 150 || (trimmed.split(' ').length - 1) > 2) {
+                continue;
+            }
+        }
+
+        const valStr = String(val).trim();
+        if (valStr.length < 2) continue;
+
+        // 🛡️ HARDENING 4: Sanitizzazione Valori di Percorso (Anti Path Traversal / Injection)
+        if (valStr.includes('../') || valStr.includes('..\\') || valStr.includes('\0')) {
+            continue;
+        }
+
+        const logic = CONFIG.mappingLogic.parentSpecials[parentKey] ||
+                      CONFIG.mappingLogic.contexts[currentCtx] ||
+                      CONFIG.mappingLogic.contexts['base'];
+        const isExplicitFile = CONFIG.syncRegex.test(valStr);
+        const isIdKey = CONFIG.mappingLogic.idKeys.includes(key.toLowerCase()) || /^[0-9]+$/.test(valStr);
+        if (isExplicitFile || isIdKey) {
+            let fileToProbe = valStr;
+            if (isIdKey && !isExplicitFile) {
+                fileToProbe = (logic.prefix || "") + valStr + (logic.ext || CONFIG.defaultExt);
+            }
+            const cleanDir = logic.path.replace(/^(\.\.\/|\.\/)+/, '');
+            const primaryUrl = normalize(CONFIG.ROOT + cleanDir + fileToProbe);
+
+            const targets = [primaryUrl];
+
+            if (isExplicitFile) {
+                knownDirs.forEach(d => {
+                    targets.push(normalize(CONFIG.ROOT + d.replace(/^(\.\.\/|\.\/)+/, '') + valStr));
+                });
+            }
+            await Promise.all([...new Set(targets)].map(async (url) => {
+
+                if (scanSet.has(url) || manifestList.includes(url)) return;
+
+                try {
+                    const timeoutSignal = AbortSignal.timeout(2500);
+                    const combinedSignal = syncAbortController ?
+                        AbortSignal.any([syncAbortController.signal, timeoutSignal]) :
+                        timeoutSignal;
+                    const probe = await fetch(url, {
+                        method: 'HEAD',
+                        cache: 'no-cache',
+                        signal: combinedSignal
+                    });
+                    if (probe.ok && probe.status === 200) {
+                        scanSet.add(url);
+                        console.info(`🎯🕵️‍♂️ SW Scanner: Asset Agganciato -> ${url}`);
+
+                        if (logic.isSequential && /\d+/.test(fileToProbe)) {
+                            const nextUrl = url.replace(/\d+/, n => parseInt(n) + 1);
+                            if (!scanSet.has(nextUrl) && !manifestList.includes(nextUrl)) {
+                                const nextProbe = await fetch(nextUrl, {
+                                        method: 'HEAD',
+                                        cache: 'no-cache',
+                                        signal: combinedSignal
+                                    });
+                                if (nextProbe.ok && nextProbe.status === 200) scanSet.add(nextUrl);
                             }
-                        }
-                        const valStr = String(val).trim();
-                        if (valStr.length < 2) continue;
-
-                        const logic = CONFIG.mappingLogic.parentSpecials[parentKey] ||
-                                      CONFIG.mappingLogic.contexts[currentCtx] ||
-                                      CONFIG.mappingLogic.contexts['base'];
-                        const isExplicitFile = CONFIG.syncRegex.test(valStr);
-                        const isIdKey = CONFIG.mappingLogic.idKeys.includes(key.toLowerCase()) || /^[0-9]+$/.test(valStr);
-                        if (isExplicitFile || isIdKey) {
-                            let fileToProbe = valStr;
-                            if (isIdKey && !isExplicitFile) {
-                                fileToProbe = (logic.prefix || "") + valStr + (logic.ext || CONFIG.defaultExt);
-                            }
-                            const cleanDir = logic.path.replace(/^(\.\.\/|\.\/)+/, '');
-                            const primaryUrl = normalize(CONFIG.ROOT + cleanDir + fileToProbe);
-
-                            const targets = [primaryUrl];
-
-                            if (isExplicitFile) {
-                                knownDirs.forEach(d => {
-                                    targets.push(normalize(CONFIG.ROOT + d.replace(/^(\.\.\/|\.\/)+/, '') + valStr));
-                                });
-                            }
-                            await Promise.all([...new Set(targets)].map(async (url) => {
-
-                                if (scanSet.has(url) || manifestList.includes(url)) return;
-
-                                try {
-                                    const timeoutSignal = AbortSignal.timeout(2500);
-									const combinedSignal = syncAbortController ?
-										AbortSignal.any([syncAbortController.signal, timeoutSignal]) :
-										timeoutSignal;
-									const probe = await fetch(url, {
-										method: 'HEAD',
-										cache: 'no-cache',
-										signal: combinedSignal
-									});
-                                    if (probe.ok && probe.status === 200) {
-                                        scanSet.add(url);
-                                        console.info(`🎯🕵️‍♂️ SW Scanner: Asset Agganciato -> ${url}`);
-
-                                        if (logic.isSequential && /\d+/.test(fileToProbe)) {
-                                            const nextUrl = url.replace(/\d+/, n => parseInt(n) + 1);
-                                            if (!scanSet.has(nextUrl) && !manifestList.includes(nextUrl)) {
-												const nextProbe = await fetch(nextUrl, {
-														method: 'HEAD',
-														cache: 'no-cache',
-														signal: combinedSignal
-													});
-                                                if (nextProbe.ok && nextProbe.status === 200) scanSet.add(nextUrl);
-                                            }
-                                        }
-                                    }
-                                } catch (e) {
-									// 🪝🛡️⏱️ INNESTO:
-									await injectTimingNoise(startNetworkTime, 45);
-								}
-                            }));
                         }
                     }
-                };
-                // 🔐 HARDENING LIVELLO INTERNO:
-                Object.freeze(universalScanner);
+                } catch (e) {
+                    // 🪝🛡️⏱️ INNESTO:
+                    await injectTimingNoise(startNetworkTime, 45);
+                }
+            }));
+        }
+    }
+};
+// 🔐 HARDENING LIVELLO INTERNO:
+Object.freeze(universalScanner);
 
                 console.info("️🧠🧬 SW: Avvio Universal Scanner...");
                 await universalScanner(db);
@@ -1472,6 +1555,45 @@ const CORE_ASSETS_SET = new Set(
 Object.freeze(assegnaFlussoPolimorfo);
 
 /**
+ * 🛡️ Security Headers Injector (Hardened v7.8+).
+ * Intercetta la Response (da rete o da CacheStorage) e inietta le intestazioni HTTP 
+ * di sicurezza difensive per prevenire MIME-sniffing, framing non autorizzato e leakage.
+ * @param {Response} response - Istanza della risorsa originale.
+ * @returns {Response} Nuova istanza Response con header di sicurezza riscritti.
+ */
+const injectSecurityHeaders = (response) => {
+    // Le risposte opache (cross-origin senza CORS) non permettono la manipolazione delle intestazioni
+    if (!response || response.type === 'opaque' || response.status === 0) {
+        return response;
+    }
+
+    const newHeaders = new Headers(response.headers);
+
+    // Previene il MIME-sniffing costringendo il browser a rispettare il Content-Type dichiarato
+    newHeaders.set('X-Content-Type-Options', 'nosniff');
+
+    // Impedisce l'inclusione della pagina all'interno di iframe/frame esterni (Anti-Clickjacking)
+    newHeaders.set('X-Frame-Options', 'DENY');
+
+    // Mantiene riservato il Referrer nei passaggi verso origini esterne
+    newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+    // Limita il caricamento delle risorse allo stesso dominio di origine
+    newHeaders.set('Cross-Origin-Resource-Policy', 'same-origin');
+
+    // Abilita la protezione XSS nativa dei browser legacy
+    newHeaders.set('X-XSS-Protection', '1; mode=block');
+
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders
+    });
+};
+Object.freeze(injectSecurityHeaders);
+
+
+/**
  * 🚦 SMITIZZAZIONE E INTERCETTAZIONE: Vigile Urbano e Gateway di Sicurezza Net-Layer.
  * Intercetta ogni singola richiesta telematica in uscita dal frontend dell'applicazione.
  * Applica i filtri di normalizzazione degli URI, isola le richieste core e devia l'instradamento
@@ -1651,7 +1773,9 @@ self.addEventListener('fetch', (event) => {
 					})());
                     console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${(finalStrategy === 'SWR' && cached) ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
                     if(!(finalStrategy === 'SWR' && cached)){
-                        return networkResponse;
+                        // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser
+        return injectSecurityHeaders(networkResponse);
+        
                     }
 					// 🗄️ Decade Verso la SEZIONE III
                 }
@@ -1660,7 +1784,8 @@ self.addEventListener('fetch', (event) => {
                         console.info("📦♻️ SW: 404 Online, Resilienza ON: ", finalPath);
 
                     } else {
-                        return networkResponse;
+                        // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+                        return injectSecurityHeaders(networkResponse);
                     }
                 }
             } catch (e) {
@@ -1669,7 +1794,7 @@ self.addEventListener('fetch', (event) => {
             }
         }
 		if (cached) {
-			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA (CACHE HIT LAYER)
+			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
@@ -1701,7 +1826,8 @@ self.addEventListener('fetch', (event) => {
                     if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                     decrypted = null;
 					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
-                    return outResponse;
+                    // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser
+                    return injectSecurityHeaders(outResponse);
                 } catch (err) {
                     	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
 					if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 40);
@@ -1782,7 +1908,8 @@ self.addEventListener('fetch', (event) => {
 									new Uint8Array(buffer).fill(0);
                                     if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                                     decrypted = null;
-									return outResponse;
+									// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser
+									return injectSecurityHeaders(outResponse);
                                 }
 
                                 return altCached.clone();
@@ -1840,7 +1967,7 @@ self.addEventListener('fetch', (event) => {
 				}
 			}
 		}
-	// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI (CRITICAL FALLBACK BLOCK)
+	// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
     // Isola l'ambiente di runtime in caso di avaria totale (assenza di rete e di cache). Evita il crash
     // erogando l'interfaccia di cortesia sterile a tolleranza di guasto (503) con marcatura forense.
 		if (!isImageRequest && isExcluded) {
