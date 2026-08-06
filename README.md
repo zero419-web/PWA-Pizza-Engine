@@ -1,6 +1,6 @@
 ![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.0-1f4e79)
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_X_PA-af0000)
-![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.8+-4f4f00)
+![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9+-4f4f00)
 
 > [!Important]
 >   - 🔃 **Last Update :** `v1.6`
@@ -41,6 +41,25 @@
 🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
+
+  - **🪖 NOVITÀ v7.9+ :**
+      - 🔍 1. Validazione Forense Blob (`isValidBlob`)
+
+        - 🧹 **SVG & Anti-Polyglot:** Blocco tag ostili (`<script>`, `<iframe>`), event handler inline (`onload=`) e signature di script in immagini raster (es. `PNG`, `WEBP`, `JPEG`).
+
+        - 📄 **PDF De-Obfuscated:** Decodifica esadecimale (#53 -> S), strip commenti/spazi, blocco stream compressi (`/flatedecode`) e isolamento pattern malevoli da `CONFIG`.
+
+        - 🧠 **RAM Zero-Out:** Bonifica della memoria con `.fill(0)` sui buffer decodificati subito dopo l'analisi o in eccezione.
+
+    - 🧠 **2. Deep Scanner IPC (`universalScanner`):**
+      - 🛑 **Cap Nodi & Profilo:** Limite massimo di **250 nodi per albero** e vincolo tassativo a **12 livelli** di profondità ( *Anti-JSON-Bomb* ).
+
+      - 🛡️ **Anti-Path Traversal:** Sanitizzazione e scarto di chiavi e percorsi con risalite directory (`../`, `..\`) o null byte (`\0`).
+
+      - ⚡ **CPU Yielding:** Pausa non-blocking dell'Event Loop ogni 10 nodi per preservare la reattività del thread worker.
+
+    - 🔒 **3. Iniezione Security Headers (`injectSecurityHeaders`):**
+       - 🌐 **Fetch Response Hardening:** Riscrittura automatica in-flight degli header HTTP (`nosniff`, `DENY`, `strict-origin-when-cross-origin`, `same-origin`) su ogni risposta intercettata.
 
   - **🪖 NOVITÀ v7.8+ :** <br> **Sessione di 🪨 Hardening generale contro il Red-Team 🔴**
 
