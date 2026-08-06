@@ -983,35 +983,22 @@ self.addEventListener('message', (event) => {
                 break;
             case 'CLEAN_CACHE':
                 // 🧹 Pulizia controllata delle cache di sistema
-                cleanUserCache(data.forceAll || false);
+                //cleanUserCache(data.forceAll || false);
                 break;
             case 'PING':
                 // 📡 Handshake e diagnosi dello stato operativo
                 if (event.ports && event.ports[0]) {}
                 break;
             case 'INIT_DB':
-                event.waitUntil(
-                    (async () => {
-                        try {
-                            // Logica di inizializzazione DB e sincronizzazione
-                            if (event.ports && event.ports[0]) {
-                                event.ports[0].postMessage({ type: 'INIT_DB_SUCCESS' });
-                            }
-                        } catch (err) {
-                            console.error('[SW] Errore INIT_DB:', err);
-                            if (event.ports && event.ports[0]) {
-                                event.ports[0].postMessage({ type: 'INIT_DB_ERROR', error: err.message });
-                            }
-                        }
-                    })()
-                );
                 break;
+                
             default:
                 return;
         }
     } catch (e) {
         // ⚠️🏴‍☠️ LOG ANTI-PROFILING: Segnalazione sterilizzata di errore IPC
         console.warn("⚠️ SW: Errore durante l'elaborazione del messaggio IPC", createCleanError("IPCExecutionError", e.message));
+        return;
     }
 });
     
