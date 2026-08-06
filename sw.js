@@ -987,9 +987,7 @@ self.addEventListener('message', (event) => {
                 break;
             case 'PING':
                 // 📡 Handshake e diagnosi dello stato operativo
-                if (event.ports && event.ports[0]) {
-                    event.ports[0].postMessage({ status: 'PONG', version: CONFIG.VERSION || '1.0.0' });
-                }
+                if (event.ports && event.ports[0]) {}
                 break;
             case 'INIT_DB':
                 event.waitUntil(
