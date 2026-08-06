@@ -1,53 +1,58 @@
 /*
- * 📄 DISCIPLINARE TECNICO DI CONFORMITÀ
+ * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
  * ⚙️ CORE: 🪖 PANZER v7.9+
  *
+ * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
- * 🛡️ REQUISITI OPERATIVI DI SISTEMA
+ *   1. 🧱🔀 ISOLAMENTO DEI FLUSSI :
+ *     Profilazione fisica del canale nello Scope isolato e protetto del Service Worker.
  *
- * 1. 🧱🔀 ISOLAMENTO DEI FLUSSI:
- * Profilazione fisica del canale nello Scope isolato e protetto del Service Worker.
+ *   2. 🔀🎭 INSTRADAMENTO POLIMORFO :
+ *     Flusso Fluido d'ufficio basato su scansione ciclica 'for...in' e telemetria hardware.
  *
- * 2. 🔀🎭 INSTRADAMENTO POLIMORFO:
- * Flusso Fluido d'ufficio basato su scansione ciclica 'for...in' e telemetria hardware.
+ *   3. 🩻🪨 RESILIENZA STRUTTURALE :
+ *     Meccanismo Smart Sync con campionamento RTT e interruzione atomica via AbortController.
  *
- * 3. 🩻🪨 RESILIENZA STRUTTURALE:
- * Meccanismo Smart Sync con campionamento RTT e interruzione atomica via AbortController.
+ *   4. 🪨🔬🧬 SW FORENSICS ( DNA CHECK ) :
+ *     Ispezione biometrica sequenziale del payload su tre (3) scomparti stagni:
+ *       - FASE 1 ( TESTA 🤯 ): Validazione Strict dei Magic Numbers contro attacchi di MIME-sniffing.
+ *       - FASE 2 ( CODA 🚓🚓🚓 ): Verifica dei marcatori strutturali ( Footer 👣 ) contro attacchi di tipo Append.
+ *       - FASE 3 ( CORPO 🪵🧬 ): Analisi euristica stringente anti-script per l'intercettazione di vettori malevoli nei PDF.
  *
- * 4. 🪨🔬🧬 SW FORENSICS (DNA CHECK):
- * Ispezione biometrica sequenziale del payload su tre (3) scomparti stagni:
- * - FASE 1 (TESTA 🤯): Validazione Strict dei Magic Numbers contro attacchi di MIME-sniffing.
- * - FASE 2 (CODA 🚓🚓🚓): Verifica dei marcatori strutturali (Footer 👣) contro attacchi di tipo Append.
- * - FASE 3 (CORPO 🪵🧬): Analisi euristica stringente anti-script per l'intercettazione di vettori malevoli nei PDF.
+ *   5. 🌡️🛡 ️CPU THERMAL SHIELD :
+ *     Ottimizzatore adattivo del respiro dell'Event Loop via 'waitTillIdle' per la prevenzione del logoramento hardware.
  *
- * 5. 🌡️🛡 ️CPU THERMAL SHIELD:
- * Ottimizzatore adattivo del respiro dell'Event Loop via 'waitTillIdle' per la prevenzione del logoramento hardware.
+ * ⚙️️ NUCLEO: [ SERVICE WORKER ] - ( SW ) " 🪖 PANZER V7.x+ " :
+ *   🎖 MILITARY EDITION ( 🔐 CRYPTOGRAPHIC 🗄️ VAULT 🔑 AES-GCM 256-BIT ).
  *
- * ⚙️️ NUCLEO: SERVICE WORKER (SW) 🪖 "PANZER V7.x+"
- * 🎖 MILITARY EDITION ( CRYPTOGRAPHIC VAULT AES-GCM 256-BIT )
- * Licenza di Distribuzione:
- * 🇪🇺📜 EUPL 1.2  (Conforme alle direttive CAD della PA 🏛 ️)
+ * Licenza di Distribuzione :
+ *   🇪🇺📜 EUPL v1.2  ( Conforme alle direttive CAD della PA 🏛 ️)
  *
- * Sviluppo Software e Ingegnerizzazione del Protocollo a cura di:
- * 👩‍💻🇮🇹 Valentino Aglianò - Perito Industriale Informatico (2013)
- * [ Istruttore Informatico - Idoneo Nazionale MaxConcorso ASMEL 2025 ]
+ * Sviluppo Software e Ingegnerizzazione del Protocollo a cura di :
+ *   👩‍💻🇮🇹 Valentino Aglianò - Perito Industriale Informatico ( 2013 )
+ *   [ 🏛️ Istruttore Informatico - Idoneo Nazionale MaxConcorso ASMEL 2025 ]
  *
  *
- * 🛡 ️DIRECTIVE DI SICUREZZA ATTIVA E BONIFICA FORENSE ( 🔐 ZERO-TRUST POLICY 🚨 )
+ * 🛡 ️DIRECTIVE DI SICUREZZA ATTIVA E BONIFICA FORENSE ( 🔐 ZERO-TRUST POLICY 🚨 ) :
  *
- * [ 🔑 MASTER KEY ]:
- * Istanza crittografica non esportabile (CryptoKey) generata a runtime e isolata in RAM volatile.
- * [ 🗄️ PWA_VAUL T]:
- * Persistenza protetta della chiave opaca in IndexedDB ➿ tramite algoritmo di clonazione strutturata (extractable: false).
- * [ 🫙 SANDBOX CONTENIMENTO ]:
- * Iniezione perentoria di header CSP restrittivi per l'isolamento dei contenuti erogati a schermo.
- * [ 🐺 WATCHDOG LOOPBACK ]:
- * Test atomico di cifratura/decrittazione simmetrica a runtime (🐦 vaultCanaryText) per la validazione della memoria.
- * [ 🚨🧼 EMERGENCY WIPE ]:
- * Tabula rasa immediata, distruzione totale e bonifica delle cache in caso di fallimento strutturale del canarino.
- * [ 🚧🕵 ️ANTI-MEMORY INSPECTION ]:
- * Sovrascrittura fisica e azzeramento dei buffer binari di transito (headBuffer, tailBuffer, fullBuffer), tramite metodo nativo 'Uint8Array.prototype.fill(0)' immediatamente post-elaborazione.
+ *   [ 🔑 MASTER KEY ]:
+ *     Istanza crittografica non esportabile (CryptoKey) generata a runtime e isolata in RAM volatile.
+ *
+ *   [ 🗄️ PWA_VAUL T]:
+ *     Persistenza protetta della chiave opaca in IndexedDB ➿ tramite algoritmo di clonazione strutturata (extractable: false).
+ *
+ *   [ 🫙 SANDBOX CONTENIMENTO ]:
+ *     Iniezione perentoria di header CSP restrittivi per l'isolamento dei contenuti erogati a schermo.
+ *
+ *   [ 🐺 WATCHDOG LOOPBACK ]:
+ *     Test atomico di cifratura/decrittazione simmetrica a runtime (🐦 vaultCanaryText) per la validazione della memoria.
+ *
+ *   [ 🚨🧼 EMERGENCY WIPE ]:
+ *     Tabula rasa immediata, distruzione totale e bonifica delle cache in caso di fallimento strutturale del canarino.
+ *
+ *   [ 🚧🕵 ️ANTI-MEMORY INSPECTION ]:
+ *     Sovrascrittura fisica e azzeramento dei buffer binari di transito (headBuffer, tailBuffer, fullBuffer), tramite metodo nativo 'Uint8Array.prototype.fill(0)' immediatamente post-elaborazione.
  *
  */
 
