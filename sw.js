@@ -972,37 +972,13 @@ self.addEventListener('message', (event) => {
     if (event.origin !== self.origin) return;
 
     // 🔍 PAYLOAD VALIDATION: Verifica struttura, tipo e presenza nei comandi autorizzati
-    const data = event.data;
-    if (!data || typeof data !== 'object' || !CONFIG.ALLOWED_IPC_TYPES.includes(data.type)) return;
-    
-    try {
-        switch (data.type) {
-            case 'SKIP_WAITING':
-                // ⚡ Esecuzione cambio versione imminente
-                self.skipWaiting();
-                break;
-            case 'CLEAN_CACHE':
-                // 🧹 Pulizia controllata delle cache di sistema
-                //cleanUserCache(data.forceAll || false);
-                break;
-            case 'PING':
-                // 📡 Handshake e diagnosi dello stato operativo
-                if (event.ports && event.ports[0]) {}
-                break;
-            case 'INIT_DB':
-                break;
-                
-            default:
-                return;
-        }
-    } catch (e) {
-        // ⚠️🏴‍☠️ LOG ANTI-PROFILING: Segnalazione sterilizzata di errore IPC
-        console.warn("⚠️ SW: Errore durante l'elaborazione del messaggio IPC", createCleanError("IPCExecutionError", e.message));
+    const data = event?.data;
+    if (!data || typeof data !== 'object' || !CONFIG.ALLOWED_IPC_TYPES.includes(data?.type)){ 
+        console.warn("⚠️ SW: Errore durante l'elaborazione del messaggio IPC");
         return;
     }
-});
     
-    const eventDataSnapshot = event.data;
+    const eventDataSnapshot = event?.data;
     if (eventDataSnapshot?.type === 'INIT_DB') {
 
         if (isSyncing) {
