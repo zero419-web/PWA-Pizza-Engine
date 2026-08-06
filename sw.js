@@ -69,9 +69,9 @@ const CONFIG = {
     userCacheName: 'user_PWA_PIZZA_ENGINE_v7.8',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
 	MAX_PATH_LENGTH: 200,
-    ALLOWED_SCHEMES: Object.freeze(['http:', 'https:']),
-    ALLOWED_METHODS: Object.freeze(['GET', 'HEAD']),
-    ALLOWED_IPC_TYPES: Object.freeze(['SKIP_WAITING', 'CLEAN_CACHE', 'PING']),
+    ALLOWED_SCHEMES: ['http:', 'https:'],
+    ALLOWED_METHODS: ['GET', 'HEAD', 'POST'],
+    ALLOWED_IPC_TYPES: ['SKIP_WAITING', 'CLEAN_CACHE', 'PING', 'INIT_DB'],
     userCacheTTL: 7,
     networkResilient: {
         maxRetries: 5,
@@ -988,9 +988,26 @@ self.addEventListener('message', (event) => {
             case 'PING':
                 // 📡 Handshake e diagnosi dello stato operativo
                 if (event.ports && event.ports[0]) {
-                    event.ports[0].postMessage({ status: 'PONG', version: CONFIG.VERSION || '7.8+' });
+                    event.ports[0].postMessage({ status: 'PONG', version: CONFIG.VERSION });
                 }
                 break;
+            case 'INIT_DB':
+            event.waitUntil(
+                (async () => {
+                    try {
+                        // Logica di inizializzazione DB e sincronizzazione
+                        if (event.ports && event.ports[0]) {
+                            event.ports[0].postMessage({ type: 'INIT_DB_SUCCESS' });
+                        }
+                    } catch (err) {
+                        console.error('[SW] Errore INIT_DB:', err);
+                        if (event.ports && event.ports[0]) {
+                            event.ports[0].postMessage({ type: 'INIT_DB_ERROR', error: err.message });
+                        }
+                    }
+                })()
+            );
+            break;
         }
     } catch (e) {
         // ⚠️🏴‍☠️ LOG ANTI-PROFILING: Segnalazione sterilizzata di errore IPC
