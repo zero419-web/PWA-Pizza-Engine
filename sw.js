@@ -142,25 +142,23 @@ const CONFIG = {
                    '2525454F46',
                    '2525454F46'
                 ]  // %%EOF (Rilevazione strutturale di coda)
-           },
-           'pdfMaliciousPatterns': [
-               '/JavaScript',
-               '/JS',
-               '/Launch',
-               '/EmbeddedFile',
-               '/OpenAction',
-               '/AA',
-               '/URI',
-               '/SubmitForm',
-               '/ImportData',
-               '/RichMedia'
-           ],
-           'compressedStreamPatterns': [
-                '/flatedecode', 
-                '/lzwdecode',
-                '/objstm',
-                '/crypt'
-            ],
+        },
+        'pdfMaliciousPatterns': [
+           '/javascript',
+           '/js',
+           '/launch',
+           '/embeddedfile',
+           '/openaction',
+           '/submitform',
+           '/importdata',
+           '/richmedia'
+        ],
+        'compressedStreamPatterns': [
+            '/flatedecode', 
+            '/lzwdecode',
+            '/objstm',
+            '/crypt'
+        ],
            'useHeadProbe': false,
            'tolerance': 0.30,
            'defaultMin': 1000
@@ -517,7 +515,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             }
         }
 
-        // --- 🛡️ FASE 3: ANALISI PDF CON ISOLAMENTO ESTRUTTURALE (NO FALSI POSITIVI SU IMMAGINI) ---
+                // --- 🛡️ FASE 3: ANALISI PDF CON ISOLAMENTO STRUTTURALE E MACCHINA A STATI ---
         const isPdf = subType === 'pdf' || finalContentType.toLowerCase().includes('pdf');
         if (!isEncrypted && !isTransformed && isPdf) {
             if (signal?.aborted) {
@@ -525,7 +523,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 return result;
             }
 
-            const configPdfPatterns = (minMap.pdf?.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
+            // Mappatura corretta direttamente dalla radice di minMap (CONFIG.minSizeMap)
+            const configPdfPatterns = (minMap.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
 
             if (typeof waitTillIdle === 'function') {
                 await waitTillIdle(200, 8000);
@@ -533,6 +532,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
             const CHUNK_SIZE = 1024 * 1024;
             let offset = 0;
+            let inStream = false;
 
             while (offset < blob.size) {
                 if (signal?.aborted) {
@@ -546,13 +546,40 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
                 const rawChunkText = new TextDecoder('latin1', { fatal: false }).decode(chunkArray);
 
-                // 1. ISOLAMENTO STRUTTURALE: Rimuove i blocchi binari (immagini/font) per analizzare solo i dizionari PDF
-                let pdfStructureOnly = rawChunkText.replace(/stream[\r\n]+[\s\S]*?[\r\n]+endstream/gi, 'stream_stripped');
+                // 1. ISOLAMENTO STRUTTURALE INTER-CHUNK (Macchina a stati per stream binari)
+                let pdfStructureOnly = "";
+                let searchPos = 0;
+
+                while (searchPos < rawChunkText.length) {
+                    if (inStream) {
+                        const endStreamIdx = rawChunkText.toLowerCase().indexOf('endstream', searchPos);
+                        if (endStreamIdx !== -1) {
+                            inStream = false;
+                            searchPos = endStreamIdx + 9; // Avanza oltre 'endstream'
+                        } else {
+                            // Lo stream binario di immagini/font prosegue nel chunk successivo
+                            break;
+                        }
+                    } else {
+                        const streamIdx = rawChunkText.toLowerCase().indexOf('stream', searchPos);
+                        if (streamIdx !== -1) {
+                            pdfStructureOnly += rawChunkText.substring(searchPos, streamIdx);
+                            inStream = true;
+                            searchPos = streamIdx + 6; // Avanza oltre 'stream'
+                        } else {
+                            pdfStructureOnly += rawChunkText.substring(searchPos);
+                            break;
+                        }
+                    }
+                }
+
+                // Normalizzazione: decodifica esadecimale PDF (#2f -> /), rimozione commenti e preservazione spazi singoli
                 pdfStructureOnly = pdfStructureOnly.toLowerCase();
                 pdfStructureOnly = pdfStructureOnly.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
-                pdfStructureOnly = pdfStructureOnly.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, '');
+                pdfStructureOnly = pdfStructureOnly.replace(/\/\*[\s\S]*?\*\//g, '');
+                pdfStructureOnly = pdfStructureOnly.replace(/\s+/g, ' ');
 
-                // 2. Scansione pattern malevoli solo sulle strutture di controllo PDF
+                // 2. Scansione pattern malevoli solo sui dizionari di struttura del PDF
                 for (const pattern of configPdfPatterns) {
                     if (pdfStructureOnly.includes(pattern)) {
                         chunkArray.fill(0);
@@ -563,7 +590,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     }
                 }
 
-                // 3. DECOMPRESSIONE PROFONDA: Eseguita solo su stream dichiarati /FlateDecode
+                // 3. DECOMPRESSIONE PROFONDA DEGLI STREAM /FlateDecode
                 const streamRegex = /stream[\r\n]+([\s\S]*?)[\r\n]+endstream/gi;
                 let match;
                 while ((match = streamRegex.exec(rawChunkText)) !== null) {
@@ -574,29 +601,30 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                             const streamStart = match.index + match[0].indexOf(match[1]);
                             const streamBytes = chunkArray.subarray(streamStart, streamStart + match[1].length);
                             
-                            // Gestione automatica zlib (header 0x78) vs deflate grezzo
-                            const format = (streamBytes[0] === 0x78) ? 'deflate' : 'deflate-raw';
-                            const ds = new DecompressionStream(format);
-                            const writer = ds.writable.getWriter();
-                            writer.write(streamBytes);
-                            writer.close();
+                            if (streamBytes.length > 0) {
+                                const format = (streamBytes[0] === 0x78) ? 'deflate' : 'deflate-raw';
+                                const ds = new DecompressionStream(format);
+                                const writer = ds.writable.getWriter();
+                                writer.write(streamBytes);
+                                writer.close();
 
-                            const decompressedBuffer = await new Response(ds.readable).arrayBuffer();
-                            let decompText = new TextDecoder('latin1', { fatal: false }).decode(new Uint8Array(decompressedBuffer)).toLowerCase();
-                            decompText = decompText.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
-                            decompText = decompText.replace(/\s+/g, '');
+                                const decompressedBuffer = await new Response(ds.readable).arrayBuffer();
+                                let decompText = new TextDecoder('latin1', { fatal: false }).decode(new Uint8Array(decompressedBuffer)).toLowerCase();
+                                decompText = decompText.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
+                                decompText = decompText.replace(/\s+/g, ' ');
 
-                            for (const pattern of configPdfPatterns) {
-                                if (decompText.includes(pattern)) {
-                                    chunkArray.fill(0);
-                                    await injectTimingNoise(startForensicTime, 50);
-                                    console.warn("⚠️ SW Security: Payload malevolo rilevato nello stream decompresso", createCleanError("PdfPatternDetected", `Pattern decompresso: ${pattern}`));
-                                    wipeRAM();
-                                    return result;
+                                for (const pattern of configPdfPatterns) {
+                                    if (decompText.includes(pattern)) {
+                                        chunkArray.fill(0);
+                                        await injectTimingNoise(startForensicTime, 50);
+                                        console.warn("⚠️ SW Security: Payload malevolo rilevato nello stream decompresso", createCleanError("PdfPatternDetected", `Pattern decompresso: ${pattern}`));
+                                        wipeRAM();
+                                        return result;
+                                    }
                                 }
                             }
                         } catch (e) {
-                            // Ignora errori di decompressione su stream grafici o formati non compatibili
+                            // Ignora errori di decompressione su stream di dati grafici
                         }
                     }
                 }
