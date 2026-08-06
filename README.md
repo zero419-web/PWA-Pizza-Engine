@@ -1,9 +1,9 @@
 ![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.0-1f4e79)
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_X_PA-af0000)
-![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.7+-4f4f00)
+![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.8+-4f4f00)
 
 > [!Important]
->   - 🔃 **Last Update :** `v1.5`
+>   - 🔃 **Last Update :** `v1.6`
 > 
 > 🌀🧪 **Questo SDK + DashBoard e un PoC**
 > 
@@ -18,7 +18,7 @@
 > `index.html, app.js, PA_PWA.webmanifest, Res-PA-manifest.json, icon.png`.
 >    - **📂 Dir Resouces del comune:** `RES_DATAS`.
 > 
-> - ⚙️📜 **Framework Core Panzer v7.7+**
+> - ⚙️📜 **Framework Core Panzer v7.x+**
 >    - **📄 File:** <br> `ServiceWorker.js ⚙️🪖` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
 >
 > 👁️‍🗨️ [**DEMO on-line**](https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/)
@@ -26,21 +26,23 @@
 
 ---
 
-![LOGO](https://img.shields.io/badge/Logo-CORE_PANZER_v7+-1f4e79)
-<p align="center"><img src="https://raw.githubusercontent.com/zero419-web/PWA-Pizza-Engine/main/sw_logo.svg" width="200" alt="Panzer v7+ Core Logo"></p>
+![LOGO](https://img.shields.io/badge/Logo-CORE_PANZER_v7.x+-1f4e79)
+<p align="center"><img src="https://raw.githubusercontent.com/zero419-web/PWA-Pizza-Engine/main/sw_logo.svg" width="200" alt="Panzer v7.x+ Core Logo"></p>
 
 ---
 
-# 🍕 PIZZA ENGINE <br> PWA Resiliente ad Alta Sicurezza <br> ( ⚙️🪖 **Motore Panzer v7+** )
+# 🍕 PIZZA ENGINE <br> PWA Resiliente ad Alta Sicurezza <br> ( ⚙️🪖 **Motore Panzer v7.x+** )
   - 🌀 **Proof of Concept :** <br> ( *PoC* ) di un'architettura software sovrana per <br>Progressive Web App ( 📲 **PWA** ) nel settore della ristorazione, progettata in modalità *🔐 Zero-Trust*. Il sistema garantisce **massima resilienza informatica**, immunità forense ai guasti hardware e piena conformità alle linee guida tecniche 📑 **AgID** e al **📜 Codice dell'Amministrazione Digitale** ( *CAD* ).
 
 ## 🚀 Obiettivi del Progetto :<br>
 - ⚙️ Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata ( Lie-Fi ), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
-## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.7+ )
+## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.x+ )
 🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
+
+  - **🪖 NOVITÀ v7.8+ :** <br> **Sessione di 🪨 Hardening generale contro il Red-Team 🔴**
 
   - **🪖 NOVITÀ v7.7+ :** <br> 🔬🧬 SW Forensics ( DNA Check & Binary Validation )
 Sintesi delle novità di hardening 🪨 implementate in isValidBlob: <br>
