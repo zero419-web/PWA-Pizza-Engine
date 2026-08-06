@@ -376,18 +376,15 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
 Object.freeze(waitTillIdle);
 
 /**
- * 🔬🧬 SW Forensics & DNA Check 
+ * 🔬🧬 SW Forensics & DNA Check - v3.0
  *      ( 🪨 Hardened 🪖 v7.9+ ).
- * 
- * Sfrutta dinamicamente CONFIG.minSizeMap, Magic Numbers e supportedSignatures per la validazione
- * di PDF nativi, PAdES, wrapper CAdES (.p7m), Immagini e Asset Code/JSON.
  * 
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
  * @param {number} [expectedSize=0] - Dimensione nominale attesa (Content-Length) per verifica tolleranza.
  * @param {boolean} [isEncrypted=false] - Flag di bypass firme per i flussi già cifrati nel Bunker.
  * @param {AbortSignal} [signals=null] - Segnale di interruzione atomica per processi pendenti.
- * @returns {Promise<{valid: boolean, blob: Blob|null}>} Esito della validazione con istanza blob pulita.
+ * @returns {Promise<{valid: boolean, blob: Blob|null, response: Response|null}>}
  */
 const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = false, signals = null) => {
     const startForensicTime = performance.now();
@@ -396,7 +393,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     let blob = null;
     let encoding = null;
     let finalContentType = contentType;
-    const result = { valid: false, blob: null };
+    let originalResponse = null;
+    const result = { valid: false, blob: null, response: null };
 
     let headerBuffer = null;
     let tailBuffer = null;
@@ -422,10 +420,10 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     try {
         if (input instanceof Response) {
             if (signal?.aborted) return result;
+            originalResponse = input;
             encoding = input.headers.get('Content-Encoding');
             finalContentType = contentType || input.headers.get('Content-Type') || '';
             try {
-                // 🛡️ FIX:
                 blob = await input.clone().blob();
             } catch (e) {
                 await injectTimingNoise(startForensicTime, 50);
@@ -446,13 +444,11 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         const pdfConfig = minMap?.pdf || {};
         const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05 };
         
-        // Rilevamento accurato del contesto PDF / CAdES / P7M per evitare misclassificazioni sugli asset
         const isPdfContext = subType === 'pdf' || subType.includes('pkcs7') || subType.includes('p7m') || 
                              finalContentType.toLowerCase().includes('pdf') || 
                              finalContentType.toLowerCase().includes('pkcs7') || 
                              finalContentType.toLowerCase().includes('p7m');
 
-        // Risoluzione sicura della sezione basata sul tipo di asset (gestisce correttamente JSON, immagini, codice e PDF)
         const section = isPdfContext ? pdfConfig : (minMap[mainType] || minMap[subType] || minMap['code'] || universal);
         const isTransformed = encoding !== null && encoding !== 'identity';
         
@@ -470,14 +466,11 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             return result;
         }
 
-       /* 🛡️ FASE 1: ANALISI MAGIC NUMBERS,
-        *  SIGNATURES & FORMATI PDF/CAdES/PAdES:
-        */
+        // 🛡️ FASE 1: ANALISI MAGIC NUMBERS & SIGNATURES
         if (!isEncrypted && !isTransformed) {
             const isSvg = subType === 'svg' || finalContentType.includes('svg');
             const isRasterImage = ['image/png', 'image/webp', 'image/jpeg'].some(t => finalContentType.includes(t)) || ['png', 'webp', 'jpg', 'jpeg'].includes(subType);
 
-            // 1.1 Sanitizzazione XML/SVG
             if (isSvg) {
                 const svgSliceSize = Math.min(blob.size, 1024 * 64);
                 const svgBuffer = await blob.slice(0, svgSliceSize).arrayBuffer();
@@ -496,7 +489,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 }
             }
 
-            // 1.2 Protezione Anti-Polyglot per Immagini Raster
             if (isRasterImage) {
                 const sampleSize = Math.min(blob.size, 1024 * 64);
                 const sampleBuffer = await blob.slice(0, sampleSize).arrayBuffer();
@@ -507,12 +499,11 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 const executableSignatures = /<script|javascript:|eval\(|function\s*\(/i;
                 if (executableSignatures.test(bodyText)) {
                     await injectTimingNoise(startForensicTime, 50);
-                    console.warn("⚠️ SW Security: Blocco file poliglotta (script embedded in immagine)", createCleanError("PolyglotDetected", "Signature di codice eseguibile nei dati immagine"));
+                    console.warn("⚠️ SW Security: Blocco file poliglotta", createCleanError("PolyglotDetected", "Signature di codice eseguibile nei dati immagine"));
                     return result;
                 }
             }
 
-            // 1.3 Controllo Avanzato Header (Magic Numbers + supportedSignatures per CAdES/PAdES/PDF)
             const magicSource = section?.magicNumbers || pdfConfig?.magicNumbers;
             const supportedSignatures = section?.supportedSignatures || pdfConfig?.supportedSignatures || [];
 
@@ -530,7 +521,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     .map(b => b.toString(16).padStart(2, '0'))
                     .join('').toUpperCase();
 
-                // Verifica riscontro tramite Magic Numbers standard
                 let hasValidSig = magicSource?.header?.some(sig => {
                     const cleanSig = sig.toUpperCase();
                     if (headerHex.includes(cleanSig)) return true;
@@ -542,7 +532,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     }
                 }) || false;
 
-                // Se fallisce, verifica tramite le firme supportate esplicite (CAdES / PAdES / MIME string matching)
                 if (!hasValidSig && supportedSignatures.length > 0) {
                     hasValidSig = supportedSignatures.some(sigPattern => {
                         const patternLower = sigPattern.toLowerCase();
@@ -552,13 +541,13 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
                 if (!hasValidSig) {
                     await injectTimingNoise(startForensicTime, 50);
-                    console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa o pattern firmato non riconosciuto"));
+                    console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa"));
                     return result;
                 }
             }
         }
 
-        // 🛡️ FASE 2: ANALISI MARCATORI DI CODA:
+        // 🛡️ FASE 2: ANALISI MARCATORI DI CODA
         const magicSourceFooter = section?.magicNumbers || pdfConfig?.magicNumbers;
         if (!isEncrypted && !isTransformed && section && magicSourceFooter?.footer?.length > 0) {
             if (signal?.aborted) return result;
@@ -585,7 +574,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 }
             });
 
-            // Verifica compatibilità wrapper CAdES (.p7m)
             const headerBytesCheck = headerBuffer ? new Uint8Array(headerBuffer) : new Uint8Array(0);
             const headerTextCheck = new TextDecoder('latin1', { fatal: false }).decode(headerBytesCheck);
             const headerHexCheck = Array.from(headerBytesCheck).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -593,12 +581,12 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
             if (!hasValidFooter && !isCadesWrapper) {
                 await injectTimingNoise(startForensicTime, 50);
-                console.warn("⚠️ SW Security: Firma footer fallita", createCleanError("FooterCheckFailed", "Mismatch marcatore di coda %%EOF o struttura di chiusura"));
+                console.warn("⚠️ SW Security: Firma footer fallita", createCleanError("FooterCheckFailed", "Mismatch marcatore di coda %%EOF"));
                 return result;
             }
         }
 
-        // 🛡️ FASE 3: ANALISI PROFONDA PDF:
+        // 🛡️ FASE 3: ANALISI PROFONDA PDF
         if (!isEncrypted && !isTransformed && isPdfContext) {
             if (signal?.aborted) return result;
 
@@ -655,7 +643,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 for (const pattern of configPdfPatterns) {
                     if (pdfStructureOnly.includes(pattern)) {
                         await injectTimingNoise(startForensicTime, 50);
-                        console.warn("⚠️ SW Security: Pattern ostile rilevato nella struttura del PDF", createCleanError("PdfPatternDetected", `Pattern rilevato: ${pattern}`));
+                        console.warn("⚠️ SW Security: Pattern ostile nella struttura del PDF", createCleanError("PdfPatternDetected", `Pattern: ${pattern}`));
                         return result;
                     }
                 }
@@ -690,14 +678,12 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                                 for (const pattern of configPdfPatterns) {
                                     if (decompText.includes(pattern)) {
                                         await injectTimingNoise(startForensicTime, 50);
-                                        console.warn("⚠️ SW Security: Payload malevolo rilevato nello stream decompresso", createCleanError("PdfPatternDetected", `Pattern decompresso: ${pattern}`));
+                                        console.warn("⚠️ SW Security: Payload malevolo in stream decompresso", createCleanError("PdfPatternDetected", `Pattern: ${pattern}`));
                                         return result;
                                     }
                                 }
                             }
-                        } catch (_) {
-                            // Ignora errori di decompressione su stream grafici complessi
-                        }
+                        } catch (_) {}
                     }
                 }
 
@@ -707,14 +693,25 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
         if (signal?.aborted) return result;
 
+        // 🛡️ COSTRUZIONE RISULTATO SICURO (Blob + Response pulita incorporata)
         result.valid = true;
         result.blob = blob;
+        result.response = originalResponse ? new Response(blob, {
+            status: originalResponse.status,
+            statusText: originalResponse.statusText,
+            headers: new Headers(originalResponse.headers)
+        }) : new Response(blob, {
+            status: 200,
+            statusText: 'OK',
+            headers: { 'Content-Type': finalContentType || 'application/octet-stream' }
+        });
+
         Object.freeze(result);
         return result;
 
     } catch (e) {
         await injectTimingNoise(startForensicTime, 50);
-        return { valid: false, blob: null };
+        return { valid: false, blob: null, response: null };
     } finally {
         wipeRAM();
     }
