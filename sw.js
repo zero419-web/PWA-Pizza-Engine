@@ -65,8 +65,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.8',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.8',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.9',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
 	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: [
@@ -156,9 +156,7 @@ const CONFIG = {
                '/openaction',
                '/submitform',
                '/importdata',
-               '/richmedia',
-               '/aa',          // Additional Actions (vettori di exploit comuni)
-               '/acroform'     // Intercettazione form interattivi non sicuri
+               '/richmedia'
             ],
            'compressedStreamPatterns': [
                '/flatedecode', 
