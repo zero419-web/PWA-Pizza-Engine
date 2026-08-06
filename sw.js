@@ -133,7 +133,7 @@ const CONFIG = {
        'pdf': {
            'firmato': 5000,
            'default': 10000,
-           'maxHeaderBytes': 4096
+           'maxHeaderBytes': 4096,
            'maxFooterBytes': 4096,
            'magicNumbers': {
                'header': [
@@ -146,7 +146,7 @@ const CONFIG = {
                     '2525454F46', // %%EOF (Rilevazione strutturale di coda PDF)
                     '3082',       // Supporto per strutture di firma in coda (PAdES / aggiornamenti incrementali)
                     '3081'
-                    ]
+                ]
            },
            'pdfMaliciousPatterns': [
                '/javascript',
@@ -159,7 +159,7 @@ const CONFIG = {
                '/richmedia',
                '/aa',          // Additional Actions (vettori di exploit comuni)
                '/acroform'     // Intercettazione form interattivi non sicuri
-               ],
+            ],
            'compressedStreamPatterns': [
                '/flatedecode', 
                '/lzwdecode',
