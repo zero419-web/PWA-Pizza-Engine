@@ -377,7 +377,7 @@ Object.freeze(waitTillIdle);
 
 /**
  * 🔬🧬 SW Forensics & DNA Check - v4.5
- *      ( 🪨 Hardened 🪖 v7.9+ ).
+ *       ( 🪨 Hardened 🪖 v7.9+ ).
  *
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
@@ -559,7 +559,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     });
                 }
 
-                if (!hasValidSig) {
+                if (!hasValidSig && !isPdfContext && (magicSource?.header?.length > 0 || supportedSignatures.length > 0)) {
                     await injectTimingNoise(startForensicTime, 50);
                     console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa"));
                     return result;
@@ -613,7 +613,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             }
         }
 
-        // 🛡️ FASE 3: ANALISI PROFONDA PDF (Con Sliding Window Overlap Anti-Split)
+        // 🛡️ FASE 3: ANALISI PROFONDA PDF (Con Sliding Window Overlap Anti-Split e ricerca binaria nativa)
         if (!isEncrypted && !isTransformed && isPdfContext) {
             if (signal?.aborted) return result;
 
@@ -676,24 +676,36 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     }
                 }
 
-                const streamRegex = /stream[\r\n]+([\s\S]*?)[\r\n]+endstream/gi;
-                let match;
-                while ((match = streamRegex.exec(rawChunkText)) !== null) {
-                    const streamContext = rawChunkText.substring(Math.max(0, match.index - 300), match.index).toLowerCase();
+                // Ricerca binaria nativa per la decompressione degli stream
+                let pos = 0;
+                while (pos < chunkArray.length) {
+                    const streamMarkerIdx = rawChunkText.toLowerCase().indexOf('stream', pos);
+                    if (streamMarkerIdx === -1) break;
 
+                    let streamStartByte = streamMarkerIdx + 6;
+                    if (rawChunkText[streamStartByte] === '\r') streamStartByte++;
+                    if (rawChunkText[streamStartByte] === '\n') streamStartByte++;
+
+                    const endStreamIdx = rawChunkText.toLowerCase().indexOf('endstream', streamStartByte);
+                    if (endStreamIdx === -1) {
+                        pos = streamMarkerIdx + 6;
+                        continue;
+                    }
+
+                    let streamEndByte = endStreamIdx;
+                    if (rawChunkText[streamEndByte - 1] === '\n') streamEndByte--;
+                    if (rawChunkText[streamEndByte - 1] === '\r') streamEndByte--;
+
+                    const streamContext = rawChunkText.substring(Math.max(0, streamMarkerIdx - 300), streamMarkerIdx).toLowerCase();
                     const isCompressedStream = pdfConfig.compressedStreamPatterns ?
                         pdfConfig.compressedStreamPatterns.some(p => streamContext.includes(p.toLowerCase())) :
                         streamContext.includes('/flatedecode');
 
-                    if (isCompressedStream && typeof DecompressionStream !== 'undefined') {
+                    if (isCompressedStream && typeof DecompressionStream !== 'undefined' && streamEndByte > streamStartByte) {
                         try {
-                            const streamStart = match.index + match[0].indexOf(match[1]);
-                            const streamBytes = chunkArray.subarray(streamStart, streamStart + match[1].length);
-
+                            const streamBytes = chunkArray.subarray(streamStartByte, streamEndByte);
                             if (streamBytes.length > 0) {
-                                // 🐛 Controllo CMF zlib robusto (verifica che il metodo di compressione sia deflate = 8)
                                 const format = ((streamBytes[0] & 0x0F) === 8) ? 'deflate' : 'deflate-raw';
-
                                 const decompressedStream = new Blob([streamBytes]).stream().pipeThrough(new DecompressionStream(format));
                                 const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
                                 activeBuffers.push(decompressedBuffer);
@@ -712,6 +724,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                             }
                         } catch (_) {}
                     }
+                    pos = endStreamIdx + 9;
                 }
 
                 if (end >= blob.size) break;
