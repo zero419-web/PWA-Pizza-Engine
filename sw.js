@@ -1990,13 +1990,7 @@ self.addEventListener('fetch', (event) => {
                         'X-PWA-Source': 'Bunker-Decrypted',
                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                         'Pragma': 'no-cache',
-                        'Expires': '0',
-                        'X-Content-Type-Options': 'nosniff',
-                        'X-Frame-Options': 'DENY',
-                        'Referrer-Policy':
-                        'strict-origin-when-cross-origin',
-                        'Cross-Origin-Resource-Policy': 'same-origin',
-                        'X-XSS-Protection': '1; mode=block'
+                        'Expires': '0'
                     });
 
                     if (ext && CONFIG.extExlPHr.includes(ext)) {
@@ -2079,12 +2073,7 @@ self.addEventListener('fetch', (event) => {
                                         'X-PWA-Source': 'Bunker-Decrypted',
                                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                                         'Pragma': 'no-cache',
-                                        'Expires': '0',
-                                        'X-Content-Type-Options': 'nosniff',
-                                        'X-Frame-Options': 'DENY',
-                                        'Referrer-Policy': 'strict-origin-when-cross-origin',
-                                        'Cross-Origin-Resource-Policy': 'same-origin',
-                                        'X-XSS-Protection': '1; mode=block'
+                                        'Expires': '0'
                                     });
 
                                     if (CONFIG.extExlPHr.includes(variantExtLower)) {
