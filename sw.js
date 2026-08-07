@@ -56,7 +56,7 @@
  *
  */
 
-let encryptionKey = null;
+ let encryptionKey = null;
 
  let isLogicEnabled = false;
  let syncAbortController = null;
@@ -1620,7 +1620,7 @@ Object.freeze(universalScanner);
 		    // 🏴‍☠️ ANTI-PROFILING: Generazione di un clone d'errore asettico e privo di Stack Trace
 		    // Ispezione forense e logging differenziato in base alla severità
 		    if (isIntegritaError) {
-		        console.error("🚨 SW: Errore di Integrità critico rilevato su un asset.", createCleanError("SyncError", "Errore di Integrità rilevato su un asset")););
+		        console.error("🚨 SW: Errore di Integrità critico rilevato su un asset.", createCleanError("SyncError", "Errore di Integrità rilevato su un asset"));
 		    } else {
 		        console.warn("🔄⚠️ SW: Errore Sync", createCleanError("SyncError", "Errore operativo durante il Sync"));
 		    }
