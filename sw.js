@@ -1779,10 +1779,9 @@ let globalPlaceholderBlob = null;
 self.addEventListener('fetch', (event) => {
     // 🚧 SEZIONE I A : NORMALIZZAZIONE E FILTRAGGIO FLUSSI IN INGRESSO
     // Isola lo scope della richiesta, valida metodo/schema telematico ed esegue il check di Same-Origin.
+	const url = new URL(event.request.url);
+	const cleanPath = normalize(url.pathname);
     try {
-        const url = new URL(event.request.url);
-		const cleanPath = normalize(url.pathname);
-
         // 🪨️ HARDENING: Schema ( http/https ), Metodi ( GET/HEAD/POST ) ed Origine Stretta
 		const currentScheme = url.protocol.toLowerCase();
 		const currentMethod = event.request.method.toUpperCase();
