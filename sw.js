@@ -2261,7 +2261,7 @@ const CoreAssets_Destroy_Caches = async (serverV = null) => {
 		});
 	} catch (err) {
 	    // 🏴‍☠️ ANTI-PROFILING:
-		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", clcreateCleanError("CacheEvacuationError", "Fallimento procedura di emergenza evacuazione"));eanErr);
+		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", clcreateCleanError("CacheEvacuationError", "Fallimento procedura di emergenza evacuazione"))
 	}
 };
 Object.freeze(CoreAssets_Destroy_Caches);
