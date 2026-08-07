@@ -1981,8 +1981,15 @@ self.addEventListener('fetch', (event) => {
                     const dotIdx = finalPath.lastIndexOf('.');
                     const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
 
+                    const decryptedBytes = new Uint8Array(decrypted);
+                    const contentLength = decryptedBytes.byteLength;
+                    
                     const secureHeaders = new Headers({
-                        'Content-Type': detectedContentType,
+                        'Content-Type':
+                        detectedContentType || 
+                        'application/pdf',
+                        'Content-Length': contentLength,
+                        'Accept-Ranges': 'bytes',
                         'X-PWA-Source': 'Bunker-Decrypted',
                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                         'Pragma': 'no-cache',
@@ -1993,44 +2000,38 @@ self.addEventListener('fetch', (event) => {
                         secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
                     }
                     
-                    const decryptedArray = new Uint8Array(decrypted);
-                    
-                    // 🛡️ Utilizzo di un TransformStream per intercettare la fine della lettura (EOF)
-                    const { readable, writable } = new TransformStream({
-                        transform(chunk, controller) {
-                            controller.enqueue(chunk);
-                        },
-                        flush() {
-                            // 🧹 Bonifica RAM eseguita non appena il browser ha completato la ricezione
-                            decryptedArray.fill(0);
-                            console.log(`🛡️🧹 SW: Bonifica RAM post-streaming completata per: ${finalPath}`);
-                        },
-                        cancel() {
-                            // 🧹 Bonifica d'emergenza in caso di interruzione anticipata del client
-                            decryptedArray.fill(0);
-                            console.warn(`🛡️⚠️ SW: Streaming interrotto, bonifica RAM anticipata per: ${finalPath}`);
+                    // 🛡️ Creazione dello stream pulito senza azzeramenti sincroni bloccanti
+                    const pdfStream = new ReadableStream({
+                        start(controller) {
+                            controller.enqueue(decryptedBytes);
+                            controller.close();
                         }
                     });
-                    
-                    // ✍️ Scrittura dei dati nello stream
-                    const writer = writable.getWriter();
-                    writer.write(decryptedArray);
-                    writer.close();
-                    
-                    // 🧽 Pulizia del buffer sorgente originario
+                    // Pulizia del buffer sorgente originario
                     if (buffer instanceof ArrayBuffer) {
                         new Uint8Array(buffer).fill(0);
                     }
-                    // ⚙️ Generazione della risposta basata sul flusso protetto
-                    const outResponse = new
-                    Response(readable, { 
+                    
+                    console.info(`💾🛡️ SW: Risorsa estratta dalla cache: ${targetCache}`);
+                    
+                    // 🧹 Bonifica RAM differita in sicurezza: azzera i dati in memoria solo dopo
+                    // che il browser ha avuto il tempo materiale di leggere e caricare il PDF nel viewer.
+                    setTimeout(() => {
+                        try {
+                            if (decryptedBytes) decryptedBytes.fill(0);
+                            decrypted = null;
+                            console.log(`🛡️🧹 SW: Bonifica RAM differita completata per: ${finalPath}`);
+                        } catch (e) {
+                            // Ignora eventuali eccezioni se già rilasciato
+                        }
+                    }, 2000); // 2 secondi sono più che sufficienti per il download/rendering iniziale del PDF
+                    
+                    // 💉 Iniezione delle intestazioni di sicurezza e ritorno della Response con stream
+                    const outResponse = new Response(pdfStream, { 
                         status: 200, 
                         headers: secureHeaders 
                     });
                     
-                    decrypted = null;
-                    console.info(`💾🛡️ SW: Risorsa estratta dalla cache: ${targetCache}`);
-                    // 💉 Iniezione delle intestazioni di sicurezza
                     return injectSecurityHeaders(outResponse);
                 } catch (err) {
                     	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
