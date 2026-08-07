@@ -1715,7 +1715,7 @@ Object.freeze(assegnaFlussoPolimorfo);
 /**
  * 🛡️ Security Headers Injector- v2.0
  * ( 🪨 Hardened 🪖 v7.9+ ).
- * Intercetta la Response (da rete o da CacheStorage) e inietta le intestazioni HTTP 
+ * Intercetta la Response (da rete) e inietta le intestazioni HTTP 
  * di sicurezza difensive, gestendo in sicurezza i flussi e i codici di stato speciali (204/304).
  * @param {Response} response - Istanza della risorsa originale.
  * @returns {Response} Nuova istanza Response con header di sicurezza riscritti.
@@ -1984,55 +1984,32 @@ self.addEventListener('fetch', (event) => {
                     const decryptedBytes = new Uint8Array(decrypted);
                     const contentLength = decryptedBytes.byteLength;
                     
-                    const secureHeaders = new Headers({
-                        'Content-Type':
-                        detectedContentType || 
-                        'application/pdf',
-                        'Content-Length': contentLength,
-                        'Accept-Ranges': 'bytes',
+                    const secureHeaders = new
+                    Headers({
+                        'Content-Type': detectedContentType,
                         'X-PWA-Source': 'Bunker-Decrypted',
                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                         'Pragma': 'no-cache',
-                        'Expires': '0'
+                        'Expires': '0',
+                        'X-Content-Type-Options': 'nosniff',
+                        'X-Frame-Options': 'DENY',
+                        'Referrer-Policy':
+                        'strict-origin-when-cross-origin',
+                        'Cross-Origin-Resource-Policy': 'same-origin',
+                        'X-XSS-Protection': '1; mode=block'
                     });
-                    
+
                     if (ext && CONFIG.extExlPHr.includes(ext)) {
                         secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
                     }
-                    
-                    // 🛡️ Creazione dello stream pulito senza azzeramenti sincroni bloccanti
-                    const pdfStream = new ReadableStream({
-                        start(controller) {
-                            controller.enqueue(decryptedBytes);
-                            controller.close();
-                        }
-                    });
-                    // Pulizia del buffer sorgente originario
-                    if (buffer instanceof ArrayBuffer) {
-                        new Uint8Array(buffer).fill(0);
-                    }
-                    
-                    console.info(`💾🛡️ SW: Risorsa estratta dalla cache: ${targetCache}`);
-                    
-                    // 🧹 Bonifica RAM differita in sicurezza: azzera i dati in memoria solo dopo
-                    // che il browser ha avuto il tempo materiale di leggere e caricare il PDF nel viewer.
-                    setTimeout(() => {
-                        try {
-                            if (decryptedBytes) decryptedBytes.fill(0);
-                            decrypted = null;
-                            console.log(`🛡️🧹 SW: Bonifica RAM differita completata per: ${finalPath}`);
-                        } catch (e) {
-                            // Ignora eventuali eccezioni se già rilasciato
-                        }
-                    }, 2000); // 2 secondi sono più che sufficienti per il download/rendering iniziale del PDF
-                    
-                    // 💉 Iniezione delle intestazioni di sicurezza e ritorno della Response con stream
-                    const outResponse = new Response(pdfStream, { 
-                        status: 200, 
-                        headers: secureHeaders 
-                    });
-                    
-                    return injectSecurityHeaders(outResponse);
+
+                    const outResponse = new Response(decrypted, { headers: secureHeaders });
+					console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
+					new Uint8Array(buffer).fill(0);
+                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+                    decrypted = null;
+					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
+					return outResponse;
                 } catch (err) {
                     	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
 					if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 40);
@@ -2096,13 +2073,18 @@ self.addEventListener('fetch', (event) => {
                                     let decrypted = await decryptBuffer(buffer);
 
                                     const variantExtLower = variantExt.toLowerCase();
-                                    const secureHeaders = new Headers({
-                                        'Content-Type': contentTypeIMG,
-                                        'X-PWA-Source': 'Bunker-Recovered-Decrypted',
-                                        'X-PWA-Original-Path': altPath,
+                                    const
+                                    secureHeaders = new Headers({
+                                        'Content-Type': detectedContentType,
+                                        'X-PWA-Source': 'Bunker-Decrypted',
                                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                                         'Pragma': 'no-cache',
-                                        'Expires': '0'
+                                        'Expires': '0',
+                                        'X-Content-Type-Options': 'nosniff',
+                                        'X-Frame-Options': 'DENY',
+                                        'Referrer-Policy': 'strict-origin-when-cross-origin',
+                                        'Cross-Origin-Resource-Policy': 'same-origin',
+                                        'X-XSS-Protection': '1; mode=block'
                                     });
 
                                     if (CONFIG.extExlPHr.includes(variantExtLower)) {
@@ -2113,8 +2095,7 @@ self.addEventListener('fetch', (event) => {
 									new Uint8Array(buffer).fill(0);
                                     if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                                     decrypted = null;
-									// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser
-									return injectSecurityHeaders(outResponse);
+									return outResponse;
                                 }
 
                                 return altCached.clone();
