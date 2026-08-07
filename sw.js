@@ -377,7 +377,7 @@ Object.freeze(waitTillIdle);
 
 /**
  * 🔬🧬 SW Forensics & DNA Check 
- *      ( 🪨 Hardened 🪖 v7.12+ - Full Input Cloning ).
+ *      ( 🪨 Hardened 🪖 v7.9+ ).
  * 
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
@@ -394,6 +394,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     let encoding = null;
     let finalContentType = contentType;
     let originalResponse = null;
+    let isResponseInput = false;
     const result = { valid: false, blob: null, response: null };
 
     let headerBuffer = null;
@@ -421,6 +422,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         if (input instanceof Response) {
             if (signal?.aborted) return result;
             originalResponse = input;
+            isResponseInput = true;
             encoding = input.headers.get('Content-Encoding');
             finalContentType = contentType || input.headers.get('Content-Type') || '';
             try {
@@ -431,8 +433,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             }
         } else if (input instanceof Blob) {
             if (signal?.aborted) return result;
+            isResponseInput = false;
             finalContentType = contentType || input.type || '';
-            // 🛡️ FIX: Clonazione/Isolamento del Blob in ingresso tramite slice(0)
             blob = input.slice(0, input.size, finalContentType);
         } else {
             await injectTimingNoise(startForensicTime, 50);
@@ -458,10 +460,10 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         const section = isPdfContext ? pdfConfig : (minMap[mainType] || minMap[subType] || minMap['code'] || universal);
         const isTransformed = encoding !== null && encoding !== 'identity';
         
-        let minSize = section?.defaultMin || pdfConfig.defaultMin || 2048; 
+        let minSize = section?.defaultMin || universal.minAbsoluteByte || 64; 
         if (section) {
             const tolerance = section.tolerance || universal.tolerance || 0.1;
-            const baseMin = section[subType] || section.defaultMin || section.default || 2048;
+            const baseMin = section[subType] || section.defaultMin || section.default || universal.minAbsoluteByte || 64;
             minSize = (expectedSize > 0) ? (expectedSize * (1 - tolerance)) : baseMin;
         }
         if (isEncrypted || isTransformed) minSize = universal.minAbsoluteByte || 64;
@@ -522,17 +524,17 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 activeBuffers.push(headerBuffer);
 
                 const headerBytes = new Uint8Array(headerBuffer);
-                const headerText = new TextDecoder('latin1', { fatal: false }).decode(headerBytes);
+                const headerText = new TextDecoder('iso-8859-1', { fatal: false }).decode(headerBytes);
                 const headerHex = Array.from(headerBytes)
                     .map(b => b.toString(16).padStart(2, '0'))
                     .join('').toUpperCase();
 
                 let hasValidSig = magicSource?.header?.some(sig => {
                     const cleanSig = sig.toUpperCase();
-                    if (headerHex.includes(cleanSig)) return true;
+                    if (headerHex.startsWith(cleanSig)) return true;
                     try {
                         const literalStr = cleanSig.match(/.{1,2}/g).map(byte => String.fromCharCode(parseInt(byte, 16))).join('');
-                        return headerText.includes(literalStr);
+                        return headerText.startsWith(literalStr);
                     } catch (_) {
                         return false;
                     }
@@ -541,7 +543,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 if (!hasValidSig && supportedSignatures.length > 0) {
                     hasValidSig = supportedSignatures.some(sigPattern => {
                         const patternLower = sigPattern.toLowerCase();
-                        return headerText.toLowerCase().includes(patternLower) || finalContentType.toLowerCase().includes(patternLower);
+                        return headerText.toLowerCase().startsWith(patternLower) || finalContentType.toLowerCase().includes(patternLower);
                     });
                 }
 
@@ -567,7 +569,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             const tailHex = Array.from(tailBytes)
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('').toUpperCase();
-            const tailText = new TextDecoder('latin1', { fatal: false }).decode(tailBytes);
+            const tailText = new TextDecoder('iso-8859-1', { fatal: false }).decode(tailBytes);
 
             const hasValidFooter = magicSourceFooter.footer.some(foot => {
                 const cleanFoot = foot.toUpperCase();
@@ -581,7 +583,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             });
 
             const headerBytesCheck = headerBuffer ? new Uint8Array(headerBuffer) : new Uint8Array(0);
-            const headerTextCheck = new TextDecoder('latin1', { fatal: false }).decode(headerBytesCheck);
+            const headerTextCheck = new TextDecoder('iso-8859-1', { fatal: false }).decode(headerBytesCheck);
             const headerHexCheck = Array.from(headerBytesCheck).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
             const isCadesWrapper = headerTextCheck.includes('smime.p7m') || headerHexCheck.startsWith('3082') || headerHexCheck.startsWith('3081');
 
@@ -592,7 +594,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             }
         }
 
-        // 🛡️ FASE 3: ANALISI PROFONDA PDF
+        // 🛡️ FASE 3: ANALISI PROFONDA PDF (Con Sliding Window Overlap Anti-Split)
         if (!isEncrypted && !isTransformed && isPdfContext) {
             if (signal?.aborted) return result;
 
@@ -602,7 +604,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 await waitTillIdle(200, 8000);
             }
 
-            const CHUNK_SIZE = 1024 * 1024;
+            const CHUNK_SIZE = 1024 * 1024; // 1MB
+            const OVERLAP_SIZE = 4096;      // 4KB di sovrapposizione per coprire i confini dei blocchi
             let offset = 0;
             let inStream = false;
 
@@ -614,7 +617,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 activeBuffers.push(chunkBuffer);
                 const chunkArray = new Uint8Array(chunkBuffer);
 
-                const rawChunkText = new TextDecoder('latin1', { fatal: false }).decode(chunkArray);
+                const rawChunkText = new TextDecoder('iso-8859-1', { fatal: false }).decode(chunkArray);
 
                 let pdfStructureOnly = "";
                 let searchPos = 0;
@@ -670,14 +673,12 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                             
                             if (streamBytes.length > 0) {
                                 const format = (streamBytes[0] === 0x78) ? 'deflate' : 'deflate-raw';
-                                const ds = new DecompressionStream(format);
-                                const writer = ds.writable.getWriter();
-                                writer.write(streamBytes);
-                                writer.close();
-
-                                const decompressedBuffer = await new Response(ds.readable).arrayBuffer();
+                                
+                                const decompressedStream = new Blob([streamBytes]).stream().pipeThrough(new DecompressionStream(format));
+                                const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
                                 activeBuffers.push(decompressedBuffer);
-                                let decompText = new TextDecoder('latin1', { fatal: false }).decode(new Uint8Array(decompressedBuffer)).toLowerCase();
+
+                                let decompText = new TextDecoder('iso-8859-1', { fatal: false }).decode(new Uint8Array(decompressedBuffer)).toLowerCase();
                                 decompText = decompText.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
                                 decompText = decompText.replace(/\s+/g, ' ');
 
@@ -693,25 +694,31 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                     }
                 }
 
-                offset += CHUNK_SIZE;
+                if (end >= blob.size) break;
+                // 🛡️ Finestra scorrevole: retrocede di 4KB per rileggerli nel blocco successivo ed evitare split ai confini
+                offset = end - OVERLAP_SIZE;
             }
         }
 
         if (signal?.aborted) return result;
 
-        // 🛡️ COSTRUZIONE RISULTATO SICURO
-        //  (Blob + Response pulita incorporata)
+        // 🛡️ RITORNO SPECIFICO (Response se input era Response, Blob se input era Blob)
         result.valid = true;
         result.blob = blob;
-        result.response = originalResponse ? new Response(blob, {
-            status: originalResponse.status,
-            statusText: originalResponse.statusText,
-            headers: new Headers(originalResponse.headers)
-        }) : new Response(blob, {
-            status: 200,
-            statusText: 'OK',
-            headers: { 'Content-Type': finalContentType || 'application/octet-stream' }
-        });
+        
+        if (isResponseInput) {
+            result.response = originalResponse ? new Response(blob, {
+                status: originalResponse.status,
+                statusText: originalResponse.statusText,
+                headers: new Headers(originalResponse.headers)
+            }) : new Response(blob, {
+                status: 200,
+                statusText: 'OK',
+                headers: { 'Content-Type': finalContentType || 'application/octet-stream' }
+            });
+        } else {
+            result.response = null;
+        }
 
         Object.freeze(result);
         return result;
