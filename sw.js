@@ -1764,24 +1764,28 @@ Object.freeze(GLOBAL_BROKEN_BLOB);
 let globalPlaceholderBlob = null;
 
 self.addEventListener('fetch', (event) => {
-    // 🚧 SEZIONE I: NORMALIZZAZIONE E FILTRAGGIO FLUSSI IN INGRESSO
+    // 🚧 SEZIONE I A : NORMALIZZAZIONE E FILTRAGGIO FLUSSI IN INGRESSO
     // Isola lo scope della richiesta, valida metodo/schema telematico ed esegue il check di Same-Origin.
     try {
         const url = new URL(event.request.url);
+		const cleanPath = normalize(url.pathname);
 
-        // 🪨️ HARDENING: Check unificato per Schema (http/https), Metodi autorizzati (GET/HEAD) ed Origine Stretta
-        if (!CONFIG.ALLOWED_SCHEMES.includes(url.protocol) ||
-            !CONFIG.ALLOWED_METHODS.includes(event.request.method) ||
-            url.origin !== self.location.origin) {
-            return; // ⏩ Delegato direttamente al browser per risorse non autorizzate, non-GET o Cross-Origin
-        }
+        // 🪨️ HARDENING: Schema ( http/https ), Metodi ( GET/HEAD/POST ) ed Origine Stretta
+		const currentScheme = url.protocol.toLowerCase();
+		const currentMethod = event.request.method.toUpperCase();
+		const allowedSchemes = CONFIG.ALLOWED_SCHEMES.map(s => s.toLowerCase());
+		const allowedMethods = CONFIG.ALLOWED_METHODS.map(m => m.toUpperCase());
+		if ( !allowedSchemes.includes(currentScheme) ||
+			 !allowedMethods.includes(currentMethod) ||
+			 url.origin !== self.location.origin
+		   ) {
+			return; // ⏩ Delegato direttamente al browser
+		}
     } catch (e) {
         return; // 🛑 Blocco difensivo in caso di URL telematico corrotto o non parsabile
     }
 
-    // 🚧 SEZIONE II: GESTIONE CACHE & FALLBACK...
-
-    const cleanPath = normalize(url.pathname);
+    // 🚧 SEZIONE I B : GESTIONE CACHE & FALLBACK...
     event.respondWith((async () => {
         // ⏱️ Marcatore iniziale:
         const startFetchTime = performance.now();
@@ -1803,7 +1807,7 @@ self.addEventListener('fetch', (event) => {
 		if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
-// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ATTIVA (ONLINE GATEWAY)
+// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ATTIVA ( ONLINE GATEWAY )
 // Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 // o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
