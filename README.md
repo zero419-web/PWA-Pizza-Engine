@@ -42,26 +42,21 @@
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
 
-  
   - **🪖 NOVITÀ v7.9+ :** <br> `Sessione di 🪨 Hardening Mirato contro il Red-Team 🔴`
-      - 🔍 **1. Validazione Forense Blob (`isValidBlob`)**
+    - 🔍 **1. Validazione Forense Blob (`isValidBlob`)**
+    - 🧹 **SVG & Anti-Polyglot:** Blocco tag ostili (`<script>`, `<iframe>`), event handler inline (`onload=`) e signature di script in immagini raster (es. `PNG`, `WEBP`, `JPEG`).
+    - 📄 **PDF, PAdES & CAdES De-Obfuscated:** Finestra di analisi estesa a **4096 byte** per header e footer (per tollerare firme digitali, aggiornamenti incrementali e buste crittografiche `.p7m`), soglia minima a **2 KB** (`2048` byte), decodifica esadecimale, strip commenti/spazi, blocco stream compressi (`/flatedecode`, `/lzwdecode`, ecc.) e isolamento pattern malevoli da `CONFIG.pdf`.
+    - 🧠 **RAM Zero-Out:** Bonifica della memoria con `.fill(0)` sui buffer attivi gestita tramite blocchi `finally` sicuri subito dopo l'analisi o in caso di eccezione.
 
-        - 🧹 **SVG & Anti-Polyglot:** Blocco tag ostili (`<script>`, `<iframe>`), event handler inline (`onload=`) e signature di script in immagini raster (es. `PNG`, `WEBP`, `JPEG`).
+  - 🧠 **2. Deep Scanner IPC (`universalScanner`):**
+    - 🛑 **Cap Nodi & Profilo:** Limite massimo di **999 nodi per albero** e vincolo tassativo a **12 livelli** di profondità ( *Anti-JSON-Bomb* ).
+    - 🛡️ **Anti-Path Traversal:** Sanitizzazione e scarto di chiavi e percorsi con risalite directory (`../`, `..\`) o null byte (`\0`).
+    - ⚡ **CPU Yielding:** Pausa non-blocking dell'Event Loop ogni 10 nodi per preservare la reattività del thread worker.
 
-        - 📄 **PDF, PAdES & CAdES De-Obfuscated:** Finestra di analisi estesa a **4096 byte** per header e footer (per tollerare firme digitali, aggiornamenti incrementali e buste crittografiche `.p7m`), soglia minima a **2 KB** (`2048` byte), decodifica esadecimale, strip commenti/spazi, blocco stream compressi (`/flatedecode`, `/lzwdecode`, ecc.) e isolamento pattern malevoli da `CONFIG.pdf`.
+  - 🔒 **3. Iniezione Security Headers (`injectSecurityHeaders`):**
+    - 🌐 **Fetch Response Hardening:** Riscrittura automatica in-flight degli header HTTP (`nosniff`, `DENY`, `strict-origin-when-cross-origin`, `same-origin`) su ogni risposta intercettata.
 
-        - 🧠 **RAM Zero-Out:** Bonifica della memoria con `.fill(0)` sui buffer attivi gestita tramite blocchi `finally` sicuri subito dopo l'analisi o in caso di eccezione.
-
-    - 🧠 **2. Deep Scanner IPC (`universalScanner`):**
-      - 🛑 **Cap Nodi & Profilo:** Limite massimo di **250 nodi per albero** e vincolo tassativo a **12 livelli** di profondità ( *Anti-JSON-Bomb* ).
-
-      - 🛡️ **Anti-Path Traversal:** Sanitizzazione e scarto di chiavi e percorsi con risalite directory (`../`, `..\`) o null byte (`\0`).
-
-      - ⚡ **CPU Yielding:** Pausa non-blocking dell'Event Loop ogni 10 nodi per preservare la reattività del thread worker.
-
-    - 🔒 **3. Iniezione Security Headers (`injectSecurityHeaders`):**
-       - 🌐 **Fetch Response Hardening:** Riscrittura automatica in-flight degli header HTTP (`nosniff`, `DENY`, `strict-origin-when-cross-origin`, `same-origin`) su ogni risposta intercettata.
-
+  
   - **🪖 NOVITÀ v7.8+ :** <br> **Sessione di 🪨 Hardening generale contro il Red-Team 🔴**
 
   - **🪖 NOVITÀ v7.7+ :** <br> 🔬🧬 SW Forensics ( DNA Check & Binary Validation )
