@@ -164,7 +164,7 @@ const CONFIG = {
                '/richmedia'
             ],
            'compressedStreamPatterns': [
-               '/flatedecode', 
+               '/flatedecode',
                '/lzwdecode',
                '/objstm',
                '/crypt',
@@ -277,7 +277,7 @@ Object.freeze(deepFreeze);
 deepFreeze(CONFIG);
 
 /**
- * 🛡🏴‍☠️️ ANTI-PROFILING: Generatore di oggetti Error sterili privi di stack trace esposto.
+ * 🛡🏴‍☠️ ANTI-PROFILING: Generatore di oggetti Error sterili privi di stack trace esposto.
  * @param {string} name - Nome formale dell'errore.
  * @param {string} message - Descrizione sintetica della violazione o del blocco.
  * @returns {Readonly<Object>} Errore sigillato ed enucleato da tracciamenti interni.
@@ -376,17 +376,17 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
 Object.freeze(waitTillIdle);
 
 /**
- * 🔬🧬 SW Forensics & DNA Check - v4.3
+ * 🔬🧬 SW Forensics & DNA Check - v4.5
  *      ( 🪨 Hardened 🪖 v7.9+ ).
- * 
+ *
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
  * @param {number} [expectedSize=0] - Dimensione nominale attesa (Content-Length) per verifica tolleranza.
  * @param {boolean} [isEncrypted=false] - Flag di bypass firme per i flussi già cifrati nel Bunker.
- * @param {AbortSignal} [signals=null] - Segnale di interruzione atomica per processi pendenti.
+ * @param {AbortSignal} [signals=globalAbortController?.signal] - Segnale Globale di interruzione atomica per processi pendenti.
  * @returns {Promise<{valid: boolean, blob: Blob|null, response: Response|null}>}
  */
-const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = false, signals = null) => {
+const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = false, signals = globalAbortController?.signal) => {
     const startForensicTime = performance.now();
 
     let signal = signals || null;
@@ -451,18 +451,18 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         const minMap = CONFIG?.minSizeMap || {};
         const pdfConfig = minMap?.pdf || {};
         const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05 };
-        
-        let isPdfContext = subType === 'pdf' || subType.includes('pkcs7') || subType.includes('p7m') || 
-                             finalContentType.toLowerCase().includes('pdf') || 
-                             finalContentType.toLowerCase().includes('pkcs7') || 
+
+        let isPdfContext = subType === 'pdf' || subType.includes('pkcs7') || subType.includes('p7m') ||
+                             finalContentType.toLowerCase().includes('pdf') ||
+                             finalContentType.toLowerCase().includes('pkcs7') ||
                              finalContentType.toLowerCase().includes('p7m');
 
         const section = isPdfContext ? pdfConfig : (minMap[mainType] || minMap[subType] || minMap['code'] || universal);
-        
-        // 🐛 FIX: Controllo robusto sull'encoding per evitare che undefined attivi falsamente il bypass
+
+        // 🐛 Controllo robusto sull'encoding per evitare che undefined attivi falsamente il bypass
         const isTransformed = encoding !== null && encoding !== undefined && encoding !== '' && encoding.toLowerCase() !== 'identity';
-        
-        let minSize = section?.defaultMin || universal.minAbsoluteByte || 64; 
+
+        let minSize = section?.defaultMin || universal.minAbsoluteByte || 64;
         if (section) {
             const tolerance = section.tolerance || universal.tolerance || 0.1;
             const baseMin = section[subType] || section.defaultMin || section.default || universal.minAbsoluteByte || 64;
@@ -680,20 +680,20 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 let match;
                 while ((match = streamRegex.exec(rawChunkText)) !== null) {
                     const streamContext = rawChunkText.substring(Math.max(0, match.index - 300), match.index).toLowerCase();
-                    
-                    const isCompressedStream = pdfConfig.compressedStreamPatterns ? 
-                        pdfConfig.compressedStreamPatterns.some(p => streamContext.includes(p.toLowerCase())) : 
+
+                    const isCompressedStream = pdfConfig.compressedStreamPatterns ?
+                        pdfConfig.compressedStreamPatterns.some(p => streamContext.includes(p.toLowerCase())) :
                         streamContext.includes('/flatedecode');
 
                     if (isCompressedStream && typeof DecompressionStream !== 'undefined') {
                         try {
                             const streamStart = match.index + match[0].indexOf(match[1]);
                             const streamBytes = chunkArray.subarray(streamStart, streamStart + match[1].length);
-                            
+
                             if (streamBytes.length > 0) {
-                                // 🐛 FIX: Controllo CMF zlib robusto (verifica che il metodo di compressione sia deflate = 8)
+                                // 🐛 Controllo CMF zlib robusto (verifica che il metodo di compressione sia deflate = 8)
                                 const format = ((streamBytes[0] & 0x0F) === 8) ? 'deflate' : 'deflate-raw';
-                                
+
                                 const decompressedStream = new Blob([streamBytes]).stream().pipeThrough(new DecompressionStream(format));
                                 const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
                                 activeBuffers.push(decompressedBuffer);
@@ -723,7 +723,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
         result.valid = true;
         result.blob = blob;
-        
+
         if (isResponseInput) {
             result.response = originalResponse ? new Response(blob, {
                 status: originalResponse.status,
@@ -968,7 +968,7 @@ const smartDownload = async (url, cache, isCore = false, version = '', probeSize
                                 const badBlob = check.blob || (r.clone ? await r.clone().blob() : null);
                                 if (badBlob) {
                                     const badBuffer = await badBlob.arrayBuffer();
-            new Uint8Array(badBuffer).fill(0);
+									new Uint8Array(badBuffer).fill(0);
                                 }
                             } catch (clearErr) {
                                 // 🛡️⏱️ INNESTO: 🪝
@@ -1180,16 +1180,15 @@ let isNewInstallation = false;
 let isSyncing = false;
 let isScannerRunning = false;
 self.addEventListener('message', (event) => {
-    // 🛡️ ORIGIN GUARD: Rifiuta messaggi originati esternamente al dominio del Service Worker
+    // 🛃️ ORIGIN GUARD: Rifiuta messaggi originati esternamente al dominio del Service Worker
     if (event.origin !== self.origin) return;
 
-    // 🔍 PAYLOAD VALIDATION: Verifica struttura, tipo e presenza nei comandi autorizzati
-    const data = event?.data;
-    if (!data || typeof data !== 'object' || !CONFIG.ALLOWED_IPC_TYPES.includes(data?.type)){ 
+    // 🔍☑️ PAYLOAD VALIDATION: Verifica struttura, tipo e presenza nei comandi autorizzati
+    if (!event?.data || typeof event?.data !== 'object' || !CONFIG.ALLOWED_IPC_TYPES.includes(event?.data?.type)){
         console.warn("⚠️ SW: Errore durante l'elaborazione del messaggio IPC");
         return;
     }
-    
+
     const eventDataSnapshot = event?.data;
     if (eventDataSnapshot?.type === 'INIT_DB') {
 
@@ -1277,14 +1276,7 @@ self.addEventListener('message', (event) => {
 						}
 					} catch (e) {
 						// 🏴‍☠️ ANTI-PROFILING:
-						const cleanManifestErr = {};
-						Object.defineProperties(cleanManifestErr, {
-							name: { value: "CoreFileError", enumerable: true },
-							message: { value: "Procedura di sincronizzazione degradata a standard", enumerable: true },
-							stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-						});
-						Object.freeze(cleanManifestErr);
-						console.warn("⚠️ SW: Fallimento..., procedo con Sync standard.", cleanManifestErr);
+						console.warn("⚠️ SW: Fallimento..., procedo con Sync standard.", createCleanError("CoreFileError","Procedura di sincronizzazione degradata a standard"));
 					}
 				}
 
@@ -1382,7 +1374,7 @@ self.addEventListener('message', (event) => {
                 const knownDirs = new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
 /**
- * 🧠🧬 Universal Object Scanner 
+ * 🧠🧬 Universal Object Scanner
  * Deep Validation ( 🪨 Hardened 🪖 v7.9+ ).
  * Esegue la scansione ricorsiva polimorfa del database fornito in input il file db.json,
  * isolando chiavi identificative e percorsi per agganciare in modo predittivo gli asset extra correlati.
@@ -1397,26 +1389,24 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
     if (!obj || typeof obj !== 'object' || depth > 12) return;
     if (syncAbortController?.signal.aborted) return;
 
-    const MAX_NODES_LIMIT = 250;
+    const MAX_NODES_LIMIT = 999;
 
     for (const [key, val] of Object.entries(obj)) {
         if (syncAbortController?.signal.aborted) return;
 
-        // 🛡️ HARDENING 1: Cap del numero totale di nodi per albero (Anti JSON-Bomb / DoS)
+        // 🪨️ HARDENING 1: Cap del numero totale di nodi per albero (Anti JSON-Bomb / DoS)
         nodeState.count++;
         if (nodeState.count > MAX_NODES_LIMIT) {
-            console.warn("⚠️ SW Scanner: Limite massimo nodi superato (Max 250). Scansione interrotta.");
+            console.warn("⚠️ SW Scanner: Limite massimo nodi superato... Scansione interrotta.");
             return;
         }
-
-        // 🛡️ HARDENING 2: Sanitizzazione Nomi Chiavi (Anti Path Traversal / Injection)
+        // 🪨️ HARDENING 2: Sanitizzazione Nomi Chiavi (Anti Path Traversal / Injection)
         if (typeof key === 'string' && (key.includes('../') || key.includes('..\\') || key.includes('\0'))) {
             continue;
         }
-
-        // 🛡️ HARDENING 3: Throttling CPU dell'Event Loop (Micro-pausa ogni 10 nodi per non congelare il worker)
-        if (nodeState.count % 10 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 0));
+        // 🪨️ HARDENING 3: Micro-pausa ogni X nodi per non congelare il worker...
+        if (nodeState.count % 250 === 0) {
+			 sleep(10);
         }
 
         if (typeof val === 'object' && val !== null) {
@@ -1628,19 +1618,11 @@ Object.freeze(universalScanner);
 		    const isIntegritaError = errorMessage.includes('Integrità');
 
 		    // 🏴‍☠️ ANTI-PROFILING: Generazione di un clone d'errore asettico e privo di Stack Trace
-		    const cleanError = {};
-		    Object.defineProperties(cleanError, {
-		        name: { value: "SyncError", enumerable: true },
-		        message: { value: isIntegritaError ? "Errore di Integrità rilevato su un asset" : "Errore operativo durante il Sync", enumerable: true },
-		        stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-		    });
-		    Object.freeze(cleanError);
-
 		    // Ispezione forense e logging differenziato in base alla severità
 		    if (isIntegritaError) {
-		        console.error("🚨 SW: Errore di Integrità critico rilevato su un asset.", cleanError);
+		        console.error("🚨 SW: Errore di Integrità critico rilevato su un asset.", createCleanError("SyncError", "Errore di Integrità rilevato su un asset")););
 		    } else {
-		        console.warn("🔄⚠️ SW: Errore Sync", cleanError);
+		        console.warn("🔄⚠️ SW: Errore Sync", createCleanError("SyncError", "Errore operativo durante il Sync"));
 		    }
 		} finally {
 				console.info(`✅ SW: SYNC Completata. Total file Download: ${completed} - Exclud(IsBunker): ${completed_ok}`);
@@ -1716,7 +1698,7 @@ Object.freeze(assegnaFlussoPolimorfo);
 /**
  * 🛡️ Security Headers Injector- v2.0
  * ( 🪨 Hardened 🪖 v7.9+ ).
- * Intercetta la Response (da rete) e inietta le intestazioni HTTP 
+ * Intercetta la Response (da rete) e inietta le intestazioni HTTP
  * di sicurezza difensive, gestendo in sicurezza i flussi e i codici di stato speciali (204/304).
  * @param {Response} response - Istanza della risorsa originale.
  * @returns {Response} Nuova istanza Response con header di sicurezza riscritti.
@@ -1786,10 +1768,10 @@ self.addEventListener('fetch', (event) => {
     // Isola lo scope della richiesta, valida metodo/schema telematico ed esegue il check di Same-Origin.
     try {
         const url = new URL(event.request.url);
-        
+
         // 🪨️ HARDENING: Check unificato per Schema (http/https), Metodi autorizzati (GET/HEAD) ed Origine Stretta
-        if (!CONFIG.ALLOWED_SCHEMES.includes(url.protocol) || 
-            !CONFIG.ALLOWED_METHODS.includes(event.request.method) || 
+        if (!CONFIG.ALLOWED_SCHEMES.includes(url.protocol) ||
+            !CONFIG.ALLOWED_METHODS.includes(event.request.method) ||
             url.origin !== self.location.origin) {
             return; // ⏩ Delegato direttamente al browser per risorse non autorizzate, non-GET o Cross-Origin
         }
@@ -1934,22 +1916,15 @@ self.addEventListener('fetch', (event) => {
 						    // 🪝🛡️⏱️ INNESTO TEMPORALE ANTI-PROFILING NELLA PIPELINE DI BACKGROUND
 							if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 30);
 
-							// 🏴‍☠️ ACCECAMENTO: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
-							const cleanErr = {};
-							Object.defineProperties(cleanErr, {
-								name: { value: "ForensicValidationError", enumerable: true },
-								message: { value: err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault", enumerable: true },
-								stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-							});
-							Object.freeze(cleanErr);
-							console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", cleanErr);
+							// 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
+							console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
 						}
 					})());
                     console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${(finalStrategy === 'SWR' && cached) ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
                     if(!(finalStrategy === 'SWR' && cached)){
                         // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser
         return injectSecurityHeaders(networkResponse);
-        
+
                     }
 					// 🗄️ Decade Verso la SEZIONE III
                 }
@@ -1984,7 +1959,7 @@ self.addEventListener('fetch', (event) => {
 
                     const decryptedBytes = new Uint8Array(decrypted);
                     const contentLength = decryptedBytes.byteLength;
-                    
+
                     const secureHeaders = new
                     Headers({
                         'Content-Type': detectedContentType,
@@ -2286,14 +2261,7 @@ const CoreAssets_Destroy_Caches = async (serverV = null) => {
 		});
 	} catch (err) {
 	    // 🏴‍☠️ ANTI-PROFILING:
-	    const cleanErr = {};
-		Object.defineProperties(cleanErr, {
-			name: { value: "CacheEvacuationError", enumerable: true },
-			message: { value: "Fallimento procedura di emergenza evacuazione", enumerable: true },
-			stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-		});
-		Object.freeze(cleanErr);
-		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", cleanErr);
+		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", clcreateCleanError("CacheEvacuationError", "Fallimento procedura di emergenza evacuazione"));eanErr);
 	}
 };
 Object.freeze(CoreAssets_Destroy_Caches);
@@ -2541,14 +2509,7 @@ const getStoredKey = async () => {
         } catch (criticalErr) {
             // 🏴‍☠️ ANTI-PROFILING:
 			if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 40);
-            const cleanErr = {};
-            Object.defineProperties(cleanErr, {
-			name: { value: "Vault-Critical-Error", enumerable: true },
-			message: { value: "Fallimento Critico Apertura del Vault", enumerable: true },
-			stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-            });
-            Object.freeze(cleanErr);
-            console.error("❌ SW: Fallimento critico sistema Vault", cleanErr);
+            console.error("❌ SW: Fallimento critico sistema Vault", createCleanError("Vault-Critical-Error", "Fallimento Critico Apertura del Vault"));
             encryptionKey = null;
             resolve(null);
         }
@@ -2660,14 +2621,7 @@ const getHash = async (blob, algo = 'SHA-256') => {
     } catch (err) {
         // 🏴‍☠️ ANTI-PROFILING:
 		if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 35);
-        const cleanHashErr = {};
-        Object.defineProperties(cleanHashErr, {
-            name: { value: "HashCalculationError", enumerable: true },
-            message: { value: "Impossibile processare impronta digitale", enumerable: true },
-            stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-        });
-        Object.freeze(cleanHashErr);
-        console.error("🧬❌ SW: Errore calcolo Hash:", cleanHashErr);
+        console.error("🧬❌ SW: Errore calcolo Hash:", createCleanError("HashCalculationError", "Impossibile processare impronta digitale"));
         if (buffer instanceof ArrayBuffer) new Uint8Array(buffer).fill(0);
         return null;
     }
@@ -2683,7 +2637,7 @@ Object.freeze(getHash);
  */
 const cleanUserCache = async (forceAll = false) => {
     try {
-        const cacheName = CONFIG.userCacheName || CONFIG.CACHE_NAME || 'panzer-cache';
+        const cacheName = CONFIG.userCacheName || CONFIG.CACHE_NAME;
         const ttlDays = CONFIG.userCacheTTL || 7;
         const cache = await caches.open(cacheName);
         const requests = await cache.keys();
@@ -2751,9 +2705,9 @@ const generateErrorPage = async(logoBlob, failedPath) => {
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#000;font-family:sans-serif;color:#fff;overflow:hidden}.box{width:95vw;height:95vh;border:2px solid red;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-sizing:border-box;padding:20px}h2{color:#ff4444;margin:5px 0;font-size:1.2rem}p{color:#bbb;font-style:italic;margin:2px 0;font-size:0.9rem}small{color:#aaa;margin-top:25px;font-size:0.65rem;word-break:break-all;max-width:90%;border-top:1px solid #222;padding-top:10px}img{max-width:140px;max-height:30vh;margin-bottom:20px;object-fit:contain}</style></head><body><div class="box"><img src="${imgContent}"><h2>Risorsa non disponibile &#x1F4E1;&#x274C;</h2><h2>Resource not available &#x1F4E1;&#x274C;</h2><small>&#x1F4C4;&#x274C; ${safePath}</small></div></body></html>`;
 
-    return new Response(html, { 
-        status: 503, 
-        headers: { 
+    return new Response(html, {
+        status: 503,
+        headers: {
             'Content-Type': 'text/html; charset=utf-8',
             'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
             'X-Content-Type-Options': 'nosniff',
