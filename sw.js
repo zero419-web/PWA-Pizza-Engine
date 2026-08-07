@@ -376,7 +376,7 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
 Object.freeze(waitTillIdle);
 
 /**
- * 🔬🧬 SW Forensics & DNA Check - v4.0
+ * 🔬🧬 SW Forensics & DNA Check - v4.3
  *      ( 🪨 Hardened 🪖 v7.9+ ).
  * 
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
@@ -458,7 +458,9 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                              finalContentType.toLowerCase().includes('p7m');
 
         const section = isPdfContext ? pdfConfig : (minMap[mainType] || minMap[subType] || minMap['code'] || universal);
-        const isTransformed = encoding !== null && encoding !== 'identity';
+        
+        // 🐛 FIX: Controllo robusto sull'encoding per evitare che undefined attivi falsamente il bypass
+        const isTransformed = encoding !== null && encoding !== undefined && encoding !== '' && encoding.toLowerCase() !== 'identity';
         
         let minSize = section?.defaultMin || universal.minAbsoluteByte || 64; 
         if (section) {
@@ -570,7 +572,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         if (!isEncrypted && !isTransformed && (magicSourceFooter?.footer?.length > 0 || isPdfContext)) {
             if (signal?.aborted) return result;
 
-            const maxFooterBytes = pdfConfig.maxFooterBytes || 8192; // Finestra ampliata per sicurezza offline
+            const maxFooterBytes = pdfConfig.maxFooterBytes || 8192;
             const fetchSize = Math.min(blob.size, maxFooterBytes);
             tailBuffer = await blob.slice(-fetchSize).arrayBuffer();
             activeBuffers.push(tailBuffer);
@@ -595,7 +597,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 });
             }
 
-            // Tolleranza nativa per marcatore PDF %%EOF anche in presenza di spazi o tag di chiusura successivi
             if (!hasValidFooter && isPdfContext) {
                 hasValidFooter = tailText.includes('%%EOF') || tailHex.includes('2525454F46');
             }
@@ -622,8 +623,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 await waitTillIdle(200, 8000);
             }
 
-            const CHUNK_SIZE = 1024 * 1024; // 1MB
-            const OVERLAP_SIZE = 4096;      // 4KB di sovrapposizione
+            const CHUNK_SIZE = 1024 * 1024;
+            const OVERLAP_SIZE = 4096;
             let offset = 0;
             let inStream = false;
 
@@ -690,7 +691,8 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                             const streamBytes = chunkArray.subarray(streamStart, streamStart + match[1].length);
                             
                             if (streamBytes.length > 0) {
-                                const format = (streamBytes[0] === 0x78) ? 'deflate' : 'deflate-raw';
+                                // 🐛 FIX: Controllo CMF zlib robusto (verifica che il metodo di compressione sia deflate = 8)
+                                const format = ((streamBytes[0] & 0x0F) === 8) ? 'deflate' : 'deflate-raw';
                                 
                                 const decompressedStream = new Blob([streamBytes]).stream().pipeThrough(new DecompressionStream(format));
                                 const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
@@ -719,7 +721,6 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 
         if (signal?.aborted) return result;
 
-        // 🛡️ RITORNO SPECIFICO
         result.valid = true;
         result.blob = blob;
         
