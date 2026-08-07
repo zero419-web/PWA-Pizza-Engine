@@ -1713,15 +1713,21 @@ const CORE_ASSETS_SET = new Set(
 Object.freeze(assegnaFlussoPolimorfo);
 
 /**
- * 🛡️ Security Headers Injector (Hardened v7.8+).
+ * 🛡️ Security Headers Injector- v2.0
+ * ( 🪨 Hardened 🪖 v7.9+ ).
  * Intercetta la Response (da rete o da CacheStorage) e inietta le intestazioni HTTP 
- * di sicurezza difensive per prevenire MIME-sniffing, framing non autorizzato e leakage.
+ * di sicurezza difensive, gestendo in sicurezza i flussi e i codici di stato speciali (204/304).
  * @param {Response} response - Istanza della risorsa originale.
  * @returns {Response} Nuova istanza Response con header di sicurezza riscritti.
  */
 const injectSecurityHeaders = (response) => {
-    // Le risposte opache (cross-origin senza CORS) non permettono la manipolazione delle intestazioni
+    // Le risposte opache (cross-origin senza CORS) o non valide non permettono la manipolazione
     if (!response || response.type === 'opaque' || response.status === 0) {
+        return response;
+    }
+
+    // Evita eccezioni se il corpo della risposta è già stato letto/consumato
+    if (response.bodyUsed) {
         return response;
     }
 
@@ -1741,6 +1747,15 @@ const injectSecurityHeaders = (response) => {
 
     // Abilita la protezione XSS nativa dei browser legacy
     newHeaders.set('X-XSS-Protection', '1; mode=block');
+
+    // I codici di stato 204 (No Content) e 304 (Not Modified) non possono possedere un corpo
+    if (response.status === 204 || response.status === 304) {
+        return new Response(null, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders
+        });
+    }
 
     return new Response(response.body, {
         status: response.status,
@@ -1973,18 +1988,49 @@ self.addEventListener('fetch', (event) => {
                         'Pragma': 'no-cache',
                         'Expires': '0'
                     });
-
+                    
                     if (ext && CONFIG.extExlPHr.includes(ext)) {
                         secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
                     }
-
-                    const outResponse = new Response(decrypted, { headers: secureHeaders });
-					console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
-					new Uint8Array(buffer).fill(0);
-                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+                    
+                    const decryptedArray = new Uint8Array(decrypted);
+                    
+                    // 🛡️ Utilizzo di un TransformStream per intercettare la fine della lettura (EOF)
+                    const { readable, writable } = new TransformStream({
+                        transform(chunk, controller) {
+                            controller.enqueue(chunk);
+                        },
+                        flush() {
+                            // 🧹 Bonifica RAM eseguita non appena il browser ha completato la ricezione
+                            decryptedArray.fill(0);
+                            console.log(`🛡️🧹 SW: Bonifica RAM post-streaming completata per: ${finalPath}`);
+                        },
+                        cancel() {
+                            // 🧹 Bonifica d'emergenza in caso di interruzione anticipata del client
+                            decryptedArray.fill(0);
+                            console.warn(`🛡️⚠️ SW: Streaming interrotto, bonifica RAM anticipata per: ${finalPath}`);
+                        }
+                    });
+                    
+                    // ✍️ Scrittura dei dati nello stream
+                    const writer = writable.getWriter();
+                    writer.write(decryptedArray);
+                    writer.close();
+                    
+                    // 🧽 Pulizia del buffer sorgente originario
+                    if (buffer instanceof ArrayBuffer) {
+                        new Uint8Array(buffer).fill(0);
+                    }
+                    // ⚙️ Generazione della risposta basata sul flusso protetto
+                    const outResponse = new
+                    Response(readable, { 
+                        status: 200, 
+                        headers: secureHeaders 
+                    });
+                    
                     decrypted = null;
-					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
-                    // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser
+                    console.info(`💾🛡️ SW: Risorsa estratta dalla cache: ${targetCache}`);
+                    // 💉 Iniezione delle intestazioni di sicurezza
                     return injectSecurityHeaders(outResponse);
                 } catch (err) {
                     	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
