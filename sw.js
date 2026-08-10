@@ -1,7 +1,7 @@
 /*
  * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
- * ⚙️ CORE: 🪖 PANZER v7.9+
+ * ⚙️ CORE: 🪖 PANZER v7.9.1+
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
@@ -108,99 +108,127 @@ const CONFIG = {
             }
         }
     },
-	minSizeMap: {
+    /**
+     * 🖼️ SEZIONE IMAGE: Soglie e controlli per formati grafici Raster & SVG
+    */
+    minSizeMap: {
         'image': {
-           'webp': 500,
-           'jpeg': 5000,
-           'jpg': 5000,
-           'png': 500,
-           'avif': 500,
-           'svg': 100,
-           'magicNumbers': {
-               'header': [
-                   '52494646', // WEBP/RIFF
-                   'FFD8FF',   // JPEG
-                   '89504E47', // PNG
-                   '3C737667'  // SVG
-                ],
-               'footer': [
-                   '57454250', // WEBP
-                   '49454E44AE426082', // PNG (IEND)
-                   'FFD9',             // JPEG (EOI)
-                   '3B',               // GIF (Terminator)
-                   '3C2F7376673E'      // SVG (</svg>)
-                ]
-           },
-           'useHeadProbe': true,
-           'tolerance': 0.30,
-           'defaultMin': 500
+             // Dimensione minima accettabile (byte) per estensione per prevenire asset vuoti o corrotti
+            'webp': 500,
+            'jpeg': 5000,
+            'jpg': 5000,
+            'png': 500,
+            'avif': 500,
+            'svg': 100,
+            // Limiti dimensionali dei buffer di analisi
+           'maxHeaderBytes': 4096,  // Byte massimi di testa da ispezionare per Magic Numbers
+            'maxFooterBytes': 4096,  // Byte massimi di coda per verificare i marcatori di chiusura
+            'maxSvgBytes': 65536,     // Tetto massimo di lettura per la scansione dei tag SVG
+            'maxRasterBytes': 65536,  // Tetto massimo per la scansione anti-poliglotta nei raster
+            'magicNumbers': {
+                // Firme esadecimali ufficiali per la verifica d'integrità di testa e coda
+                'header': [
+                    '52494646',
+                    'FFD8FF',
+                    '89504E47',
+                    '3C737667'
+                ], // WEBP/RIFF, JPEG, PNG, SVG (<svg)
+                'footer': [
+                    '57454250',
+                    '49454E44AE426082', 
+                    'FFD9',
+                    '3B',
+                    '3C2F7376673E'
+                ] // WEBP, PNG (IEND), JPEG, SVG (; / </svg>)
+            },
+            'svgPatterns': {
+                'forbiddenTags': /<(script|foreignobject|embed|object|iframe)[\s>]/i,
+                'forbiddenEvents': /\son\w+\s*=/i,
+                'forbiddenUri': /(href|xlink:href)\s*=\s*["']?\s*(javascript:|data:text\/html)/i
+            },
+            'rasterPatterns': {
+                'executableSignatures': /<script|javascript:|eval\(|function\s*\(/i
+            },
+            'useHeadProbe': true,
+            'tolerance': 0.30,
+            'defaultMin': 500,
+            'timingNoiseMs': 50
         },
-       'pdf': {
-           'firmato': 5000,
-           'default': 10000,
-           'maxHeaderBytes': 4096,
-           'maxFooterBytes': 4096,
-           'magicNumbers': {
-               'header': [
-                   '25504446', // %PDF (Rilevazione universale PDF standard)
-                   '5044462D', // PDF- (Variante offset iniziale)
-                   '3082',     // ASN.1 DER Sequence per CAdES (.p7m / PKCS#7)
-                   '3081'      // ASN.1 DER Sequence alternativa per .p7m
+        'pdf': {
+            'firmato': 5000,
+            'default': 10000,
+            'maxHeaderBytes': 4096,
+            'maxFooterBytes': 8192,
+            'magicNumbers': {
+                'header': [
+                    '25504446',
+                    '5044462D',
+                    '3082',
+                    '3081'
                 ],
                 'footer': [
-                    '2525454F46', // %%EOF (Rilevazione strutturale di coda PDF)
-                    '3082',       // Supporto per strutture di firma in coda (PAdES / aggiornamenti incrementali)
+                    '2525454F46',
+                    '3082',
                     '3081'
                 ]
-           },
-           'pdfMaliciousPatterns': [
-               '/javascript',
-               '/js',
-               '/launch',
-               '/embeddedfile',
-               '/openaction',
-               '/submitform',
-               '/importdata',
-               '/richmedia'
+            },
+            'pdfMaliciousPatterns': [
+                '/javascript', 
+                '/js', 
+                '/launch', 
+                '/embeddedfile', 
+                '/openaction', 
+                '/submitform', 
+                '/importdata', 
+                '/richmedia'
             ],
-           'compressedStreamPatterns': [
-               '/flatedecode',
-               '/lzwdecode',
-               '/objstm',
-               '/crypt',
-               '/asciihexdecode',
-               '/asci85decode',
-               '/runlengthdecode'
+            'compressedStreamPatterns': [
+                '/flatedecode', 
+                '/lzwdecode', 
+                '/objstm', 
+                '/crypt', 
+                '/asciihexdecode', 
+                '/asci85decode',
+                '/runlengthdecode'
             ],
-           'supportedSignatures': [
-               'adbe.pkcs7.detached',
-               'adbe.pkcs7.sha1',
-               'etsi.cades.detached',
-               'application/pkcs7-mime',
-               'smime.p7m'
+            'supportedSignatures': [
+                'adbe.pkcs7.detached', 
+                'adbe.pkcs7.sha1', 
+                'etsi.cades.detached',
+                'application/pkcs7-mime',
+                'smime.p7m'
             ],
-           'useHeadProbe': false,
-           'tolerance': 0.30,
-           'defaultMin': 2048 // ~2 KB
+            'chunkSize': 1048576,
+            'overlapSize': 4096,
+            'streamContextWindow': 300,
+            'idleMinMs': 200,
+            'idleTimeoutMs': 8000,
+            'useHeadProbe': false,
+            'tolerance': 0.30,
+            'defaultMin': 2048,
+            'timingNoiseMs': 50
         },
         'code': {
             'html': 100,
             'css': 100,
             'js': 100,
             'json': 10,
-            // Lasciati vuoti per garantire 0 falsi positivi nella PA
-            'magicNumbers': {
-                'header': [],
+            'magicNumbers': { 
+                'header': [], 
                 'footer': []
             },
             'useHeadProbe': true,
             'tolerance': 0.20,
-            'defaultMin': 100
+            'defaultMin': 100,
+            'timingNoiseMs': 50
         },
         'universal': {
             'tolerance': 0.05,
             'minAbsoluteByte': 64,
-            'fallbackToGet': true
+            'fallbackToGet': true,
+            'maxHeaderBytes': 4096,
+            'maxFooterBytes': 8192,
+            'timingNoiseMs': 50
         }
     },
     coreAssets: [
@@ -419,6 +447,20 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
     };
 
     try {
+        let mainType = (contentType || '').split('/')[0]?.toLowerCase() || '';
+        let subType = (contentType || '').split('/')[1]?.split(';')[0]?.toLowerCase() || '';
+        const minMap = CONFIG?.minSizeMap || {};
+        const pdfConfig = minMap?.pdf || {};
+        const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05, timingNoiseMs: 50 };
+
+        let isPdfContext = subType === 'pdf' || subType.includes('pkcs7') || subType.includes('p7m') ||
+                             (contentType || '').toLowerCase().includes('pdf') ||
+                             (contentType || '').toLowerCase().includes('pkcs7') ||
+                             (contentType || '').toLowerCase().includes('p7m');
+
+        const section = isPdfContext ? pdfConfig : (minMap[mainType] || minMap[subType] || minMap['code'] || universal);
+        const timingNoiseMs = section?.timingNoiseMs || universal?.timingNoiseMs || 50;
+
         if (input instanceof Response) {
             if (signal?.aborted) return result;
             originalResponse = input;
@@ -428,7 +470,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             try {
                 blob = await input.clone().blob();
             } catch (e) {
-                await injectTimingNoise(startForensicTime, 50);
+                await injectTimingNoise(startForensicTime, timingNoiseMs);
                 return result;
             }
         } else if (input instanceof Blob) {
@@ -437,27 +479,17 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             finalContentType = contentType || input.type || '';
             blob = input.slice(0, input.size, finalContentType);
         } else {
-            await injectTimingNoise(startForensicTime, 50);
+            await injectTimingNoise(startForensicTime, timingNoiseMs);
             return result;
         }
 
         if (!blob || !(blob instanceof Blob)) {
-            await injectTimingNoise(startForensicTime, 50);
+            await injectTimingNoise(startForensicTime, timingNoiseMs);
             return result;
         }
 
-        let mainType = finalContentType.split('/')[0]?.toLowerCase() || '';
-        let subType = finalContentType.split('/')[1]?.split(';')[0]?.toLowerCase() || '';
-        const minMap = CONFIG?.minSizeMap || {};
-        const pdfConfig = minMap?.pdf || {};
-        const universal = minMap.universal || { minAbsoluteByte: 64, tolerance: 0.05 };
-
-        let isPdfContext = subType === 'pdf' || subType.includes('pkcs7') || subType.includes('p7m') ||
-                             finalContentType.toLowerCase().includes('pdf') ||
-                             finalContentType.toLowerCase().includes('pkcs7') ||
-                             finalContentType.toLowerCase().includes('p7m');
-
-        const section = isPdfContext ? pdfConfig : (minMap[mainType] || minMap[subType] || minMap['code'] || universal);
+        mainType = finalContentType.split('/')[0]?.toLowerCase() || '';
+        subType = finalContentType.split('/')[1]?.split(';')[0]?.toLowerCase() || '';
 
         // 🐛 Controllo robusto sull'encoding per evitare che undefined attivi falsamente il bypass
         const isTransformed = encoding !== null && encoding !== undefined && encoding !== '' && encoding.toLowerCase() !== 'identity';
@@ -471,14 +503,14 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         if (isEncrypted || isTransformed) minSize = universal.minAbsoluteByte || 64;
 
         if (blob.size < minSize) {
-            await injectTimingNoise(startForensicTime, 50);
+            await injectTimingNoise(startForensicTime, timingNoiseMs);
             console.warn("⚠️ SW Forensics: Asset scartato per dimensione insufficiente", createCleanError("SizeCheckFailed", "Dimensione inferiore alla soglia minima"));
             return result;
         }
 
-        // 🛡️ FASE 1: ANALISI MAGIC NUMBERS & SIGNATURES (Con Auto-Rilevamento PDF da Header)
+        // 🛡️ FASE 1: ANALISI MAGIC NUMBERS & SIGNATURES...
         if (!isEncrypted && !isTransformed) {
-            const maxHeaderBytes = pdfConfig.maxHeaderBytes || 4096;
+            const maxHeaderBytes = section?.maxHeaderBytes || universal?.maxHeaderBytes || 4096;
             const headerSliceSize = Math.min(blob.size, maxHeaderBytes);
             headerBuffer = await blob.slice(0, headerSliceSize).arrayBuffer();
             activeBuffers.push(headerBuffer);
@@ -499,33 +531,35 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             const isRasterImage = ['image/png', 'image/webp', 'image/jpeg'].some(t => finalContentType.includes(t)) || ['png', 'webp', 'jpg', 'jpeg'].includes(subType);
 
             if (isSvg) {
-                const svgSliceSize = Math.min(blob.size, 1024 * 64);
+                const svgSliceSize = Math.min(blob.size, activeSection?.maxSvgBytes || 65536);
                 const svgBuffer = await blob.slice(0, svgSliceSize).arrayBuffer();
                 activeBuffers.push(svgBuffer);
                 const svgArray = new Uint8Array(svgBuffer);
                 const svgText = new TextDecoder('utf-8', { fatal: false }).decode(svgArray).toLowerCase();
 
-                const forbiddenTags = /<(script|foreignobject|embed|object|iframe)[\s>]/i;
-                const forbiddenEvents = /\son\w+\s*=/i;
-                const forbiddenUri = /(href|xlink:href)\s*=\s*["']?\s*(javascript:|data:text\/html)/i;
+                const svgPats = activeSection?.svgPatterns || {};
+                const forbiddenTags = svgPats.forbiddenTags || /<(script|foreignobject|embed|object|iframe)[\s>]/i;
+                const forbiddenEvents = svgPats.forbiddenEvents || /\son\w+\s*=/i;
+                const forbiddenUri = svgPats.forbiddenUri || /(href|xlink:href)\s*=\s*["']?\s*(javascript:|data:text\/html)/i;
 
                 if (forbiddenTags.test(svgText) || forbiddenEvents.test(svgText) || forbiddenUri.test(svgText)) {
-                    await injectTimingNoise(startForensicTime, 50);
+                    await injectTimingNoise(startForensicTime, timingNoiseMs);
                     console.warn("⚠️ SW Security: Blocco SVG con elementi/handler non sicuri", createCleanError("SvgMalwareDetected", "Tag o evento ostile rilevato nell'SVG"));
                     return result;
                 }
             }
 
             if (isRasterImage) {
-                const sampleSize = Math.min(blob.size, 1024 * 64);
+                const sampleSize = Math.min(blob.size, activeSection?.maxRasterBytes || 65536);
                 const sampleBuffer = await blob.slice(0, sampleSize).arrayBuffer();
                 activeBuffers.push(sampleBuffer);
                 const sampleArray = new Uint8Array(sampleBuffer);
                 const bodyText = new TextDecoder('utf-8').decode(sampleArray);
 
-                const executableSignatures = /<script|javascript:|eval\(|function\s*\(/i;
+                const rasterPats = activeSection?.rasterPatterns || {};
+                const executableSignatures = rasterPats.executableSignatures || /<script|javascript:|eval\(|function\s*\(/i;
                 if (executableSignatures.test(bodyText)) {
-                    await injectTimingNoise(startForensicTime, 50);
+                    await injectTimingNoise(startForensicTime, timingNoiseMs);
                     console.warn("⚠️ SW Security: Blocco file poliglotta", createCleanError("PolyglotDetected", "Signature di codice eseguibile nei dati immagine"));
                     return result;
                 }
@@ -560,19 +594,20 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 }
 
                 if (!hasValidSig && !isPdfContext && (magicSource?.header?.length > 0 || supportedSignatures.length > 0)) {
-                    await injectTimingNoise(startForensicTime, 50);
+                    await injectTimingNoise(startForensicTime, timingNoiseMs);
                     console.warn("⚠️ SW Security: Firma header non valida", createCleanError("HeaderCheckFailed", "Mismatch firma binaria di testa"));
                     return result;
                 }
             }
         }
 
-        // 🛡️ FASE 2: ANALISI MARCATORI DI CODA (Con tolleranza flessibile per PDF firmati/incrementali)
-        const magicSourceFooter = (isPdfContext ? pdfConfig : section)?.magicNumbers;
+        // 🛡️ FASE 2: ANALISI MARCATORI DI CODA...
+        const activeSectionFooter = isPdfContext ? pdfConfig : section;
+        const magicSourceFooter = activeSectionFooter?.magicNumbers;
         if (!isEncrypted && !isTransformed && (magicSourceFooter?.footer?.length > 0 || isPdfContext)) {
             if (signal?.aborted) return result;
 
-            const maxFooterBytes = pdfConfig.maxFooterBytes || 8192;
+            const maxFooterBytes = activeSectionFooter?.maxFooterBytes || universal?.maxFooterBytes || 8192;
             const fetchSize = Math.min(blob.size, maxFooterBytes);
             tailBuffer = await blob.slice(-fetchSize).arrayBuffer();
             activeBuffers.push(tailBuffer);
@@ -607,128 +642,158 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
             const isCadesWrapper = headerTextCheck.includes('smime.p7m') || headerHexCheck.startsWith('3082') || headerHexCheck.startsWith('3081');
 
             if (!hasValidFooter && !isCadesWrapper) {
-                await injectTimingNoise(startForensicTime, 50);
+                await injectTimingNoise(startForensicTime, timingNoiseMs);
                 console.warn("⚠️ SW Security: Firma footer fallita", createCleanError("FooterCheckFailed", "Mismatch marcatore di coda %%EOF"));
                 return result;
             }
         }
 
-        // 🛡️ FASE 3: ANALISI PROFONDA PDF (Con Sliding Window Overlap Anti-Split e ricerca binaria nativa)
+        // 🛡️ FASE 3: ANALISI PROFONDA PDF...
         if (!isEncrypted && !isTransformed && isPdfContext) {
             if (signal?.aborted) return result;
 
             const configPdfPatterns = (pdfConfig.pdfMaliciousPatterns || []).map(p => p.toLowerCase());
 
             if (typeof waitTillIdle === 'function') {
-                await waitTillIdle(200, 8000);
+                const idleMin = pdfConfig.idleMinMs || 200;
+                const idleTimeout = pdfConfig.idleTimeoutMs || 8000;
+                await waitTillIdle(idleMin, idleTimeout);
             }
 
-            const CHUNK_SIZE = 1024 * 1024;
-            const OVERLAP_SIZE = 4096;
+            const CHUNK_SIZE = pdfConfig.chunkSize || (1024 * 1024);
+            const OVERLAP_SIZE = pdfConfig.overlapSize || 4096;
+            const streamContextWindow = pdfConfig.streamContextWindow || 300;
             let offset = 0;
             let inStream = false;
 
             while (offset < blob.size) {
                 if (signal?.aborted) return result;
 
-                const end = Math.min(offset + CHUNK_SIZE, blob.size);
-                const chunkBuffer = await blob.slice(offset, end).arrayBuffer();
-                activeBuffers.push(chunkBuffer);
-                const chunkArray = new Uint8Array(chunkBuffer);
+                let chunkBuffer = null;
+                const chunkBuffersToClean = [];
 
-                const rawChunkText = new TextDecoder('iso-8859-1', { fatal: false }).decode(chunkArray);
+                try {
+                    const end = Math.min(offset + CHUNK_SIZE, blob.size);
+                    chunkBuffer = await blob.slice(offset, end).arrayBuffer();
+                    const chunkArray = new Uint8Array(chunkBuffer);
 
-                let pdfStructureOnly = "";
-                let searchPos = 0;
+                    const rawChunkText = new TextDecoder('iso-8859-1', { fatal: false }).decode(chunkArray);
 
-                while (searchPos < rawChunkText.length) {
-                    if (inStream) {
-                        const endStreamIdx = rawChunkText.toLowerCase().indexOf('endstream', searchPos);
-                        if (endStreamIdx !== -1) {
-                            inStream = false;
-                            searchPos = endStreamIdx + 9;
+                    let pdfStructureOnly = "";
+                    let searchPos = 0;
+
+                    while (searchPos < rawChunkText.length) {
+                        if (inStream) {
+                            const endStreamIdx = rawChunkText.toLowerCase().indexOf('endstream', searchPos);
+                            if (endStreamIdx !== -1) {
+                                inStream = false;
+                                searchPos = endStreamIdx + 9;
+                            } else {
+                                break;
+                            }
                         } else {
-                            break;
+                            const streamIdx = rawChunkText.toLowerCase().indexOf('stream', searchPos);
+                            if (streamIdx !== -1) {
+                                const nextChar = rawChunkText[streamIdx + 6];
+                                if (nextChar === '\r' || nextChar === '\n' || nextChar === ' ' || streamIdx + 6 === rawChunkText.length) {
+                                    pdfStructureOnly += rawChunkText.substring(searchPos, streamIdx);
+                                    inStream = true;
+                                    searchPos = streamIdx + 6;
+                                } else {
+                                    pdfStructureOnly += rawChunkText.substring(searchPos, streamIdx + 6);
+                                    searchPos = streamIdx + 6;
+                                }
+                            } else {
+                                pdfStructureOnly += rawChunkText.substring(searchPos);
+                                break;
+                            }
                         }
-                    } else {
-                        const streamIdx = rawChunkText.toLowerCase().indexOf('stream', searchPos);
-                        if (streamIdx !== -1) {
-                            pdfStructureOnly += rawChunkText.substring(searchPos, streamIdx);
-                            inStream = true;
-                            searchPos = streamIdx + 6;
-                        } else {
-                            pdfStructureOnly += rawChunkText.substring(searchPos);
-                            break;
+                    }
+
+                    pdfStructureOnly = pdfStructureOnly.toLowerCase();
+                    pdfStructureOnly = pdfStructureOnly.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
+                    pdfStructureOnly = pdfStructureOnly.replace(/\/\*[\s\S]*?\*\//g, '');
+                    pdfStructureOnly = pdfStructureOnly.replace(/\s+/g, ' ');
+
+                    for (const pattern of configPdfPatterns) {
+                        if (pdfStructureOnly.includes(pattern)) {
+                            await injectTimingNoise(startForensicTime, timingNoiseMs);
+                            console.warn("⚠️ SW Security: Pattern ostile nella struttura del PDF", createCleanError("PdfPatternDetected", `Pattern: ${pattern}`));
+                            return result;
                         }
                     }
-                }
 
-                pdfStructureOnly = pdfStructureOnly.toLowerCase();
-                pdfStructureOnly = pdfStructureOnly.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
-                pdfStructureOnly = pdfStructureOnly.replace(/\/\*[\s\S]*?\*\//g, '');
-                pdfStructureOnly = pdfStructureOnly.replace(/\s+/g, ' ');
+                    // Ricerca binaria nativa per la decompressione degli stream
+                    let pos = 0;
+                    while (pos < chunkArray.length) {
+                        const streamMarkerIdx = rawChunkText.toLowerCase().indexOf('stream', pos);
+                        if (streamMarkerIdx === -1) break;
 
-                for (const pattern of configPdfPatterns) {
-                    if (pdfStructureOnly.includes(pattern)) {
-                        await injectTimingNoise(startForensicTime, 50);
-                        console.warn("⚠️ SW Security: Pattern ostile nella struttura del PDF", createCleanError("PdfPatternDetected", `Pattern: ${pattern}`));
-                        return result;
-                    }
-                }
+                        const nextChar = rawChunkText[streamMarkerIdx + 6];
+                        if (nextChar !== '\r' && nextChar !== '\n' && nextChar !== ' ' && streamMarkerIdx + 6 < rawChunkText.length) {
+                            pos = streamMarkerIdx + 6;
+                            continue;
+                        }
 
-                // Ricerca binaria nativa per la decompressione degli stream
-                let pos = 0;
-                while (pos < chunkArray.length) {
-                    const streamMarkerIdx = rawChunkText.toLowerCase().indexOf('stream', pos);
-                    if (streamMarkerIdx === -1) break;
+                        let streamStartByte = streamMarkerIdx + 6;
+                        if (rawChunkText[streamStartByte] === '\r') streamStartByte++;
+                        if (rawChunkText[streamStartByte] === '\n') streamStartByte++;
 
-                    let streamStartByte = streamMarkerIdx + 6;
-                    if (rawChunkText[streamStartByte] === '\r') streamStartByte++;
-                    if (rawChunkText[streamStartByte] === '\n') streamStartByte++;
+                        const endStreamIdx = rawChunkText.toLowerCase().indexOf('endstream', streamStartByte);
+                        if (endStreamIdx === -1) {
+                            pos = streamMarkerIdx + 6;
+                            continue;
+                        }
 
-                    const endStreamIdx = rawChunkText.toLowerCase().indexOf('endstream', streamStartByte);
-                    if (endStreamIdx === -1) {
-                        pos = streamMarkerIdx + 6;
-                        continue;
-                    }
+                        let streamEndByte = endStreamIdx;
+                        if (rawChunkText[streamEndByte - 1] === '\n') streamEndByte--;
+                        if (rawChunkText[streamEndByte - 1] === '\r') streamEndByte--;
 
-                    let streamEndByte = endStreamIdx;
-                    if (rawChunkText[streamEndByte - 1] === '\n') streamEndByte--;
-                    if (rawChunkText[streamEndByte - 1] === '\r') streamEndByte--;
+                        const streamContext = rawChunkText.substring(Math.max(0, streamMarkerIdx - streamContextWindow), streamMarkerIdx).toLowerCase();
+                        const isCompressedStream = pdfConfig.compressedStreamPatterns ?
+                            pdfConfig.compressedStreamPatterns.some(p => streamContext.includes(p.toLowerCase())) :
+                            streamContext.includes('/flatedecode');
 
-                    const streamContext = rawChunkText.substring(Math.max(0, streamMarkerIdx - 300), streamMarkerIdx).toLowerCase();
-                    const isCompressedStream = pdfConfig.compressedStreamPatterns ?
-                        pdfConfig.compressedStreamPatterns.some(p => streamContext.includes(p.toLowerCase())) :
-                        streamContext.includes('/flatedecode');
+                        if (isCompressedStream && typeof DecompressionStream !== 'undefined' && streamEndByte > streamStartByte) {
+                            try {
+                                const streamBytes = chunkArray.subarray(streamStartByte, streamEndByte);
+                                if (streamBytes.length > 0) {
+                                    const format = ((streamBytes[0] & 0x0F) === 8) ? 'deflate' : 'deflate-raw';
+                                    const decompressedStream = new Blob([streamBytes]).stream().pipeThrough(new DecompressionStream(format));
+                                    const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
+                                    chunkBuffersToClean.push(decompressedBuffer);
 
-                    if (isCompressedStream && typeof DecompressionStream !== 'undefined' && streamEndByte > streamStartByte) {
-                        try {
-                            const streamBytes = chunkArray.subarray(streamStartByte, streamEndByte);
-                            if (streamBytes.length > 0) {
-                                const format = ((streamBytes[0] & 0x0F) === 8) ? 'deflate' : 'deflate-raw';
-                                const decompressedStream = new Blob([streamBytes]).stream().pipeThrough(new DecompressionStream(format));
-                                const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
-                                activeBuffers.push(decompressedBuffer);
+                                    let decompText = new TextDecoder('iso-8859-1', { fatal: false }).decode(new Uint8Array(decompressedBuffer)).toLowerCase();
+                                    decompText = decompText.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
+                                    decompText = decompText.replace(/\s+/g, ' ');
 
-                                let decompText = new TextDecoder('iso-8859-1', { fatal: false }).decode(new Uint8Array(decompressedBuffer)).toLowerCase();
-                                decompText = decompText.replace(/#([0-9a-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)).toLowerCase());
-                                decompText = decompText.replace(/\s+/g, ' ');
-
-                                for (const pattern of configPdfPatterns) {
-                                    if (decompText.includes(pattern)) {
-                                        await injectTimingNoise(startForensicTime, 50);
-                                        console.warn("⚠️ SW Security: Payload malevolo in stream decompresso", createCleanError("PdfPatternDetected", `Pattern: ${pattern}`));
-                                        return result;
+                                    for (const pattern of configPdfPatterns) {
+                                        if (decompText.includes(pattern)) {
+                                            await injectTimingNoise(startForensicTime, timingNoiseMs);
+                                            console.warn("⚠️ SW Security: Payload malevolo in stream decompresso", createCleanError("PdfPatternDetected", `Pattern: ${pattern}`));
+                                            return result;
+                                        }
                                     }
                                 }
-                            }
-                        } catch (_) {}
+                            } catch (_) {}
+                        }
+                        pos = endStreamIdx + 9;
                     }
-                    pos = endStreamIdx + 9;
-                }
 
-                if (end >= blob.size) break;
-                offset = end - OVERLAP_SIZE;
+                    if (end >= blob.size) break;
+                    offset = end - OVERLAP_SIZE;
+
+                } finally {
+                    if (chunkBuffer) {
+                        try { new Uint8Array(chunkBuffer).fill(0); } catch (_) {}
+                    }
+                    while (chunkBuffersToClean.length > 0) {
+                        const buf = chunkBuffersToClean.pop();
+                        if (buf) {
+                            try { new Uint8Array(buf).fill(0); } catch (_) {}
+                        }
+                    }
+                }
             }
         }
 
@@ -755,7 +820,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
         return result;
 
     } catch (e) {
-        await injectTimingNoise(startForensicTime, 50);
+        await injectTimingNoise(startForensicTime, timingNoiseMs);
         return { valid: false, blob: null, response: null };
     } finally {
         wipeRAM();
