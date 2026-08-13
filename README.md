@@ -37,6 +37,19 @@
 ## 🚀 Obiettivi del Progetto :<br>
 - ⚙️ Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata ( Lie-Fi ), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
+> [!NOTE]
+> La demo live serve per provare immediatamente: la resilienza, la modalità bunker, ecc...
+> 
+<h2 align="center">
+ <a href="https://zero419-web.github.io/PWA-Pizza-Engine/">
+  <strong>
+   🍕 PWA Pizza Engine !
+    <br>
+   📲 Prova la Demo Live
+  </strong>
+ </a>
+</h2>
+
 ## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.x+ )
 🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
 
