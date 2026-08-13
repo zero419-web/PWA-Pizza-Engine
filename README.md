@@ -35,7 +35,7 @@
   - 🌀 **Proof of Concept :** <br> ( *PoC* ) di un'architettura software sovrana per <br>Progressive Web App ( 📲 **PWA** ) nel settore della ristorazione, progettata in modalità *🔐 Zero-Trust*. Il sistema garantisce **massima resilienza informatica**, immunità forense ai guasti hardware e piena conformità alle linee guida tecniche 📑 **AgID** e al **📜 Codice dell'Amministrazione Digitale** ( *CAD* ).
 
 ## 🚀 Obiettivi del Progetto :<br>
-- ⚙️ Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata ( Lie-Fi ), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
+- ⚙️ Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata ( Lie-Fi 🤥🛜 ), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
 > [!NOTE]
 > La demo live serve per provare immediatamente: la resilienza, la modalità bunker, ecc...
