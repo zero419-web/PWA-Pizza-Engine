@@ -38,7 +38,7 @@
 - ⚙️ Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata ( Lie-Fi 🤥🛜 ), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
 > [!NOTE]
-> La demo live serve per provare immediatamente: la resilienza, la modalità bunker, ecc...
+> 💡 La demo live serve per provare immediatamente: la resilienza, la modalità bunker, ecc...
 > 
 <h2 align="center">
  <a href="https://zero419-web.github.io/PWA-Pizza-Engine/">
@@ -111,7 +111,7 @@ Sintesi delle novità di hardening 🪨 implementate in isValidBlob: <br>
 - ⚙️🛡️ Specialista in ingegneria difensiva, architetture PWA in Bunker Mode e cyber security applicata <br> ( 🟣 Purple Team: bilanciamento tra mentalità offensiva Red team 🔴, e blindatura il Blue Team 🔵 ).
 
 ## ⚖️ Licenza :
-- ⚙️📑 Progetto rilasciato sotto licenza **🇪🇺 EUPL v1.2**. <br> La legalità del riuso, la trasparenza del codice e la conformità ai framework normativi dell'Unione Europea sono garantiti. Consulta il file [`LICENSE`](LICENSE.md).
+- ⚙️📑 Progetto rilasciato sotto licenza **🇪🇺 EUPL v1.2**. <br> La legalità del riuso, la trasparenza del codice e la conformità ai framework normativi dell'Unione Europea sono garantiti. Consulta il file [`LICENSE`](https://github.com/zero419-web/PWA-Pizza-Engine?tab=License-1-ov-file#%E2%84%B9%EF%B8%8F--eupl-v12---european-union-public-licence).
 
-## 📚 Documentazione Ufficiale :
-- 🔍🚀 Per l'analisi dei vettori crittografici, le metriche forensi di stabilità e gli scenari applicativi per Enti e Pubblica Amministrazione, consulta la nostra [📖 Wiki Ufficiale](../../wiki).
+## 📖 Documentazione Ufficiale :
+- 🔍🚀 Per l'analisi dei vettori crittografici, le metriche forensi di stabilità e gli scenari applicativi per Enti e Pubblica Amministrazione, consulta la nostra [📚 Wiki Ufficiale](https://github.com/zero419-web/PWA-Pizza-Engine/wiki).
