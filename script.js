@@ -20,7 +20,7 @@ console.log('PWA: Già in esecuzione come app.');
         return;
     }
 
-    initPwaCheck(5000);
+    initPwaCheck(60000);
 
 });
 
@@ -149,11 +149,12 @@ installEventTriggered = true;
 
 if (isSuspiciousQuota && !installEventTriggered && isSWRA) {
 console.log("PWA: Quota sospetta e nessun evento. Attendo timeout...");
-await new Promise(res => setTimeout(res, timeoutMs));
+await new Promise(res => setTimeout(res, timeoutMs / 4 ));
            }
 
 if (isSuspiciousQuota && !installEventTriggered) {
 console.warn("PWA: Conferma Incognito dopo timeout.");
+	SetupdatePwaStatus('sw_not_work');
     if (isChromium) {
         if (!PWAisInstall) {
             Sw_PwA_calls(4);
