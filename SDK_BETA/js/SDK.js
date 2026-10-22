@@ -153,7 +153,9 @@ export class PanzerSDK {
         if (!installEventTriggered) {
             this.onLogMessage('warn', "PWA: Rilevata modalità Incognito / Sandbox restrittiva su Chromium.");
             if (isChromium && !PWAisInstall) {
-                this._showIncognitoBlocker();
+                if( !window.matchMedia('(display-mode: standalone)').matches ){
+                    this._showIncognitoBlocker();
+                }
             }
         }
     }
