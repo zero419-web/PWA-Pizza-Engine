@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8
+ * v1.8.1
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
-        checkTimeout: 4000,
+        checkTimeout: 60000,
 
         // 🎛️ Soglie di quota storage personalizzate
         quotaLimits: {
