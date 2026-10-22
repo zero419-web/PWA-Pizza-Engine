@@ -130,7 +130,7 @@ if(isSuspiciousQuota){
     setTimeout(() => {
         SetupdatePwaStatus('sw_not_work');
     }, 3000);
-        return 0;
+        //return 0;
 }
     }
 
