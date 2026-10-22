@@ -22,7 +22,7 @@ export class PanzerSDK {
         ];
 
         // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
-        this.checkTimeout = options.checkTimeout || 30000;
+        this.checkTimeout = options.checkTimeout || 60000;
 
         // 🎛️ Parametri di soglia quota configurabili e modificabili nel tempo tramite le opzioni dell'SDK
         this.quotaLimits = options.quotaLimits || {
@@ -117,11 +117,8 @@ export class PanzerSDK {
             } else if (os === 'Desktop') {
                 isSuspiciousQuota = (qMB < limits.desktopMax);
             }
-            if(isSuspiciousQuota === false){
-                isSuspiciousQuota = 10240;
-            }
         }
-
+        
         const pwaEventRace = new Promise((resolve) => {
             const timer = setTimeout(() => {
                 window.removeEventListener('beforeinstallprompt', eventHandler);
@@ -148,15 +145,6 @@ export class PanzerSDK {
             try {
                 localStorage.setItem('pwa_check_point', now);
             } catch (e) {}
-
-            if (isSuspiciousQuota) {
-                setTimeout(() => {
-                    if (isChromium) {
-                        this._showIncognitoBlocker();
-                    }
-                }, 3000);
-                //return;
-            }
         }
 
         let installEventTriggered = await pwaEventRace;
