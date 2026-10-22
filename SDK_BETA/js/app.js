@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
-        checkTimeout: 60000,
+        checkTimeout: 30000,
 
         // 🎛️ Soglie di quota storage personalizzate
         quotaLimits: {
