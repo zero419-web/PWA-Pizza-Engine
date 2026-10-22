@@ -22,7 +22,7 @@ export class PanzerSDK {
         ];
 
         // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
-        this.checkTimeout = options.checkTimeout || 60000;
+        this.checkTimeout = options.checkTimeout || 30000;
 
         // 🎛️ Parametri di soglia quota configurabili e modificabili nel tempo tramite le opzioni dell'SDK
         this.quotaLimits = options.quotaLimits || {
