@@ -1,7 +1,7 @@
 /**
  * 🛡️ PanzerSDK - Beta v1.0
  * 
- * Client Bridge v1.4.2 ( Bunker Mode 🛡️📦 )
+ * Client Bridge v1.4.3 ( Bunker Mode 🛡️📦 )
  * 
  * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -150,7 +150,7 @@ export class PanzerSDK {
         let installEventTriggered = await pwaEventRace;
         const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
 
-        if (isSuspiciousQuota && !installEventTriggered) {
+        if (!installEventTriggered) {
             this.onLogMessage('warn', "PWA: Rilevata modalità Incognito / Sandbox restrittiva su Chromium.");
             if (isChromium && !PWAisInstall) {
                 this._showIncognitoBlocker();
