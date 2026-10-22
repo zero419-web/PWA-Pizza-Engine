@@ -140,7 +140,7 @@ let installEventTriggered = await eventPromise;
 
 const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
 if(PWAisInstall === 'true'){
-if (!isSuspiciousQuota && !installEventTriggered) {
+if (!installEventTriggered) {
 installEventTriggered = true;
 }
 
