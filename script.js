@@ -88,11 +88,8 @@ if (isChromium) {
             (qMB < 5000)
             );
     }
-	if(isSuspiciousQuota === false){
-		isSuspiciousQuota = 10240;
-	}
 }
-
+//isSuspiciousQuota = true;
 const pwaEventRace = new Promise((resolve) => {
         const timer = setTimeout(() => {
             window.removeEventListener('beforeinstallprompt', eventHandler);
@@ -126,12 +123,6 @@ const savedPoint = localStorage.getItem('pwa_check_point');
         try {
 localStorage.setItem('pwa_check_point', now);
         } catch(e) {}
-if(isSuspiciousQuota){
-    setTimeout(() => {
-        SetupdatePwaStatus('sw_not_work');
-    }, 3000);
-        //return 0;
-}
     }
 
 const swPromise = initPwaLogic(true);
@@ -157,8 +148,8 @@ await new Promise(res => setTimeout(res, timeoutMs / 4 ));
 
 if (isSuspiciousQuota && !installEventTriggered) {
 console.warn("PWA: Conferma Incognito dopo timeout.");
-	SetupdatePwaStatus('sw_not_work');
     if (isChromium) {
+		SetupdatePwaStatus('sw_not_work');
         if (!PWAisInstall) {
             Sw_PwA_calls(4);
         }else{
