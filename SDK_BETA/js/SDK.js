@@ -1,7 +1,7 @@
 /**
  * 🛡️ PanzerSDK - Beta v1.0
  * 
- * Client Bridge v1.4 ( Bunker Mode 🛡️📦 )
+ * Client Bridge v1.4.2 ( Bunker Mode 🛡️📦 )
  * 
  * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -22,7 +22,7 @@ export class PanzerSDK {
         ];
 
         // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
-        this.checkTimeout = options.checkTimeout || 5000;
+        this.checkTimeout = options.checkTimeout || 60000;
 
         // 🎛️ Parametri di soglia quota configurabili e modificabili nel tempo tramite le opzioni dell'SDK
         this.quotaLimits = options.quotaLimits || {
@@ -116,6 +116,9 @@ export class PanzerSDK {
                 isSuspiciousQuota = (qMB >= limits.mobileMin && qMB <= limits.mobileMax);
             } else if (os === 'Desktop') {
                 isSuspiciousQuota = (qMB < limits.desktopMax);
+            }
+            if(isSuspiciousQuota === false){
+                isSuspiciousQuota = 10240;
             }
         }
 
