@@ -88,6 +88,9 @@ if (isChromium) {
             (qMB < 5000)
             );
     }
+	if(isSuspiciousQuota === false){
+		isSuspiciousQuota = 10240;
+	}
 }
 
 const pwaEventRace = new Promise((resolve) => {
