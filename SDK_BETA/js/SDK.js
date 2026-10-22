@@ -155,7 +155,7 @@ export class PanzerSDK {
                         this._showIncognitoBlocker();
                     }
                 }, 3000);
-                return;
+                //return;
             }
         }
 
