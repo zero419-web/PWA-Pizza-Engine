@@ -22,8 +22,13 @@
 > - ⚙️📜 **Framework Core Panzer v7.x+**
 >    - **📄 File:** <br> `ServiceWorker.js ⚙️🪖` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
 >
-> 👁️‍🗨️ [**DEMO on-line**](https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/)
-> 
+<h2 align="center">
+ <a href="https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/">
+  <strong>
+    👁️‍🗨️ SDK DEMO ···> on-line
+  </strong>
+ </a>
+</h2>
 
 ---
 
