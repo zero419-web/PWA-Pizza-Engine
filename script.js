@@ -87,9 +87,10 @@ if (isChromium) {
         isSuspiciousQuota = (
             (qMB < 5000)
             );
-    }
+    }else{
+		isSuspiciousQuota = true;
 }
-//isSuspiciousQuota = true;
+
 const pwaEventRace = new Promise((resolve) => {
         const timer = setTimeout(() => {
             window.removeEventListener('beforeinstallprompt', eventHandler);
