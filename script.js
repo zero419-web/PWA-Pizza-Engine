@@ -74,43 +74,45 @@ const isChromium = profile.brands?.some(item =>
 item.brand.toLowerCase().includes('chrome') ||
 item.brand.toLowerCase().includes('chromium')) || false;
 
-const estimate = await navigator.storage.estimate();
-const qMB = Math.round(estimate.quota / (1024 * 1024));
-
-let isSuspiciousQuota = (qMB >= 2000 && qMB <= 2400);
+//const estimate = await navigator.storage.estimate();
+//const qMB = Math.round(estimate.quota / (1024 * 1024));
+//alert( 'MB quota: '+ qMB +'n\GB quota: '+ (qMB * 1024) );
+	
+let isSuspiciousQuota = false;
 if (isChromium) {
-    if(getMobileOS() === 'Android'){
-        isSuspiciousQuota = (
-            (qMB >= 2000 && qMB <= 2400)
-            );
-    }else if(getMobileOS() === 'Desktop'){
-        isSuspiciousQuota = (
-            (qMB < 5000)
-            );
-    }
-	if(isSuspiciousQuota === false){
-		isSuspiciousQuota = true;
-	}
+	isSuspiciousQuota = true;
 }
-	//alert('MB quota: '+ qMB);
 
-const pwaEventRace = new Promise((resolve) => {
-        const timer = setTimeout(() => {
-            window.removeEventListener('beforeinstallprompt', eventHandler);
-
-            resolve(false);
-        }, timeoutMs);
-
-        function eventHandler(e) {
-            clearTimeout(timer);
-            window.removeEventListener('beforeinstallprompt', eventHandler);
-            e.preventDefault();
-           window.deferredPrompt = e;
-           Sw_PwA_calls(2);
-           resolve(true);
+const pwaEventRace = new Promise(async (resolve) => {
+    const TIMEOUT_SINGLE_MS = 3333;
+    const TOTAL_LIMIT_MS = timeoutMs;
+    const startTime = Date.now();
+    while (Date.now() - startTime < TOTAL_LIMIT_MS) {
+        const success = await new Promise((res) => {
+            const timer = setTimeout(() => {
+                window.removeEventListener('beforeinstallprompt', eventHandler);
+                res(false);
+            }, TIMEOUT_SINGLE_MS);
+            function eventHandler(e) {
+                clearTimeout(timer);
+                window.removeEventListener('beforeinstallprompt', eventHandler);
+                e.preventDefault();
+                window.deferredPrompt = e;
+                Sw_PwA_calls(2);
+                res(true);
+            }
+            window.addEventListener('beforeinstallprompt', eventHandler);
+        });
+        if (success) {
+            resolve(true);
+            return;
         }
-        window.addEventListener('beforeinstallprompt', eventHandler);
-    });
+        if (Date.now() - startTime >= TOTAL_LIMIT_MS) {
+            break;
+        }
+    }
+	resolve(false);
+});
 
 const savedPoint = localStorage.getItem('pwa_check_point');
     const now = Date.now();
@@ -138,17 +140,16 @@ let installEventTriggered = await eventPromise;
 
 const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
 if(PWAisInstall === 'true'){
-if (!installEventTriggered) {
-installEventTriggered = true;
-}
-
+	if (!installEventTriggered) {
+		installEventTriggered = true;
+	}
 }
     try {
 
 if (isSuspiciousQuota && !installEventTriggered && isSWRA) {
-console.log("PWA: Quota sospetta e nessun evento. Attendo timeout...");
-await new Promise(res => setTimeout(res, timeoutMs / 4 ));
-           }
+	console.log("PWA: Quota sospetta e nessun evento. Attendo timeout...");
+	await new Promise(res => setTimeout(res, 333 ));
+}
 
 if (isSuspiciousQuota && !installEventTriggered) {
 console.warn("PWA: Conferma Incognito dopo timeout.");
