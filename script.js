@@ -87,7 +87,7 @@ if (isChromium) {
         isSuspiciousQuota = (
             (qMB < 5000)
             );
-    }else{
+    }else if(isSuspiciousQuota === false){
 		isSuspiciousQuota = true;
 }
 
