@@ -87,10 +87,12 @@ if (isChromium) {
         isSuspiciousQuota = (
             (qMB < 5000)
             );
-    }else{
+    }
+	if(isSuspiciousQuota === false){
 		isSuspiciousQuota = true;
 	}
 }
+	alert('MB quota: '+ qMB);
 
 const pwaEventRace = new Promise((resolve) => {
         const timer = setTimeout(() => {
