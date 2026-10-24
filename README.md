@@ -1,5 +1,5 @@
 ![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.0.0200-1f4e79)
-![LOGO](https://img.shields.io/badge/PoC-📱_PWA_X_PA-af0000)
+![LOGO](https://img.shields.io/badge/PoC-📱_PWA_x_PA-af0000)
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9+-4f4f00)
 
 > [!Important]
