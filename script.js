@@ -1,3 +1,5 @@
+// v4.0
+
 let site_title_now = document.title;
 let errorLog = [];
 
@@ -7,7 +9,7 @@ const FRONTEND_BASE = window.location.pathname.substring(0, window.location.path
 let File_Json_DB = `${FRONTEND_BASE}db.json`;
 let File_SW = `${FRONTEND_BASE}sw.js`;
 
-const FORMATS = ['jpg', 'jpeg', 'png', 'webp'];
+const FORMATS = ['webp', 'jpg', 'png', 'jpeg'];
 
 let isTransitioning = false;
 
@@ -77,7 +79,7 @@ item.brand.toLowerCase().includes('chromium')) || false;
 //const estimate = await navigator.storage.estimate();
 //const qMB = Math.round(estimate.quota / (1024 * 1024));
 //alert( 'MB quota: '+ qMB +'n\GB quota: '+ (qMB * 1024) );
-	
+
 let isSuspiciousQuota = false;
 if (isChromium) {
 	isSuspiciousQuota = true;
@@ -99,7 +101,7 @@ const checkPwaInstallabilityCriteria = async () => {
         const response = await fetch(manifestLink.href);
         if (!response.ok) return false;
         const manifest = await response.json();
-        
+
         if (!manifest.name && !manifest.short_name) return false;
         if (!manifest.start_url) return false;
         if (!manifest.icons || manifest.icons.length === 0) return false;
@@ -111,7 +113,7 @@ const checkPwaInstallabilityCriteria = async () => {
     return true;
 };
 
-	
+
 const pwaEventRace = new Promise(async (resolve) => {
     const TIMEOUT_SINGLE_MS = 3333;
     const TOTAL_LIMIT_MS = timeoutMs;
@@ -162,7 +164,7 @@ localStorage.setItem('pwa_check_point', now);
 
 const swPromise = initPwaLogic(true);
 const eventPromise = pwaEventRace;
-	
+
 const isSWRA = await swPromise;
 let installEventTriggered = await eventPromise;
 
@@ -174,7 +176,7 @@ if(PWAisInstall === 'true'){
 }
     try {
 
-if( checkPwaInstallabilityCriteria === false ){ 
+if( checkPwaInstallabilityCriteria === false ){
 	SetupdatePwaStatus('sw_not_work');
 	return;
 }
@@ -319,27 +321,18 @@ async function loadImageAsync(imgElement, folder, ID) {
     imgElement.src = window.APP_CONFIG.svg_loading;
     for (const ext of FORMATS) {
         const cleanExt = ext.replace(/^\./, "");
-        const relativeUrl = `${folder}${ID}.${cleanExt}`;
-        let exists = false;
-        if ('caches' in window) {
-            const absoluteUrl = new URL(relativeUrl, window.location.href).href;
-            const cachedResponse = await caches.match(absoluteUrl, { ignoreSearch: true });
-            if (cachedResponse && cachedResponse.ok) {
-                exists = true;
+        const url = `${folder}${ID}.${cleanExt}`;
+        try {
+            const response = await fetch(url, { method: 'GET' });
+            if (response.ok) {
+                const pwaSource = response.headers.get('X-PWA-Source');
+                if (pwaSource === 'Bunker-Placeholder') {
+                    continue;
+                }
+                imgElement.src = url;
+                return true;
             }
-        }
-        if (!exists) {
-            exists = await new Promise((resolve) => {
-                const tempImg = new Image();
-                tempImg.onload = () => resolve(true);
-                tempImg.onerror = () => resolve(false);
-                tempImg.src = relativeUrl;
-            });
-        }
-        if (exists) {
-            imgElement.src = relativeUrl;
-            return true;
-        }
+        } catch (err) {}
     }
     return false;
 }
@@ -1286,18 +1279,23 @@ function openZoom(src, description = "") {
         }
     };
 
-    const loadInBuffer = (targetSrc) => {
-        const imgBuffer = new Image();
-        imgBuffer.onload = function() {
-
-            zoomImg.src = imgBuffer.src;
-            zoomImg.style.opacity = "1";
-        };
-        imgBuffer.onerror = function() {
-
+    const loadInBuffer = async (targetSrc) => {
+        try {
+            const response = await fetch(targetSrc, { method: 'GET' });
+            if (response.ok) {
+                const pwaSource = response.headers.get('X-PWA-Source');
+                if (pwaSource === 'Bunker-Placeholder') {
+                    zoomImg.onerror();
+                    return;
+                }
+                zoomImg.src = targetSrc;
+                zoomImg.style.opacity = "1";
+            } else {
+                zoomImg.onerror();
+            }
+        } catch (err) {
             zoomImg.onerror();
-        };
-        imgBuffer.src = targetSrc;
+        }
     };
 
     zoomImg.style.display = 'block';
