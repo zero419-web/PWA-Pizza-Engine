@@ -176,7 +176,9 @@ const checkPwaInstallabilityCriteria = async () => {
             }else{
 				this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
 			}
-        }
+        }else{
+			this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
+		}
     }
 
     /**
