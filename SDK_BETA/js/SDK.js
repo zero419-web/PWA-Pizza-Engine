@@ -1,5 +1,5 @@
 /**
- * 🛡️ PanzerSDK - Beta v1.0
+ * 🛡️ PanzerSDK - Beta v1.0.0200
  * 
  * Client Bridge v1.4.3 ( Bunker Mode 🛡️📦 )
  * 
@@ -23,6 +23,9 @@ export class PanzerSDK {
 
         // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
         this.checkTimeout = options.checkTimeout || 7000;
+		if(this.checkTimeout < 7000){
+			this.checkTimeout = 7000;
+		}
 
         // 🛑 Configurazione dinamica personalizzabile per l'overlay Anti-Incognito (Contenuto, Colori e Azioni)
         this.incognitoBlocker = {
@@ -158,6 +161,7 @@ const checkPwaInstallabilityCriteria = async () => {
 
         if( checkPwaInstallabilityCriteria === false ){
             SetupdatePwaStatus('sw_not_work');
+			this.onLogMessage('warn', "PWA: Rilevata modalità Incognito / Sandbox restrittiva su Chromium.");
             return;
         }
     
@@ -169,7 +173,9 @@ const checkPwaInstallabilityCriteria = async () => {
                         this._showIncognitoBlocker();
                     }, 3000);
                 }
-            }
+            }else{
+				this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
+			}
         }
     }
 
