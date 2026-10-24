@@ -319,16 +319,25 @@ async function loadImageAsync(imgElement, folder, ID) {
     imgElement.src = window.APP_CONFIG.svg_loading;
     for (const ext of FORMATS) {
         const cleanExt = ext.replace(/^\./, "");
-        const url = `${folder}${ID}.${cleanExt}`;
-        const success = await new Promise((resolve) => {
-            const tempImg = new Image();
-            tempImg.onload = () => resolve(true);
-            tempImg.onerror = () => resolve(false);
-            tempImg.src = url;
-        });
-        if (success) {
-
-            imgElement.src = url;
+        const relativeUrl = `${folder}${ID}.${cleanExt}`;
+        let exists = false;
+        if ('caches' in window) {
+            const absoluteUrl = new URL(relativeUrl, window.location.href).href;
+            const cachedResponse = await caches.match(absoluteUrl, { ignoreSearch: true });
+            if (cachedResponse && cachedResponse.ok) {
+                exists = true;
+            }
+        }
+        if (!exists) {
+            exists = await new Promise((resolve) => {
+                const tempImg = new Image();
+                tempImg.onload = () => resolve(true);
+                tempImg.onerror = () => resolve(false);
+                tempImg.src = relativeUrl;
+            });
+        }
+        if (exists) {
+            imgElement.src = relativeUrl;
             return true;
         }
     }
