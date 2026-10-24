@@ -44,7 +44,7 @@
 - ⚙️ Questo engine implementa strategie avanzate di computazione asincrona isolata, crittografia simmetrica client-side e tolleranza ai guasti di tipo militare. Garantisce che le applicazioni web e i dati sensibili rimangano protetti e operativi anche in condizioni di rete degradata ( Lie-Fi 🤥🛜 ), assente o in caso di tentativi di manomissione fisica e data breach sul file system locale del client.
 
 > [!NOTE]
-> 💡 **La demo live serve per provare immediatamente: la Resilienza, la Modalità Bunker, il Lie-fie, il Download simultanio delle Risorse dal Manifesto...** `ecc...`
+> 💡 **La demo live serve per provare immediatamente: la Resilienza, la Modalità Bunker 🗄️, il Lie-Fi 🤥🛜 , il Download 📥 simultanio delle Risorse dal Manifesto...** `ecc...`
 > 
 <h2 align="center">
  <a href="https://zero419-web.github.io/PWA-Pizza-Engine/">
