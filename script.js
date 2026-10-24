@@ -7,7 +7,7 @@ const FRONTEND_BASE = window.location.pathname.substring(0, window.location.path
 let File_Json_DB = `${FRONTEND_BASE}db.json`;
 let File_SW = `${FRONTEND_BASE}sw.js`;
 
-const FORMATS = ['webp', 'jpg', 'png', 'jpeg'];
+const FORMATS = ['jpg', 'jpeg', 'png', 'webp'];
 
 let isTransitioning = false;
 
