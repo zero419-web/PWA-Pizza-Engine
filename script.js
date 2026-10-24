@@ -20,7 +20,7 @@ console.log('PWA: Già in esecuzione come app.');
         return;
     }
 
-    initPwaCheck(3000);
+    initPwaCheck(7000);
 
 });
 
