@@ -318,14 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
-        checkTimeout: 30000,
-
-        // 🎛️ Soglie di quota storage personalizzate
-        quotaLimits: {
-            mobileMin: 1800,
-            mobileMax: 2200,
-            desktopMax: 5000
-        },
+        checkTimeout: 6660,
 
         // 🛑 Personalizzazione completa dell'overlay Anti-Incognito
         incognitoBlocker: {
