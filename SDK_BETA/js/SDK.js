@@ -92,7 +92,7 @@ export class PanzerSDK {
             item.brand.toLowerCase().includes('chromium')
         ) || false;
 
-isSuspiciousQuota = false;
+let isSuspiciousQuota = false;
 if (isChromium) {
 	isSuspiciousQuota = true;
 }
