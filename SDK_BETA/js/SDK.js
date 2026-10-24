@@ -22,14 +22,7 @@ export class PanzerSDK {
         ];
 
         // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
-        this.checkTimeout = options.checkTimeout || 60000;
-
-        // 🎛️ Parametri di soglia quota configurabili e modificabili nel tempo tramite le opzioni dell'SDK
-        this.quotaLimits = options.quotaLimits || {
-            mobileMin: 2000,
-            mobileMax: 2400,
-            desktopMax: 5000
-        };
+        this.checkTimeout = options.checkTimeout || 7000;
 
         // 🛑 Configurazione dinamica personalizzabile per l'overlay Anti-Incognito (Contenuto, Colori e Azioni)
         this.incognitoBlocker = {
@@ -99,25 +92,38 @@ export class PanzerSDK {
             item.brand.toLowerCase().includes('chromium')
         ) || false;
 
-        let estimate;
-        try {
-            estimate = await navigator.storage.estimate();
-        } catch (err) {
-            estimate = { quota: 0 };
-        }
-        
-        const qMB = Math.round(estimate.quota / (1024 * 1024));
+isSuspiciousQuota = false;
+if (isChromium) {
+	isSuspiciousQuota = true;
+}
 
-        // 📐 Valutazione dinamica basata sulle variabili di quota configurabili nell'istanza
-        const limits = this.quotaLimits;
-        let isSuspiciousQuota = (qMB >= limits.mobileMin && qMB <= limits.mobileMax);
-        if (isChromium) {
-            if (os === 'Android') {
-                isSuspiciousQuota = (qMB >= limits.mobileMin && qMB <= limits.mobileMax);
-            } else if (os === 'Desktop') {
-                isSuspiciousQuota = (qMB < limits.desktopMax);
-            }
-        }
+const checkPwaInstallabilityCriteria = async () => {
+    const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isSecure) return false;
+    if (!('serviceWorker' in navigator)) return false;
+    try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        if (registrations.length === 0) return false;
+    } catch (e) {
+        return false;
+    }
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (!manifestLink) return false;
+    try {
+        const response = await fetch(manifestLink.href);
+        if (!response.ok) return false;
+        const manifest = await response.json();
+
+        if (!manifest.name && !manifest.short_name) return false;
+        if (!manifest.start_url) return false;
+        if (!manifest.icons || manifest.icons.length === 0) return false;
+    } catch (e) {
+        return false;
+    }
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) return false;
+    return true;
+};
         
         const pwaEventRace = new Promise((resolve) => {
             const timer = setTimeout(() => {
@@ -150,6 +156,11 @@ export class PanzerSDK {
         let installEventTriggered = await pwaEventRace;
         const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
 
+        if( checkPwaInstallabilityCriteria === false ){
+            SetupdatePwaStatus('sw_not_work');
+            return;
+        }
+    
         if (!installEventTriggered) {
             if (isChromium && !PWAisInstall) {
                 if( !window.matchMedia('(display-mode: standalone)').matches ){
