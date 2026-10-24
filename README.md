@@ -3,15 +3,15 @@
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9+-4f4f00)
 
 > [!Important]
->   - 🔃 **Last Update :** `v1.7`
+>   - 🔃 **Last Update :** `v1.7.1`
 > 
 > 🌀🧪 **Questo SDK + DashBoard e un PoC**
 > 
 > 📦 **FrameWork Panzer <br> SDK BETA v1.0.01 :**
 > 
 > - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'**SDK aggiornata con:**
->    - **🐺 Watchdog Anti-Incognito ❌🕵️**, le soglie di quota dinamiche e il timeout adattivo.
->       - aggiornamento per ultima versione di Chrome...
+>    - **🐺 Watchdog Anti-Incognito ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo 7s o personalizzato di time out per dichiarare lo stato incognito del browser!
+>       - Update ultima versione di Chromium compatibilità!
 > 
 > - **📊 Dashboard :**  
 > **🌀 PoC per la PA 🏛️** <br> Un esempio pratico di dashboard sviluppata per la Pubblica Amministrazione orientata alla consultazione sicura in modalità `🛡️ Bunker`.
