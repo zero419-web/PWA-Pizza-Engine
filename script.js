@@ -20,7 +20,7 @@ console.log('PWA: Già in esecuzione come app.');
         return;
     }
 
-    initPwaCheck(30000);
+    initPwaCheck(3000);
 
 });
 
@@ -83,6 +83,35 @@ if (isChromium) {
 	isSuspiciousQuota = true;
 }
 
+const checkPwaInstallabilityCriteria = async () => {
+    const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isSecure) return false;
+    if (!('serviceWorker' in navigator)) return false;
+    try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        if (registrations.length === 0) return false;
+    } catch (e) {
+        return false;
+    }
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (!manifestLink) return false;
+    try {
+        const response = await fetch(manifestLink.href);
+        if (!response.ok) return false;
+        const manifest = await response.json();
+        
+        if (!manifest.name && !manifest.short_name) return false;
+        if (!manifest.start_url) return false;
+        if (!manifest.icons || manifest.icons.length === 0) return false;
+    } catch (e) {
+        return false;
+    }
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) return false;
+    return true;
+};
+
+	
 const pwaEventRace = new Promise(async (resolve) => {
     const TIMEOUT_SINGLE_MS = 3333;
     const TOTAL_LIMIT_MS = timeoutMs;
@@ -132,9 +161,8 @@ localStorage.setItem('pwa_check_point', now);
     }
 
 const swPromise = initPwaLogic(true);
-
 const eventPromise = pwaEventRace;
-
+	
 const isSWRA = await swPromise;
 let installEventTriggered = await eventPromise;
 
@@ -145,6 +173,11 @@ if(PWAisInstall === 'true'){
 	}
 }
     try {
+
+if( checkPwaInstallabilityCriteria === false ){ 
+	SetupdatePwaStatus('sw_not_work');
+	return;
+}
 
 if (isSuspiciousQuota && !installEventTriggered && isSWRA) {
 	console.log("PWA: Quota sospetta e nessun evento. Attendo timeout...");
