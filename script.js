@@ -1,4 +1,4 @@
-// v4.0
+// v4.1
 
 let site_title_now = document.title;
 let errorLog = [];
@@ -61,6 +61,10 @@ if (!('serviceWorker' in navigator)){
     const d = DATA?.[lang];
     const os = getMobileOS();
     if (os === 'iOS') {
+		const msg1 = d?.ErrMsgBox_msg1 ?? '';
+       if(msg1 !== ''){ 
+		   showErrorPanel(msg1);
+	   }
         Sw_PwA_calls(1);
         return;
     }
