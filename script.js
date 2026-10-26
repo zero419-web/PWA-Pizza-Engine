@@ -1597,23 +1597,25 @@ window.addEventListener('appinstalled', () => {
 });
 
 async function hPWAInstal(Z) {
+	const os = getMobileOS();
     const isAlreadyInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
 const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
-if (window.deferredPrompt || PWAisInstall !== 'true') {
-
-        window.deferredPrompt.prompt();
-const { outcome } = await window.deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-console.log('Utente ha installato la PWA');
-
-if(Z) Z.classList.add('vcard-btn-premium_Disabled');
-        } else {
-console.log('Utente ha annullato...');
-        }
-        window.deferredPrompt = null;
+if ((window.deferredPrompt || PWAisInstall !== 'true') && os !== 'iOS') {
+  window.deferredPrompt.prompt();
+  const { outcome } = await window.deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    console.log('Utente ha installato la PWA');
+    if(Z) Z.classList.add('vcard-btn-premium_Disabled');
+  } else {
+    console.log('Utente ha annullato...');
+  }
+    window.deferredPrompt = null;
     } else {
-        if (isAlreadyInstalled) {
+        if (os === 'iOS') {
+            const c = DATA.config;
+            handleDoc(c.pdf?.[lang]?.pdfPWA);
+        } else if (isAlreadyInstalled) {
 
 alert("⚠️  APP Exist & Is Runing...  ⚠️");
 if(Z){
