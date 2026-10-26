@@ -61,6 +61,7 @@ if (!('serviceWorker' in navigator)){
     const d = DATA?.[lang];
     const os = getMobileOS();
     if (os === 'iOS') {
+		enablePWAButton()
 		const msg1 = d?.ErrMsgBox_msg1 ?? '';
        if(msg1 !== ''){ 
 		   showErrorPanel(msg1);
@@ -1596,7 +1597,6 @@ window.addEventListener('appinstalled', () => {
 });
 
 async function hPWAInstal(Z) {
-    const os = getMobileOS();
     const isAlreadyInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
 const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
@@ -1613,11 +1613,7 @@ console.log('Utente ha annullato...');
         }
         window.deferredPrompt = null;
     } else {
-
-        if (os === 'iOS') {
-            const c = DATA.config;
-            handleDoc(c.pdf?.[lang]?.pdfPWA);
-        } else if (isAlreadyInstalled) {
+        if (isAlreadyInstalled) {
 
 alert("⚠️  APP Exist & Is Runing...  ⚠️");
 if(Z){
