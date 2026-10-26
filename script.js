@@ -1,5 +1,6 @@
-// v4.1
+// v4.2
 
+let isChromium_Browser = false;
 let site_title_now = document.title;
 let errorLog = [];
 
@@ -57,19 +58,8 @@ async function initPwaCheck(timeoutMs) {
 if (!('serviceWorker' in navigator)){
     return false;
 }
-
+	
     const d = DATA?.[lang];
-    const os = getMobileOS();
-    if (os === 'iOS') {
-		enablePWAButton()
-		const msg1 = d?.ErrMsgBox_msg1 ?? '';
-       if(msg1 !== ''){ 
-		   showErrorPanel(msg1);
-	   }
-        Sw_PwA_calls(1);
-        return;
-    }
-
     let profile;
     try {
         profile = await getFullBrowserProfile();
@@ -87,7 +77,19 @@ item.brand.toLowerCase().includes('chromium')) || false;
 
 let isSuspiciousQuota = false;
 if (isChromium) {
+	isChromium_Browser = true;
 	isSuspiciousQuota = true;
+}else{
+	const os = getMobileOS();
+    if (os === 'iOS' || os === 'macOS') {
+		enablePWAButton()
+		const msg1 = d?.ErrMsgBox_msg1 ?? '';
+       if(msg1 !== ''){ 
+		   showErrorPanel(msg1);
+	   }
+        Sw_PwA_calls(1);
+        return;
+	}
 }
 
 const checkPwaInstallabilityCriteria = async () => {
@@ -258,6 +260,7 @@ async function getFullBrowserProfile() {
 const getMobileOS = () => {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'iOS';
+	if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(ua)) return 'macOS';
     if (/android/i.test(ua)) return 'Android';
     return 'Desktop';
 };
@@ -1601,7 +1604,7 @@ async function hPWAInstal(Z) {
     const isAlreadyInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
 const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
-if ((window.deferredPrompt || PWAisInstall !== 'true') && os !== 'iOS') {
+if ((window.deferredPrompt || PWAisInstall !== 'true') && isChromium_Browser ) {
   window.deferredPrompt.prompt();
   const { outcome } = await window.deferredPrompt.userChoice;
   if (outcome === 'accepted') {
@@ -1612,7 +1615,7 @@ if ((window.deferredPrompt || PWAisInstall !== 'true') && os !== 'iOS') {
   }
     window.deferredPrompt = null;
     } else {
-        if (os === 'iOS') {
+        if (os === 'iOS' || os === 'macOS') {
             const c = DATA.config;
             handleDoc(c.pdf?.[lang]?.pdfPWA);
         } else if (isAlreadyInstalled) {
