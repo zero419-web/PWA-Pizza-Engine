@@ -1377,8 +1377,6 @@ function closeLegal() {
 
 function switchTheme() {
     if (isTransitioning) return;
-    if (!DATA) return;
-
     isTransitioning = true;
     const body = document.body;
 
@@ -1396,8 +1394,14 @@ function switchTheme() {
             }
 
             IsTheme = theme;
-            
-            const d = DATA[lang];
+            if (!DATA) {
+                body.classList.remove('theme-switching');
+                body.classList.remove('lang-transition');
+                isTransitioning = false;
+                return;
+            }
+
+            const d = DATA[lang], c = DATA.config;
             const T = document.getElementById('themeIcon-span');
             if (T && d && d.nav && d.nav[11]) {
                 T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
@@ -1405,11 +1409,16 @@ function switchTheme() {
 
             localStorage.setItem('user_preferred_theme', theme);
             const activeBtn = document.activeElement;
-            if (activeBtn && typeof activeBtn.blur === 'function') {
-                activeBtn.blur();
+            if (activeBtn && activeBtn.parentElement) {
+                requestAnimationFrame(() => {
+                    try {
+                        const clone = activeBtn.cloneNode(true);
+                        activeBtn.parentNode.replaceChild(clone, activeBtn);
+                    } catch (e) {}
+                });
             }
         } catch (err) {
-            console.warn("⚠️ PWA: Errore durante lo switch del tema:", err);
+            console.warn("⚠️ PWA: Errore switch tema:", err);
         } finally {
             body.classList.remove('theme-switching');
 
@@ -1420,6 +1429,7 @@ function switchTheme() {
         }
     }, 450);
 }
+
 function switchLang() {
     if (isTransitioning) return;
     isTransitioning = true;
