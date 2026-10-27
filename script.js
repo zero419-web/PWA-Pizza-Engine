@@ -1,4 +1,4 @@
-// v4.4.8
+// v4.5.0
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1223,24 +1223,26 @@ async function checkSpecials(isManual = false, shouldShow = true) {
 }
 
 function handleDoc(fileName, btn) {
-
-	const urlsPaths = DATA?.config?.paths?.docs?.base;
-
-    const fullUrl = urlsPaths + ( DATA?.config?.paths?.docs?.[lang]?.dir ) + fileName;
-
-	const os = getMobileOS();
+    const urlsPaths = DATA?.config?.paths?.docs?.base;
+    let baseDir = DATA?.config?.paths?.docs?.[lang]?.dir || '';
+    let relativeOrAbsolutePath = urlsPaths + baseDir + fileName;
+    if (!relativeOrAbsolutePath.startsWith('http') && !relativeOrAbsolutePath.startsWith('//')) {
+        if (!relativeOrAbsolutePath.startsWith('/')) {
+            relativeOrAbsolutePath = '/' + relativeOrAbsolutePath;
+        }
+        relativeOrAbsolutePath = window.location.origin + relativeOrAbsolutePath;
+    }
+    const fullUrl = relativeOrAbsolutePath;
+    const os = getMobileOS();
     if (window.innerWidth < 768 || os === 'iOS') {
         window.open(fullUrl, '_blank');
         return;
     }
-
     const popup = document.getElementById('legal-popup');
     const iframe = document.getElementById('legal-iframe');
-
     if (popup && iframe) {
         iframe.src = fullUrl;
         popup.style.display = 'flex';
-
         PopupModal();
         toggleFloatingButtons(false);
     }
@@ -1382,9 +1384,8 @@ function switchTheme() {
         return;
     }
     isTransitioning = true;
-    isTransitioning = true;
     const body = document.body;
-    const activeBtn = document.activeElement;
+    const themeBtn = document.getElementById('BTheme');
     body.style.transition = "background-color 0.25s ease, color 0.25s ease";
     requestAnimationFrame(() => {
         IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');
@@ -1397,10 +1398,10 @@ function switchTheme() {
         const T = document.getElementById('themeIcon-span');
         if (T && d && d.nav && d.nav[11]) {
             T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
-        }
+        }    
         localStorage.setItem('user_preferred_theme', IsTheme);
-        if (activeBtn && typeof activeBtn.blur === 'function') {
-            activeBtn.blur();
+        if (themeBtn) {
+            themeBtn.blur();
         }
     });
     setTimeout(() => {
