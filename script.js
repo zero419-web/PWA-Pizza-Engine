@@ -1,4 +1,4 @@
-// v4.5.4
+// v4.5.5
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1225,14 +1225,7 @@ async function checkSpecials(isManual = false, shouldShow = true) {
 function handleDoc(fileName, btn) {
     const urlsPaths = DATA?.config?.paths?.docs?.base;
     let baseDir = DATA?.config?.paths?.docs?.[lang]?.dir || '';
-    let relativeOrAbsolutePath = urlsPaths + baseDir + fileName;
-    if (!relativeOrAbsolutePath.startsWith('http') && !relativeOrAbsolutePath.startsWith('//')) {
-        if (!relativeOrAbsolutePath.startsWith('/')) {
-            relativeOrAbsolutePath = '/' + relativeOrAbsolutePath;
-        }
-        relativeOrAbsolutePath = window.location.origin + relativeOrAbsolutePath;
-    }
-    const fullUrl = relativeOrAbsolutePath;
+    const fullUrl = urlsPaths + baseDir + fileName;
     const os = getMobileOS();
     if (window.innerWidth < 768 || os === 'iOS') {
         window.open(fullUrl, '_blank');
@@ -1384,7 +1377,6 @@ function switchTheme() {
         return;
     }
     isTransitioning = true;
-    isTransitioning = true;
     const body = document.body;
     body.style.transition = "background-color 0.25s ease, color 0.25s ease";
     requestAnimationFrame(() => {
@@ -1400,13 +1392,19 @@ function switchTheme() {
             T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
         }        
         localStorage.setItem('user_preferred_theme', IsTheme);
-        setTimeout(() => {
+        const os = getMobileOS();
+        if (os === 'iOS' || os === 'macOS_safari') {
+			render();
+			SetupdatePwaStatus('ok');
+			enablePWAButton();
+		}
+		setTimeout(() => {
             const themeBtn = document.getElementById('BTheme');
             if (themeBtn && themeBtn.parentNode) {
                 const clone = themeBtn.cloneNode(true);
                 themeBtn.parentNode.replaceChild(clone, themeBtn);
             }
-        }, 360);
+        }, 120);
     });
     setTimeout(() => {
         body.style.transition = ""; 
