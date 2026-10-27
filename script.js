@@ -1,4 +1,4 @@
-// v4.2
+// v4.2.1
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1640,12 +1640,12 @@ Z.classList.add('vcard-btn-premium_Disabled');
     }
 }
 async function enablePWAButton() {
-
+    const os = getMobileOS();
     const tryToUnlock = () => {
         const btn = document.querySelector('.vcard-btn-premium_Disabled');
         if (btn) {
             const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
-            if (((window.deferredPrompt || getMobileOS() === 'iOS') && PWAisInstall !== 'true')) {
+            if (((window.deferredPrompt || (os === 'iOS' || os === 'macOS_safari')) && PWAisInstall !== 'true')) {
                 btn.classList.remove('vcard-btn-premium_Disabled');
                 return true;
             }
