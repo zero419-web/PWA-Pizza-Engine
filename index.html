@@ -78,7 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
 img {
     max-width: 100%;
     height: auto;
-	-webkit-transform: translateZ(0);
+}
+img, [style*="background-image"] {
+    -webkit-transform: translateZ(0);
     transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
