@@ -84,9 +84,9 @@ if (isChromium) {
     if (os === 'iOS' || os === 'macOS_safari') {
 		enablePWAButton();
 		const msg1 = d?.ErrMsgBox_msg1 ?? '';
-       if(msg1 !== ''){ 
+        if(msg1 !== ''){ 
 		   showErrorPanel(msg1);
-	   }
+	    }
         Sw_PwA_calls(1);
         return;
 	}
@@ -2151,17 +2151,15 @@ const ws = navigator.serviceWorker.controller;
         return;
     }
     if (!ws) {
-
 const hasCache = await isCacheEmpty(false, 1, 1024, true);
-
     const isPwaReady = await initPwaLogic();
         if(!isPwaReady && hasCache){
-alert("⚠️  Cache Not Found  ⚠️\n\n🌐  Web Site:  Reload.");
-            setTimeout(() => {
-
+			const msg1 = "⚠️  Cache Not Found  ⚠️\n\n🌐  Web Site:  Reload.";
+            //alert(msg1);
+		    showErrorPanel(msg1);
+			setTimeout(() => {
 				window.location.href = window.location.pathname;
-
-            }, 500);
+            }, 6660);
         }
     }
 }, 1000);
