@@ -1,4 +1,4 @@
-// v4.2.1
+// v4.3.1
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1226,6 +1226,11 @@ function handleDoc(fileName, btn) {
 
     const fullUrl = urlsPaths + ( DATA?.config?.paths?.docs?.[lang]?.dir ) + fileName;
 
+	const os = getMobileOS();
+    if (os === 'iOS' || os === 'macOS_safari') {
+        window.open(fullUrl, '_blank');
+        return;
+	}
     if (window.innerWidth < 768) {
         window.open(fullUrl, '_blank');
         return;
