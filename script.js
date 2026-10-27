@@ -1376,7 +1376,6 @@ function closeLegal() {
 }
 
 function switchTheme() {
-function switchTheme() {
     if (isTransitioning) return;
     isTransitioning = true;
     const body = document.body;
