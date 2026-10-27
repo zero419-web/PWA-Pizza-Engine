@@ -1062,83 +1062,85 @@ async function _checkRealOnlineStatus() {
         return false;
     }
 }
+
 let initGallery_OnLine = null;
 async function initGallery() {
-	if( initGallery_OnLine === null){
-		initGallery_OnLine = await _checkRealOnlineStatus();
+    if (initGallery_OnLine === null) {
+        initGallery_OnLine = await _checkRealOnlineStatus();
     }
-	const root = document.getElementById('gal-root');
+    const root = document.getElementById('gal-root');
     if (!root) return;
     root.innerHTML = "";
     const realGalleryCount = (DATA && DATA.gallery) ? DATA.gallery.length : 0;
 
-const MAX_ATTEMPTS = 20;
+    const MAX_ATTEMPTS = 20;
 
     const loadSlot = async (id) => {
+        try {
+            if (!initGallery_OnLine && id > realGalleryCount) {
+                return null;
+            }
+            const wrap = document.createElement('div');
+            wrap.className = 'gal-card';
+            const img = document.createElement('img');
+            const found = await loadImageAsync(img, DATA?.config?.paths?.gallery, id);
+            if (found) {
+                if (!initGallery_OnLine) {
+                    try {
+                        const response = await fetch(img.src, { method: 'HEAD' });
+                        const isPlaceholder = response.headers.get('X-PWA-Source') === 'Bunker-Placeholder';
+                        if (isPlaceholder) {
+                            if (id > realGalleryCount) return null;
 
-        if (!initGallery_OnLine && id > realGalleryCount) {
+                            wrap.classList.add('img-corrupted');
+                            wrap.style.border = "2px dashed red";
+                            console.warn(`🚨 PWA Gallery: Risorsa ${id} mancante in cache!`);
+                        }
+                    } catch (e) {
+                        if (id > realGalleryCount) return null;
+                    }
+                }
+                const itemData = DATA?.gallery?.[id - 1]?.[lang] || "";
+                wrap.innerHTML = `
+                    <div class="gal-img-wrapper">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                             class="gal-img"
+                             loading="lazy"
+                             alt="${itemData}">
+                    </div>
+                    <div class="zoom-icon-badge" title="Zoom">${ICONS.zoom}</div>
+                `;
+                const imgWrapper = wrap.querySelector('.gal-img-wrapper');
+                const dummyImg = imgWrapper.querySelector('.gal-img');
+
+                img.className = 'gal-img';
+                img.loading = 'lazy';
+                img.alt = itemData;
+
+                if (imgWrapper && dummyImg) {
+                    imgWrapper.replaceChild(img, dummyImg);
+                }
+                wrap.onclick = () => openZoom(img.src, itemData);
+                return wrap;
+            }
+            return null;
+        } catch (err) {
+            console.warn(`⚠️ PWA Gallery: Slot ${id} saltato per sicurezza:`, err);
             return null;
         }
-        const wrap = document.createElement('div');
-        wrap.className = 'gal-card';
-        const img = document.createElement('img');
-
-        const found = await loadImageAsync(img, DATA?.config?.paths?.gallery, id);
-        if (found) {
-
-            if (!initGallery_OnLine) {
-                try {
-                    const response = await fetch(img.src, { method: 'HEAD' });
-                    const isPlaceholder = response.headers.get('X-PWA-Source') === 'Bunker-Placeholder';
-                    if (isPlaceholder) {
-                        if (id > realGalleryCount) return null;
-
-                        wrap.classList.add('img-corrupted');
-                        wrap.style.border = "2px dashed red";
-                        console.warn(`🚨 PWA Gallery: Risorsa ${id} mancante in cache.`);
-                    }
-                } catch (e) {
-                    if (id > realGalleryCount) return null;
+    };
+    for (let i = 1; i <= MAX_ATTEMPTS; i++) {
+        if (!initGallery_OnLine && i > realGalleryCount) break;
+        try {
+            const slotDOM = await loadSlot(i);
+            if (slotDOM) {
+                root.appendChild(slotDOM);
+            } else {
+                if (i <= realGalleryCount) {
+                    console.warn(`⚠️ PWA Gallery: Risorsa ${i} non disponibile!`);
                 }
             }
-
-            const itemData = DATA?.gallery?.[id - 1]?.[lang] || "";
-
-            wrap.innerHTML = `
-                <div class="gal-img-wrapper">
-                    <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                         class="gal-img"
-                         loading="lazy"
-                         alt="${itemData}">
-                </div>
-                <div class="zoom-icon-badge" title="Zoom">${ICONS.zoom}</div>
-            `;
-            const imgWrapper = wrap.querySelector('.gal-img-wrapper');
-            const dummyImg = imgWrapper.querySelector('.gal-img');
-
-            img.className = 'gal-img';
-            img.loading = 'lazy';
-            img.alt = itemData;
-
-            imgWrapper.replaceChild(img, dummyImg);
-
-            wrap.onclick = () => openZoom(img.src, itemData);
-            return wrap;
-        }
-        return null;
-    };
-
-    for (let i = 1; i <= MAX_ATTEMPTS; i++) {
-
-        if (!initGallery_OnLine && i > realGalleryCount) break;
-        const slotDOM = await loadSlot(i);
-        if (slotDOM) {
-            root.appendChild(slotDOM);
-        } else {
-            if (i <= realGalleryCount) {
-                console.warn(`⚠️ PWA Gallery: Risorsa critica ${i} non disponibile.`);
-            }
-        }
+        } catch (loopErr) {}
     }
 }
 
