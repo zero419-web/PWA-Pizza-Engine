@@ -1,4 +1,4 @@
-// v4.4.7
+// v4.4.8
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1382,6 +1382,7 @@ function switchTheme() {
         return;
     }
     isTransitioning = true;
+    isTransitioning = true;
     const body = document.body;
     const activeBtn = document.activeElement;
     body.style.transition = "background-color 0.25s ease, color 0.25s ease";
@@ -1398,9 +1399,8 @@ function switchTheme() {
             T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
         }
         localStorage.setItem('user_preferred_theme', IsTheme);
-        if (activeBtn && activeBtn.parentElement) {
-            const clone = activeBtn.cloneNode(true);
-            activeBtn.parentNode.replaceChild(clone, activeBtn);
+        if (activeBtn && typeof activeBtn.blur === 'function') {
+            activeBtn.blur();
         }
     });
     setTimeout(() => {
