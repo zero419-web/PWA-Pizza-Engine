@@ -1377,9 +1377,14 @@ function closeLegal() {
 
 function switchTheme() {
     if (isTransitioning) return;
+    if (!DATA) {
+        console.warn("⚠️ PWA: Switch tema interrotto: [DATA] non disponibile.");
+        return;
+    }
+
     isTransitioning = true;
     const body = document.body;
-
+	
     body.classList.add('lang-transition');
     body.classList.add('theme-switching');
 	
@@ -1400,16 +1405,18 @@ function switchTheme() {
             }
 
             IsTheme = theme;
-            if (!DATA) return;
-
+            
             const d = DATA[lang], c = DATA.config;
             const T = document.getElementById('themeIcon-span');
             if (T && d && d.nav && d.nav[11]) {
                 T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
             }
 
-            localStorage.setItem('user_preferred_theme', theme);
-			
+            try {
+                localStorage.setItem('user_preferred_theme', theme);
+            } catch (storageErr) {
+                console.warn("⚠️ PWA: Impossibile scrivere su localStorage:", storageErr);
+            }
             const activeBtn = document.activeElement;
             if (activeBtn && activeBtn.parentElement) {
                 requestAnimationFrame(() => {
