@@ -1,4 +1,4 @@
-// v4.3.2
+// v4.3.4
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1433,6 +1433,7 @@ localStorage.setItem('user_preferred_lang', lang);
 
         render();
         SetupdatePwaStatus('ok');
+		enablePWAButton();
 
         const targetAnchor = sessionStorage.getItem('active_section');
 
