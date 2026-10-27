@@ -1,4 +1,4 @@
-// v4.3.6
+// v4.3.7
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1376,13 +1376,20 @@ function closeLegal() {
 }
 
 function switchTheme() {
+function switchTheme() {
     if (isTransitioning) return;
     isTransitioning = true;
     const body = document.body;
 
     body.classList.add('lang-transition');
     body.classList.add('theme-switching');
-    
+	
+    const safetyTimeout = setTimeout(() => {
+        body.classList.remove('theme-switching');
+        body.classList.remove('lang-transition');
+        isTransitioning = false;
+    }, 666);
+
     setTimeout(() => {
         try {
             theme = (IsTheme === 'dark' ? 'light' : 'dark');
@@ -1394,12 +1401,7 @@ function switchTheme() {
             }
 
             IsTheme = theme;
-            if (!DATA) {
-                body.classList.remove('theme-switching');
-                body.classList.remove('lang-transition');
-                isTransitioning = false;
-                return;
-            }
+            if (!DATA) return;
 
             const d = DATA[lang], c = DATA.config;
             const T = document.getElementById('themeIcon-span');
@@ -1408,6 +1410,7 @@ function switchTheme() {
             }
 
             localStorage.setItem('user_preferred_theme', theme);
+			
             const activeBtn = document.activeElement;
             if (activeBtn && activeBtn.parentElement) {
                 requestAnimationFrame(() => {
@@ -1418,10 +1421,10 @@ function switchTheme() {
                 });
             }
         } catch (err) {
-            console.warn("⚠️ PWA: Errore switch tema:", err);
+            console.warn("⚠️ PWA: Errore durante lo switch del tema:", err);
         } finally {
+            clearTimeout(safetyTimeout);
             body.classList.remove('theme-switching');
-
             setTimeout(() => {
                 body.classList.remove('lang-transition');
                 isTransitioning = false;
