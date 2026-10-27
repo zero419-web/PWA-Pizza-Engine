@@ -1,4 +1,4 @@
-// v4.3.1
+// v4.3.2
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -82,7 +82,7 @@ if (isChromium) {
 }else{
 	const os = getMobileOS();
     if (os === 'iOS' || os === 'macOS_safari') {
-		enablePWAButton()
+		enablePWAButton();
 		const msg1 = d?.ErrMsgBox_msg1 ?? '';
        if(msg1 !== ''){ 
 		   showErrorPanel(msg1);
@@ -1227,11 +1227,7 @@ function handleDoc(fileName, btn) {
     const fullUrl = urlsPaths + ( DATA?.config?.paths?.docs?.[lang]?.dir ) + fileName;
 
 	const os = getMobileOS();
-    if (os === 'iOS' || os === 'macOS_safari') {
-        window.open(fullUrl, '_blank');
-        return;
-	}
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 768 || os === 'iOS') {
         window.open(fullUrl, '_blank');
         return;
     }
@@ -1456,7 +1452,13 @@ localStorage.setItem('user_preferred_lang', lang);
         isTransitioning = false;
     }, 50);
 
-}, 450);}
+}, 450);
+
+  const os = getMobileOS();
+  if (os === 'iOS' || os === 'macOS_safari') {
+	 enablePWAButton();
+  }
+}
 
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e => {
     if (!localStorage.getItem('user_preferred_theme')) {
