@@ -1453,11 +1453,12 @@ localStorage.setItem('user_preferred_lang', lang);
     }, 50);
 
 }, 450);
-
+/*
   const os = getMobileOS();
   if (os === 'iOS' || os === 'macOS_safari') {
 	 enablePWAButton();
   }
+*/
 }
 
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e => {
@@ -1627,18 +1628,19 @@ if ((window.deferredPrompt || PWAisInstall !== 'true') && isChromium_Browser ) {
   } else {
     console.log('Utente ha annullato...');
   }
-    window.deferredPrompt = null;
+    //window.deferredPrompt = null;
     } else {
         if (os === 'iOS' || os === 'macOS_safari') {
             const c = DATA.config;
             handleDoc(c.pdf?.[lang]?.pdfPWA);
         } else if (isAlreadyInstalled) {
-
+window.deferredPrompt = null;
 alert("⚠️  APP Exist & Is Runing...  ⚠️");
 if(Z){
 Z.classList.add('vcard-btn-premium_Disabled');
 }
         } else {
+window.deferredPrompt = null;
 alert("🌐  Browser not Supported !  🛡\n\n  ● OR 🕵  Incognite Mode Actived  ⚠️️");
 if(Z){
 Z.classList.add('vcard-btn-premium_Disabled');
