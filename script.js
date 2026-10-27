@@ -1,4 +1,4 @@
-// v4.4.6
+// v4.4.7
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1384,7 +1384,7 @@ function switchTheme() {
     isTransitioning = true;
     const body = document.body;
     const activeBtn = document.activeElement;
-    body.style.transition = "background-color 0.4s ease, color 0.4s ease";
+    body.style.transition = "background-color 0.25s ease, color 0.25s ease";
     requestAnimationFrame(() => {
         IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');
         if (IsTheme === 'light') {
@@ -1398,18 +1398,15 @@ function switchTheme() {
             T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
         }
         localStorage.setItem('user_preferred_theme', IsTheme);
-        if (activeBtn && typeof activeBtn.blur === 'function') {
-            activeBtn.blur();
-            activeBtn.style.transform = "scale(1)";
-            setTimeout(() => {
-                activeBtn.style.transform = "";
-            }, 200);
+        if (activeBtn && activeBtn.parentElement) {
+            const clone = activeBtn.cloneNode(true);
+            activeBtn.parentNode.replaceChild(clone, activeBtn);
         }
     });
     setTimeout(() => {
         body.style.transition = ""; 
         isTransitioning = false;
-    }, 450);
+    }, 280);
 }
 
 function switchLang() {
