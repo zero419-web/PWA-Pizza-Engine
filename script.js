@@ -1,4 +1,4 @@
-// v4.3.8
+// v4.4.0
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -338,8 +338,8 @@ async function loadImageAsync(imgElement, folder, ID) {
         const cleanExt = ext.replace(/^\./, "");
         const url = `${folder}${ID}.${cleanExt}`;
         try {
-            const response = await fetch(url, { method: 'GET' });
-            if (response.ok) {
+            const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+            if (response && response.ok) {
                 const pwaSource = response.headers.get('X-PWA-Source');
                 if (pwaSource === 'Bunker-Placeholder') {
                     continue;
@@ -1465,12 +1465,6 @@ localStorage.setItem('user_preferred_lang', lang);
     }, 50);
 
 }, 450);
-/*
-  const os = getMobileOS();
-  if (os === 'iOS' || os === 'macOS_safari') {
-	 enablePWAButton();
-  }
-*/
 }
 
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e => {
