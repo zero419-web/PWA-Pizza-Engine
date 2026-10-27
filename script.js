@@ -81,7 +81,7 @@ if (isChromium) {
 	isSuspiciousQuota = true;
 }else{
 	const os = getMobileOS();
-    if (os === 'iOS' || os === 'macOS') {
+    if (os === 'iOS' || os === 'macOS_safari') {
 		enablePWAButton()
 		const msg1 = d?.ErrMsgBox_msg1 ?? '';
        if(msg1 !== ''){ 
@@ -260,7 +260,14 @@ async function getFullBrowserProfile() {
 const getMobileOS = () => {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'iOS';
-	if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(ua)) return 'macOS';
+	const isMacDesktop = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua);
+    if (isMacDesktop) {
+        const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
+        if (isSafari) {
+            return 'macOS_safari';
+        }
+        return 'macOS';
+	}
     if (/android/i.test(ua)) return 'Android';
     return 'Desktop';
 };
@@ -1615,7 +1622,7 @@ if ((window.deferredPrompt || PWAisInstall !== 'true') && isChromium_Browser ) {
   }
     window.deferredPrompt = null;
     } else {
-        if (os === 'iOS' || os === 'macOS') {
+        if (os === 'iOS' || os === 'macOS_safari') {
             const c = DATA.config;
             handleDoc(c.pdf?.[lang]?.pdfPWA);
         } else if (isAlreadyInstalled) {
