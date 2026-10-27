@@ -1,4 +1,4 @@
-// v4.4.2
+// v4.4.3
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1412,8 +1412,6 @@ function switchTheme() {
     }, 50);
     }, 450);
 }
-
-Ma a quella nuova anche con questi time out non e fluido! La transazione!
 
 function switchLang() {
     if (isTransitioning) return;
