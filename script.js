@@ -1,4 +1,4 @@
-// v4.3.7
+// v4.3.8
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1071,8 +1071,9 @@ async function initGallery() {
     const root = document.getElementById('gal-root');
     if (!root) return;
     root.innerHTML = "";
+    
     const realGalleryCount = (DATA && DATA.gallery) ? DATA.gallery.length : 0;
-
+    
     const MAX_ATTEMPTS = 20;
 
     const loadSlot = async (id) => {
@@ -1080,9 +1081,11 @@ async function initGallery() {
             if (!initGallery_OnLine && id > realGalleryCount) {
                 return null;
             }
+            
             const wrap = document.createElement('div');
             wrap.className = 'gal-card';
             const img = document.createElement('img');
+
             const found = await loadImageAsync(img, DATA?.config?.paths?.gallery, id);
             if (found) {
                 if (!initGallery_OnLine) {
@@ -1091,16 +1094,16 @@ async function initGallery() {
                         const isPlaceholder = response.headers.get('X-PWA-Source') === 'Bunker-Placeholder';
                         if (isPlaceholder) {
                             if (id > realGalleryCount) return null;
-
                             wrap.classList.add('img-corrupted');
                             wrap.style.border = "2px dashed red";
-                            console.warn(`🚨 PWA Gallery: Risorsa ${id} mancante in cache!`);
                         }
                     } catch (e) {
                         if (id > realGalleryCount) return null;
                     }
                 }
-                const itemData = DATA?.gallery?.[id - 1]?.[lang] || "";
+
+                const itemData = (DATA?.gallery?.[id - 1] && DATA.gallery[id - 1][lang]) ? DATA.gallery[id - 1][lang] : "";
+
                 wrap.innerHTML = `
                     <div class="gal-img-wrapper">
                         <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
@@ -1120,25 +1123,22 @@ async function initGallery() {
                 if (imgWrapper && dummyImg) {
                     imgWrapper.replaceChild(img, dummyImg);
                 }
+
                 wrap.onclick = () => openZoom(img.src, itemData);
                 return wrap;
             }
             return null;
         } catch (err) {
-            console.warn(`⚠️ PWA Gallery: Slot ${id} saltato per sicurezza:`, err);
             return null;
         }
     };
+
     for (let i = 1; i <= MAX_ATTEMPTS; i++) {
         if (!initGallery_OnLine && i > realGalleryCount) break;
         try {
             const slotDOM = await loadSlot(i);
             if (slotDOM) {
                 root.appendChild(slotDOM);
-            } else {
-                if (i <= realGalleryCount) {
-                    console.warn(`⚠️ PWA Gallery: Risorsa ${i} non disponibile!`);
-                }
             }
         } catch (loopErr) {}
     }
@@ -1383,59 +1383,44 @@ function switchTheme() {
     }
 
     isTransitioning = true;
+    const btn = document.activeElement;
     const body = document.body;
-	
+
     body.classList.add('lang-transition');
     body.classList.add('theme-switching');
-	
-    const safetyTimeout = setTimeout(() => {
-        body.classList.remove('theme-switching');
-        body.classList.remove('lang-transition');
-        isTransitioning = false;
-    }, 666);
-
+    
     setTimeout(() => {
-        try {
-            theme = (IsTheme === 'dark' ? 'light' : 'dark');
+        theme = (IsTheme === 'dark' ? 'light' : 'dark');
 
-            if (theme === 'light') {
-                body.classList.add('light-theme');
-            } else {
-                body.classList.remove('light-theme');
-            }
-
-            IsTheme = theme;
-            
-            const d = DATA[lang], c = DATA.config;
-            const T = document.getElementById('themeIcon-span');
-            if (T && d && d.nav && d.nav[11]) {
-                T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
-            }
-
-            try {
-                localStorage.setItem('user_preferred_theme', theme);
-            } catch (storageErr) {
-                console.warn("⚠️ PWA: Impossibile scrivere su localStorage:", storageErr);
-            }
-            const activeBtn = document.activeElement;
-            if (activeBtn && activeBtn.parentElement) {
-                requestAnimationFrame(() => {
-                    try {
-                        const clone = activeBtn.cloneNode(true);
-                        activeBtn.parentNode.replaceChild(clone, activeBtn);
-                    } catch (e) {}
-                });
-            }
-        } catch (err) {
-            console.warn("⚠️ PWA: Errore durante lo switch del tema:", err);
-        } finally {
-            clearTimeout(safetyTimeout);
-            body.classList.remove('theme-switching');
-            setTimeout(() => {
-                body.classList.remove('lang-transition');
-                isTransitioning = false;
-            }, 50);
+        if (theme === 'light') {
+            body.classList.add('light-theme');
+        } else {
+            body.classList.remove('light-theme');
         }
+
+        IsTheme = theme;
+        
+        const d = DATA[lang], c = DATA.config;
+        const T = document.getElementById('themeIcon-span');
+        if (T && d && d.nav && d.nav[11]) {
+            T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
+        }
+
+        localStorage.setItem('user_preferred_theme', theme);
+
+        const activeBtn = document.activeElement;
+        if (activeBtn && activeBtn.parentElement) {
+            const clone = activeBtn.cloneNode(true);
+            activeBtn.parentNode.replaceChild(clone, activeBtn);
+        }
+        
+        body.classList.remove('theme-switching');
+
+        setTimeout(() => {
+            body.classList.remove('lang-transition');
+            isTransitioning = false;
+        }, 50);
+        
     }, 450);
 }
 
