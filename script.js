@@ -1375,44 +1375,47 @@ function closeLegal() {
 
 function switchTheme() {
     if (isTransitioning) return;
+    if (!DATA) return; 
+
     isTransitioning = true;
     const btn = document.activeElement;
     const body = document.body;
 
     body.classList.add('lang-transition');
     body.classList.add('theme-switching');
+    
     setTimeout(() => {
-
         theme = (IsTheme === 'dark' ? 'light' : 'dark');
-
         if (theme === 'light') {
             body.classList.add('light-theme');
         } else {
             body.classList.remove('light-theme');
         }
+        IsTheme = theme;
+        
+        const d = DATA[lang], c = DATA.config;
+        const T = document.getElementById('themeIcon-span');
+        if (T && d && d.nav && d.nav[11]) {
+            T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
+        }
 
-    IsTheme = theme;
-    if(!DATA) return;
-    const d = DATA[lang], c = DATA.config;
-const T = document.getElementById('themeIcon-span');
-T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
+        localStorage.setItem('user_preferred_theme', theme);
 
-localStorage.setItem('user_preferred_theme', theme);
+        const activeBtn = document.activeElement;
+        if (activeBtn && activeBtn.parentElement) {
+            const clone = activeBtn.cloneNode(true);
+            activeBtn.parentNode.replaceChild(clone, activeBtn);
+        }
+        
+        body.classList.remove('theme-switching');
 
-    const activeBtn = document.activeElement;
-    if (activeBtn && activeBtn.parentElement) {
-        const clone = activeBtn.cloneNode(true);
-        activeBtn.parentNode.replaceChild(clone, activeBtn);
-    }
-    body.classList.remove('theme-switching');
-
-    setTimeout(() => {
-        body.classList.remove('lang-transition');
-        isTransitioning = false;
-    }, 50);
+        setTimeout(() => {
+            body.classList.remove('lang-transition');
+            isTransitioning = false;
+        }, 50);
+        
     }, 450);
 }
-
 function switchLang() {
     if (isTransitioning) return;
     isTransitioning = true;
