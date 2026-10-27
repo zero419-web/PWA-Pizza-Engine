@@ -2224,7 +2224,7 @@ console.log("Watchdog PwA: SW Death...");
 }}
 
 let Btn_sSpan_curentColor = '';
-Const ICONS = {
+const ICONS = {
     brand: `<svg class="svg-ui" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h2v11H5V4.5C5 3.12 5.9 2 7 2zM5 15h4v7H5v-7z"/><path d="M14 2h1v7h-1V2zm3 0h1v7h-1V2zm3 0h1v7h-1V2zm-7.5 9c0 1.1.9 2 2 2h5c1.1 0 2-.9 2-2V9h-9v2zm1.5 4h6v7h-6v-7z"/></svg>`,
     specials: `<svg class="svg-ui" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`,
     storia: `<svg class="svg-ui" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h12v11.64c-.33-.4-.79-.64-1.3-.64H7.3c-.51 0-.97.24-1.3.64V4zm12 16H6v-1.36c.33.4.79.64 1.3.64h9.4c.51 0 .97-.24 1.3-.64V20z"/><rect x="8" y="7" width="8" height="1.5" rx="0.5"/><rect x="8" y="10" width="8" height="1.5" rx="0.5"/><rect x="8" y="13" width="5" height="1.5" rx="0.5"/></svg>`,
