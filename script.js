@@ -2305,3 +2305,28 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 
 });
+
+// SAFARI DYNAMIC - beta v0.1
+const safariImageProtector = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) {
+                const targets = node.tagName === 'IMG' ? [node] : node.querySelectorAll('img, [style*="background-image"]'); 
+                targets.forEach(el => {
+                    // Applica accelerazione GPU per Safari
+                    el.style.webkitTransform = 'translateZ(0)';
+                    el.style.transform = 'translateZ(0)';
+                    el.style.webkitBackfaceVisibility = 'hidden';
+                    el.style.backfaceVisibility = 'hidden';
+                });
+            }
+        });
+    });
+});
+// Avvia appena il DOM è pronto !
+document.addEventListener('DOMContentLoaded', () => {
+    safariImageProtector.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});
