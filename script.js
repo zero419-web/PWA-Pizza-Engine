@@ -1,4 +1,4 @@
-// v4.5.0
+// v4.5.2
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1385,10 +1385,10 @@ function switchTheme() {
     }
     isTransitioning = true;
     const body = document.body;
-    const activeElement = document.activeElement;
+    const themeBtn = document.getElementById('BTheme');
     body.style.transition = "background-color 0.25s ease, color 0.25s ease";
     requestAnimationFrame(() => {
-        IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');        
+        IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');       
         if (IsTheme === 'light') {
             body.classList.add('light-theme');
         } else {
@@ -1398,14 +1398,13 @@ function switchTheme() {
         const T = document.getElementById('themeIcon-span');
         if (T && d && d.nav && d.nav[11]) {
             T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
-        }
+        }     
         localStorage.setItem('user_preferred_theme', IsTheme);
-        if (activeElement && typeof activeElement.blur === 'function') {
-            setTimeout(() => {
-				activeElement.blur();
-			    body.setAttribute('tabindex', '-1');
-                body.focus();
-                body.removeAttribute('tabindex');
+        if (themeBtn) {
+			setTimeout(() => {
+				themeBtn.blur();
+                window.getSelection().removeAllRanges();
+                body.click();
 			}, 333);
         }
     });
