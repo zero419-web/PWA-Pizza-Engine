@@ -1,4 +1,4 @@
-// v4.4.4
+// v4.4.6
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1383,26 +1383,33 @@ function switchTheme() {
     }
     isTransitioning = true;
     const body = document.body;
-    body.classList.add('lang-transition', 'theme-switching');
-    IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');
-    if (IsTheme === 'light') {
-        body.classList.add('light-theme');
-    } else {
-        body.classList.remove('light-theme');
-    }
-    const d = DATA[lang];
-    const T = document.getElementById('themeIcon-span');
-    if (T && d && d.nav && d.nav[11]) {
-        T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
-    }
-    localStorage.setItem('user_preferred_theme', IsTheme);
+    const activeBtn = document.activeElement;
+    body.style.transition = "background-color 0.4s ease, color 0.4s ease";
+    requestAnimationFrame(() => {
+        IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');
+        if (IsTheme === 'light') {
+            body.classList.add('light-theme');
+        } else {
+            body.classList.remove('light-theme');
+        }
+        const d = DATA[lang];
+        const T = document.getElementById('themeIcon-span');
+        if (T && d && d.nav && d.nav[11]) {
+            T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
+        }
+        localStorage.setItem('user_preferred_theme', IsTheme);
+        if (activeBtn && typeof activeBtn.blur === 'function') {
+            activeBtn.blur();
+            activeBtn.style.transform = "scale(1)";
+            setTimeout(() => {
+                activeBtn.style.transform = "";
+            }, 200);
+        }
+    });
     setTimeout(() => {
-        body.classList.remove('theme-switching');
-        setTimeout(() => {
-            body.classList.remove('lang-transition');
-            isTransitioning = false;
-        }, 50);
-    }, 300);
+        body.style.transition = ""; 
+        isTransitioning = false;
+    }, 450);
 }
 
 function switchLang() {
