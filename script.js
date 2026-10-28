@@ -1,4 +1,4 @@
-// v4.5.5
+// v4.7.4
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -58,7 +58,7 @@ async function initPwaCheck(timeoutMs) {
 if (!('serviceWorker' in navigator)){
     return false;
 }
-	
+
     const d = DATA?.[lang];
     let profile;
     try {
@@ -84,10 +84,11 @@ if (isChromium) {
     if (os === 'iOS' || os === 'macOS_safari') {
 		enablePWAButton();
 		const msg1 = d?.ErrMsgBox_msg1 ?? '';
-        if(msg1 !== ''){ 
+        if(msg1 !== ''){
 		   showErrorPanel(msg1);
 	    }
-        Sw_PwA_calls(1);
+        //Sw_PwA_calls(1);
+		SetupdatePwaStatus('sw_not_work');
         return;
 	}
 }
@@ -105,7 +106,7 @@ const checkPwaInstallabilityCriteria = async () => {
     const manifestLink = document.querySelector('link[rel="manifest"]');
     if (!manifestLink) return false;
     try {
-        const response = await fetch(manifestLink.href);
+        const response = await fetch(manifestLink.href, { method: 'GET'});
         if (!response.ok) return false;
         const manifest = await response.json();
 
@@ -334,20 +335,28 @@ function fillPlaceholder(template, placeholder, value) {
 
 async function loadImageAsync(imgElement, folder, ID) {
     imgElement.src = window.APP_CONFIG.svg_loading;
-    for (const ext of FORMATS) {
+    const checks = FORMATS.map(async (ext) => {
         const cleanExt = ext.replace(/^\./, "");
         const url = `${folder}${ID}.${cleanExt}`;
         try {
-            const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+            const response = await fetch(url, {
+				method: 'HEAD',
+				cache: 'default',
+				headers: { 'Cache-Control': 'max-age=600' }
+			});
             if (response && response.ok) {
                 const pwaSource = response.headers.get('X-PWA-Source');
-                if (pwaSource === 'Bunker-Placeholder') {
-                    continue;
-                }
-                imgElement.src = url;
-                return true;
+                if (pwaSource === 'Bunker-Placeholder') return null;
+                return url;
             }
         } catch (err) {}
+        return null;
+    });
+    const results = await Promise.all(checks);
+    const validUrl = results.find(url => url !== null);
+    if (validUrl) {
+        imgElement.src = validUrl;
+        return true;
     }
     return false;
 }
@@ -392,7 +401,7 @@ async function init() {
     try {
 		if (!DATA) {
 			try {
-				const response = await fetch(File_Json_DB);
+				const response = await fetch(File_Json_DB, { method: 'GET'});
 				console.log("PWA - fetch: ", File_Json_DB);
 				if (!response.ok) {
 					throw new Error(`Error HTTP! state: ${response.status}`);
@@ -1053,11 +1062,12 @@ encodeURIComponent(p[3] || "") +  encodeURIComponent(qty) + (p[4] ? encodeURICom
 
 async function _checkRealOnlineStatus() {
     try {
-        const response = await fetch(`${File_Json_DB}?t=${Date.now()}`, {
+        const response = await fetch(File_Json_DB, {
             method: 'HEAD',
-            cache: 'no-store'
+            cache: 'default',
+            headers: { 'Cache-Control': 'max-age=30' }
         });
-		return response.ok;
+        return response.ok;
     } catch (e) {
         return false;
     }
@@ -1071,9 +1081,9 @@ async function initGallery() {
     const root = document.getElementById('gal-root');
     if (!root) return;
     root.innerHTML = "";
-    
+
     const realGalleryCount = (DATA && DATA.gallery) ? DATA.gallery.length : 0;
-    
+
     const MAX_ATTEMPTS = 20;
 
     const loadSlot = async (id) => {
@@ -1081,7 +1091,7 @@ async function initGallery() {
             if (!initGallery_OnLine && id > realGalleryCount) {
                 return null;
             }
-            
+
             const wrap = document.createElement('div');
             wrap.className = 'gal-card';
             const img = document.createElement('img');
@@ -1090,7 +1100,11 @@ async function initGallery() {
             if (found) {
                 if (!initGallery_OnLine) {
                     try {
-                        const response = await fetch(img.src, { method: 'HEAD' });
+                        const response = await fetch(img.src, {
+							method: 'HEAD',
+							cache: 'default',
+							headers: { 'Cache-Control': 'max-age=600' }
+						});
                         const isPlaceholder = response.headers.get('X-PWA-Source') === 'Bunker-Placeholder';
                         if (isPlaceholder) {
                             if (id > realGalleryCount) return null;
@@ -1246,13 +1260,15 @@ function openZoom(src, description = "") {
     const iframe = document.getElementById('legal-iframe');
     const loaderGif = window.APP_CONFIG.svg_loading;
     let zoomImg = document.getElementById('modal-zoom-img');
+
     if (!zoomImg) {
         zoomImg = document.createElement('img');
         zoomImg.id = 'modal-zoom-img';
-        zoomImg.loading = "lazy";
+        zoomImg.loading = "eager";
         zoomImg.style.cssText = "max-width:90%;height:75vh;max-height:80vh;object-fit:contain;display:none;margin:auto;box-shadow: 0 0 30px var(--Sshadow);background-color: inherit; transition: opacity 0.3s ease-in-out;";
         iframe.parentNode.insertBefore(zoomImg, iframe);
     }
+
     let zoomDesc = document.getElementById('modal-zoom-desc');
     if (!zoomDesc) {
         zoomDesc = document.createElement('p');
@@ -1260,70 +1276,58 @@ function openZoom(src, description = "") {
         zoomDesc.style.cssText = "color:var(--oro); font-family:'Cinzel'; text-align:center; margin-top:15px; text-transform:uppercase; letter-spacing:1px; font-weight:bold;";
         zoomImg.parentNode.insertBefore(zoomDesc, zoomImg.nextSibling);
     }
+
     if (iframe) iframe.style.display = 'none';
+
     const lastDot = src.lastIndexOf('.');
     let basePath = src;
     if (lastDot !== -1 && (src.length - lastDot) <= 6) {
         basePath = src.substring(0, lastDot);
     }
+
     const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
     const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
-    zoomImg.dataset.basePath = basePath;
-    zoomImg.dataset.priorityList = JSON.stringify(prioritizedExts);
-    zoomImg.dataset.attempt = "0";
-
-    zoomImg.onerror = function() {
-        let attempt = parseInt(this.dataset.attempt || "0");
-        const priorityList = JSON.parse(this.dataset.priorityList || "[]");
-        attempt++;
-        this.dataset.attempt = attempt;
-        if (attempt < priorityList.length) {
-            const nextExt = priorityList[attempt];
-            const nextSrc = `${this.dataset.basePath}${nextExt}`;
-            if (nextSrc && !nextSrc.includes('undefined')) {
-                console.warn(`Fallback Zoom: Tentativo ${attempt} -> ${nextSrc}`);
-                loadInBuffer(nextSrc);
-            }
-        } else {
-            this.onerror = null;
-            this.style.opacity = "1";
-            console.error("PWA Zoom: Nessun formato disponibile.");
-            this.src = window.APP_CONFIG.svg_logo;
-        }
-    };
-
-    const loadInBuffer = async (targetSrc) => {
-        try {
-            const response = await fetch(targetSrc, { method: 'GET' });
-            if (response.ok) {
-                const pwaSource = response.headers.get('X-PWA-Source');
-                if (pwaSource === 'Bunker-Placeholder') {
-                    zoomImg.onerror();
-                    return;
-                }
-                zoomImg.src = targetSrc;
-                zoomImg.style.opacity = "1";
-            } else {
-                zoomImg.onerror();
-            }
-        } catch (err) {
-            zoomImg.onerror();
-        }
-    };
 
     zoomImg.style.display = 'block';
     zoomImg.style.opacity = "1";
     zoomImg.src = loaderGif;
-
-    loadInBuffer(basePath + prioritizedExts[0]);
     zoomImg.alt = description;
     zoomDesc.innerText = description;
     zoomDesc.style.display = description ? 'block' : 'none';
+
     if (popup) {
         popup.style.display = 'flex';
         if (typeof PopupModal === "function") PopupModal();
         if (typeof toggleFloatingButtons === "function") toggleFloatingButtons(false);
     }
+
+    const tryNextFormat = async (index) => {
+        if (index >= prioritizedExts.length) {
+            zoomImg.src = window.APP_CONFIG.svg_logo;
+            return;
+        }
+
+        const targetSrc = `${basePath}${prioritizedExts[index]}`;
+
+        try {
+            const response = await fetch(targetSrc, {
+                method: 'HEAD',
+                cache: 'default',
+                headers: { 'Cache-Control': 'max-age=600' }
+            });
+
+            if (response && response.ok) {
+                const pwaSource = response.headers.get('X-PWA-Source');
+                if (pwaSource === 'Bunker-Placeholder') {
+                    return tryNextFormat(index + 1);
+                }
+                zoomImg.src = targetSrc;
+                return;
+            }
+        } catch (err) {}
+        return tryNextFormat(index + 1);
+    };
+    tryNextFormat(0);
 }
 
 function closeLegal() {
@@ -1380,7 +1384,7 @@ function switchTheme() {
     const body = document.body;
     body.style.transition = "background-color 0.25s ease, color 0.25s ease";
     requestAnimationFrame(() => {
-        IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');        
+        IsTheme = (IsTheme === 'dark' ? 'light' : 'dark');
         if (IsTheme === 'light') {
             body.classList.add('light-theme');
         } else {
@@ -1390,7 +1394,7 @@ function switchTheme() {
         const T = document.getElementById('themeIcon-span');
         if (T && d && d.nav && d.nav[11]) {
             T.innerHTML = fillPlaceholder(d.nav[11], '{istheme}', (IsTheme === 'dark' ? 'LIGHT' : 'DARK'));
-        }        
+        }
         localStorage.setItem('user_preferred_theme', IsTheme);
         const os = getMobileOS();
         if (os === 'iOS' || os === 'macOS_safari') {
@@ -1407,7 +1411,7 @@ function switchTheme() {
         }, 120);
     });
     setTimeout(() => {
-        body.style.transition = ""; 
+        body.style.transition = "";
         isTransitioning = false;
     }, 280);
 }
@@ -1628,17 +1632,21 @@ if ((window.deferredPrompt || PWAisInstall !== 'true') && isChromium_Browser ) {
             const c = DATA.config;
             handleDoc(c.pdf?.[lang]?.pdfPWA);
         } else if (isAlreadyInstalled) {
-window.deferredPrompt = null;
-alert("⚠️  APP Exist & Is Runing...  ⚠️");
-if(Z){
-Z.classList.add('vcard-btn-premium_Disabled');
-}
+			window.deferredPrompt = null;
+			//alert("⚠️  APP Exist & Is Runing...  ⚠️");
+			const msg1 = "⚠️  APP Exist & Is Runing...  ⚠️";
+		    showErrorPanel(msg1);
+			if(Z){
+				Z.classList.add('vcard-btn-premium_Disabled');
+			}
         } else {
-window.deferredPrompt = null;
-alert("🌐  Browser not Supported !  🛡\n\n  ● OR 🕵  Incognite Mode Actived  ⚠️️");
-if(Z){
-Z.classList.add('vcard-btn-premium_Disabled');
-}
+			window.deferredPrompt = null;
+			//alert("🌐  Browser not Supported !  🛡\n\n  ● OR 🕵  Incognite Mode Actived  ⚠️️");
+			const msg1 = "🌐  Browser not Supported !  🛡\n\n  ● OR 🕵  Incognite Mode Actived  ⚠️";
+		    showErrorPanel(msg1);
+			if(Z){
+				Z.classList.add('vcard-btn-premium_Disabled');
+			}
         }
     }
 }
@@ -1770,11 +1778,10 @@ navigator.serviceWorker.removeEventListener('message', hSwMessages);
 navigator.serviceWorker.addEventListener('message', hSwMessages);
 
             if (!X) {
-
                 if (!DATA) {
-const response = await fetch(File_Json_DB);
-    DATA = await response.json();
-    console.log("PWA: Data Ready...");
+					const response = await fetch(File_Json_DB, { method: 'GET'});
+					DATA = await response.json();
+					console.log("PWA: Data Ready...");
                 }
 
                 startSyncProcess(activeWorker);
@@ -2311,7 +2318,7 @@ const safariImageProtector = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
             if (node.nodeType === 1) {
-                const targets = node.tagName === 'IMG' ? [node] : node.querySelectorAll('img, [style*="background-image"]'); 
+                const targets = node.tagName === 'IMG' ? [node] : node.querySelectorAll('img, [style*="background-image"]');
                 targets.forEach(el => {
                     // Applica accelerazione GPU per Safari
                     el.style.webkitTransform = 'translateZ(0)';
