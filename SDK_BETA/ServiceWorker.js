@@ -1,7 +1,7 @@
 /*
  * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
- * ⚙️ CORE: 🪖 PANZER v7.9.1+
+ * ⚙️ CORE: 🪖 PANZER v7.9.5+
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
@@ -70,8 +70,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.9',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.9.5',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.5',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
 	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: [
@@ -135,7 +135,7 @@ const CONFIG = {
                 ], // WEBP/RIFF, JPEG, PNG, SVG (<svg)
                 'footer': [
                     '57454250',
-                    '49454E44AE426082', 
+                    '49454E44AE426082',
                     'FFD9',
                     '3B',
                     '3C2F7376673E'
@@ -173,27 +173,27 @@ const CONFIG = {
                 ]
             },
             'pdfMaliciousPatterns': [
-                '/javascript', 
-                '/js', 
-                '/launch', 
-                '/embeddedfile', 
-                '/openaction', 
-                '/submitform', 
-                '/importdata', 
+                '/javascript',
+                '/js',
+                '/launch',
+                '/embeddedfile',
+                '/openaction',
+                '/submitform',
+                '/importdata',
                 '/richmedia'
             ],
             'compressedStreamPatterns': [
-                '/flatedecode', 
-                '/lzwdecode', 
-                '/objstm', 
-                '/crypt', 
-                '/asciihexdecode', 
+                '/flatedecode',
+                '/lzwdecode',
+                '/objstm',
+                '/crypt',
+                '/asciihexdecode',
                 '/asci85decode',
                 '/runlengthdecode'
             ],
             'supportedSignatures': [
-                'adbe.pkcs7.detached', 
-                'adbe.pkcs7.sha1', 
+                'adbe.pkcs7.detached',
+                'adbe.pkcs7.sha1',
                 'etsi.cades.detached',
                 'application/pkcs7-mime',
                 'smime.p7m'
@@ -208,22 +208,22 @@ const CONFIG = {
             'defaultMin': 2048,
             'timingNoiseMs': 50
         },
-        'code': {
+		'code': {
             'html': 100,
             'css': 100,
             'js': 100,
             'json': 10,
-            'magicNumbers': { 
-                'header': [], 
+            'magicNumbers': {
+                'header': [],
                 'footer': []
             },
             'useHeadProbe': true,
-            'tolerance': 0.20,
-            'defaultMin': 100,
+            'tolerance': 0.90,
+            'defaultMin': 10,
             'timingNoiseMs': 50
         },
         'universal': {
-            'tolerance': 0.05,
+            'tolerance': 0.5,
             'minAbsoluteByte': 64,
             'fallbackToGet': true,
             'maxHeaderBytes': 4096,
@@ -379,13 +379,13 @@ Object.freeze(sleep);
 /**
  * ⏳💤 Ottimizzatore adattivo del respiro della CPU per Service Worker.
  * Misura lo stress attuale dell'Event Loop e calcola la pausa ideale.
- * @param {number} [minPauseMs=200] - Pausa minima richiesta (Base assoluta: 200ms).
+ * @param {number} [minPauseMs=50] - Pausa minima richiesta (Base assoluta: 50ms).
  * @param {number} [timeoutMs=8000] - Tempo limite massimo (guardia) di sicurezza.
  * @returns {Promise<void>}
  */
-const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
+const waitTillIdle = (minPauseMs = 50, timeoutMs = 8000) => {
     return new Promise((resolve) => {
-        const pausaBaseMinima = Math.max(200, minPauseMs);
+        const pausaBaseMinima = Math.max(30, minPauseMs);
         const inizioTest = performance.now();
         const ATTESA_TEST_MS = 20; // Micro-timer
         setTimeout(() => {
@@ -404,8 +404,8 @@ const waitTillIdle = (minPauseMs = 200, timeoutMs = 8000) => {
 Object.freeze(waitTillIdle);
 
 /**
- * 🔬🧬 SW Forensics & DNA Check - v4.5
- *       ( 🪨 Hardened 🪖 v7.9+ ).
+ * 🔬🧬 SW Forensics & DNA Check - v4.6
+ *       ( 🪨 Hardened 🪖 v7.9.x+ ).
  *
  * @param {Response|Blob} input - Il flusso dati grezzo intercettato dal network o dal cache layer.
  * @param {string} contentType - Intestazione MIME-Type ufficiale dichiarata dal server.
@@ -565,8 +565,16 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
                 }
             }
 
-            const magicSource = activeSection?.magicNumbers || pdfConfig?.magicNumbers;
-            const supportedSignatures = activeSection?.supportedSignatures || pdfConfig?.supportedSignatures || [];
+            // 🐛️ File di testo, codice o senza magic numbers espliciti non devono mai essere controllati con le firme binarie o i PDF
+            const isTextOrCode = finalContentType.includes('text/') ||
+                                 finalContentType.includes('json') ||
+                                 finalContentType.includes('javascript') ||
+                                 finalContentType.includes('manifest') ||
+                                 !activeSection?.magicNumbers?.header ||
+                                 activeSection.magicNumbers.header.length === 0;
+
+            const magicSource = isTextOrCode ? { header: [] } : (activeSection?.magicNumbers || {});
+            const supportedSignatures = isTextOrCode ? [] : (activeSection?.supportedSignatures || []);
 
             if (activeSection && (magicSource?.header?.length > 0 || supportedSignatures.length > 0)) {
                 if (signal?.aborted) return result;
@@ -828,7 +836,7 @@ const isValidBlob = async (input, contentType, expectedSize = 0, isEncrypted = f
 };
 Object.freeze(isValidBlob);
 
-/**
+/** v2.0
  * 🧲 SONDA TECNICA HEAD: Pre-ispezione preventiva delle risorse (Anti-MIME Sniffing).
  * Interroga l'endpoint remoto tramite metodo HEAD leggero per estrarre la dimensione nominale (Content-Length) ed il tipo MIME dichiarato dal server.
  * Interrompe l'esecuzione via AbortController in caso di superamento della soglia massima di latenza di 2.5 secondi.
@@ -839,7 +847,21 @@ Object.freeze(isValidBlob);
  */
 const performProbe = async (url, rules) => {
 
-    if (!rules || rules.useHeadProbe === false) {
+    const cleanUrl = url.split('?')[0];
+
+    // Elenco delle chiavi di configurazione strutturale da ignorare
+    const codeConfigKeys = ['magicNumbers', 'useHeadProbe', 'tolerance', 'defaultMin', 'timingNoiseMs'];
+
+    // Estrae dinamicamente le estensioni valide direttamente dal CONFIG.minSizeMap.code
+    const codeExtensions = CONFIG.minSizeMap.code ?
+        Object.keys(CONFIG.minSizeMap.code).filter(k => !codeConfigKeys.includes(k)) : [];
+
+    // Verifica se l'URL è la root o appartiene a un'estensione configurata nel blocco 'code'
+    const isCodeOrCore = cleanUrl.endsWith('/') ||
+                         codeExtensions.some(ext => cleanUrl.endsWith('.' + ext));
+
+    // Salta la sonda HEAD per la root e per qualsiasi file di codice configurato
+    if (!rules || rules.useHeadProbe === false || isCodeOrCore) {
         return { ok: true, size: 0, type: '' };
     }
 
@@ -867,9 +889,8 @@ const performProbe = async (url, rules) => {
             };
         }
     } catch (e) {
-
         if (e.name === 'AbortError') {
-            console.info(`🧲⚠️ SW: Sonda HEAD in timeout per ${url}. Procedo con download.`);
+            console.info(`🧲⚠️ SW: Sonda HEAD in timeout >= 2.5s per ${url}. Procedo con download.`);
         } else {
             console.info(`🧲❌ SW: Sonda HEAD fallita (CORS o Rete) per ${url}.`);
         }
@@ -994,10 +1015,22 @@ const smartDownload = async (url, cache, isCore = false, version = '', probeSize
         await cache.delete(cleanKey);
     }
 
-    const ext = url.split('.').pop().toLowerCase();
-    const rules = CONFIG.minSizeMap[ext] ||
+    // Se l'URL termina con '/' o non ha punti (es. la root '/demo/'), è l'index HTML principale
+    const cleanUrlForExt = url.split('?')[0];
+    const isRootOrHtml = cleanUrlForExt.endsWith('/') || !cleanUrlForExt.includes('.');
+    const ext = isRootOrHtml ? 'html' : cleanUrlForExt.split('.').pop().toLowerCase();
+
+    // Estrae in modo dinamico le regole dal blocco 'code' del config
+    const codeConfigKeys = ['magicNumbers', 'useHeadProbe', 'tolerance', 'defaultMin', 'timingNoiseMs'];
+    const isCodeExt = CONFIG.minSizeMap.code &&
+                      CONFIG.minSizeMap.code[ext] !== undefined &&
+                      !codeConfigKeys.includes(ext);
+
+    const rules = isCodeExt ? CONFIG.minSizeMap.code :
+                  (CONFIG.minSizeMap[ext] ||
                   (CONFIG.extensions.includes(ext) ? CONFIG.minSizeMap[ext === 'pdf' ? 'pdf' : 'image'] : null) ||
-                  CONFIG.minSizeMap.universal;
+                  CONFIG.minSizeMap.universal);
+
     // 🔐 HARDENING LIVELLO INTERNO:
     if (rules) Object.freeze(rules);
 
@@ -1399,7 +1432,7 @@ self.addEventListener('message', (event) => {
 							}
 						});
 					}
-					await waitTillIdle(200);
+					await waitTillIdle();
 				}
 				const core_Down_OK = coreResults.filter(r => r.status === 'fulfilled' && r.value === "DOWNLOADED").length;
 				console.info(`✅⚙️ SW: Core File Scaricati effettivi da rete: ${core_Down_OK}/${coreResults.length}`);
@@ -1628,7 +1661,7 @@ Object.freeze(universalScanner);
 							abortPromise
 						]);
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
-						await waitTillIdle(200);
+						await waitTillIdle();
 					} catch (raceError) {
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
 						throw raceError;
@@ -1775,7 +1808,7 @@ Object.freeze(assegnaFlussoPolimorfo);
 
 /**
  * 🛡️ Security Headers Injector- v2.0
- * ( 🪨 Hardened 🪖 v7.9+ ).
+ * ( 🪨 Hardened 🪖 v7.9.x+ ).
  * Intercetta la Response (da rete) e inietta le intestazioni HTTP
  * di sicurezza difensive, gestendo in sicurezza i flussi e i codici di stato speciali (204/304).
  * @param {Response} response - Istanza della risorsa originale.
@@ -1858,6 +1891,10 @@ self.addEventListener('fetch', (event) => {
 		   ) {
 			return; // ⏩ Delegato direttamente al browser
 		}
+		if(currentMethod === 'HEAD'){
+			//console.info(`✅ SW: HEAD Request !\n⏩ Delegato direttamente al browser`);
+			//return; // ⏩ Delegato direttamente al browser
+		}
     } catch (e) {
         return; // 🛑 Blocco difensivo in caso di URL telematico corrotto o non parsabile
     }
@@ -1880,149 +1917,122 @@ self.addEventListener('fetch', (event) => {
 		const isCoreAsset = CORE_ASSETS_SET.has(finalPath);
         const shouldBeEncrypted = isCoreAsset || existsInMain;
 		const targetCache = shouldBeEncrypted ? "📦🛡️ (Bunker)" : "📦🔓 (Magazzino)";
+		let isImageRequest = false;
+		let isExcluded = false;
+		let isHTML = false;
 
+		// Scarto Tecnico mio !
 		if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
-// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ATTIVA ( ONLINE GATEWAY )
-// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
-// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
+	// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE
+	// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
+	// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
-		const isOnline = await checkRealOnline('fetch');
-		if (isOnline) {
+
+		//console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ ${isOnline} ]`);
+		//console.info(`👮‍♂⚡️ SW: Azione: Erogazione Risorsa: ${finalPath} da ${cached ? 'WEB 🌐' : 'Cached 🗄️' }`);
+
+        // 🛡️ BLOCCO CONDIVISO: Elaborazione, validazione forense, cifratura e salvataggio nel bunker/magazzino
+        const processAndStore = async (responseToProcess, controllerSignal) => {
             try {
-                const currentProfile = getNetworkProfile(self.navigator);
-                const TIMEOUT_MS = currentProfile.timeout * 1000;
-                const controller = new AbortController();
-                const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-				const fetchSignal = globalAbortController
-                ? AbortSignal.any([globalAbortController?.signal, controller?.signal])
-                : controller?.signal;
+                const isOk = await verifyVaultIntegrity();
+                if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
+                if (!responseToProcess || !isLogicEnabled || isSyncing) return;
 
-                const networkResponse = await fetch(event.request, {
-                    cache: 'no-cache',
-                    signal: fetchSignal
-                });
-                clearTimeout(tId);
-                if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-					if (!isLogicEnabled || isSyncing) {
-						// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
-						return networkResponse;
-					}
+                const contentType = responseToProcess.headers.get('Content-Type') || '';
+                const lastMod = responseToProcess.headers.get('Last-Modified');
+                const localLastMod = existsInMain ? existsInMain.headers.get('X-PWA-LastMod') : null;
+                const UserlocalLastMod = cached ? cached.headers.get('X-PWA-LastMod') : null;
 
-                    const responseClone = networkResponse.clone();
-                    event.waitUntil((async () => {
-						try {
-							const isOk = await verifyVaultIntegrity();
-							if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
-							if (!responseClone || !isLogicEnabled || isSyncing) return;
-
-							const contentType = responseClone.headers.get('Content-Type') || '';
-							const lastMod = responseClone.headers.get('Last-Modified');
-							const localLastMod = existsInMain ? existsInMain.headers.get('X-PWA-LastMod') : null;
-							const UserlocalLastMod = cached ? cached.headers.get('X-PWA-LastMod') : null;
-
-							if (lastMod && ((localLastMod && lastMod === localLastMod) || (UserlocalLastMod && lastMod === UserlocalLastMod))) {
-								return;
-							}
-
-							const check = await isValidBlob(responseClone, contentType, 0, false, controller.signal);
-							if (check.valid) {
-								let finalBlob = check.blob;
-								const updatedHeaders = new Headers(responseClone.headers);
-								updatedHeaders.set('X-PWA-Date', Date.now().toString());
-								if (lastMod) updatedHeaders.set('X-PWA-LastMod', lastMod);
-
-								console.info(`🔄💾 SW: [ ${targetCache} ], ♻️ File: ${finalPath}`);
-
-								if (shouldBeEncrypted) {
-									finalBlob = await encryptBlob(finalBlob);
-									updatedHeaders.set('X-PWA-Encrypted', 'true');
-								}
-
-								const targetCacheObj = shouldBeEncrypted ? mainCache : userCache;
-								let bufferToClear = (finalBlob instanceof Uint8Array) ? finalBlob : null;
-
-								try {
-									await targetCacheObj.put(finalPath, new Response(finalBlob, {
-										status: responseClone.status,
-										statusText: responseClone.statusText,
-										headers: updatedHeaders
-									}));
-									console.info(`✅🔄💾 SW: [ ${targetCache} ], Aggiornamento - File: ${finalPath}`);
-								} catch (cacheError) {
-								    // 🏴‍☠️ ACCECAMENTO INTERMEDIO:
-									const cleanCacheErr = {};
-									Object.defineProperties(cleanCacheErr, {
-										name: { value: "CacheWriteError", enumerable: true },
-										message: { value: "Impossibile allocare la risorsa nel segmento isolato", enumerable: true },
-										stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-									});
-									Object.freeze(cleanCacheErr);
-									console.error(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`, cleanCacheErr);
-									if (await QuotaExceeded_User_Assets(cacheError) !== false) {
-										try {
-											await targetCacheObj.put(finalPath, new Response(finalBlob, {
-												status: responseClone.status,
-												statusText: responseClone.statusText,
-												headers: updatedHeaders
-											}));
-											console.info(`✅🔄💾 SW: [ ${targetCache} ], Salvataggio riuscito dopo pulizia: ${finalPath}`);
-										} catch (retryError) {
-										    // 🏴‍☠️ ACCECAMENTO SUL RETRY: Distruzione dello Stack Trace sul fallimento definitivo
-											const cleanRetryErr = {};
-										Object.defineProperties(cleanRetryErr, {
-										    name: { value: "FatalCacheStorageError", enumerable: true },
-										  message: { value: "Saturazione persistente o violazione del perimetro di archiviazione", enumerable: true },
-										    stack: { value: undefined, configurable: false, writable: false, enumerable: false }
-											});
-										Object.freeze(cleanRetryErr);
-										console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", cleanRetryErr);
-											throw cleanRetryErr; // Rilanciamo l'errore già accecato verso il catch superiore
-										}
-									} else {
-										console.warn("📦⚠️ SW: Update cache fallito:", cleanCacheErr);
-										throw cleanCacheErr; // Rilanciamo l'errore già accecato verso il catch superiore
-									}
-								} finally {
-									if (bufferToClear) {
-										bufferToClear.fill(0);
-										console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
-									}
-								}
-							} else {
-								throw new Error(`Integrità/DNA Fallito per ${finalPath}`);
-							}
-						} catch (err) {
-						    // 🪝🛡️⏱️ INNESTO TEMPORALE ANTI-PROFILING NELLA PIPELINE DI BACKGROUND
-							if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 30);
-
-							// 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
-							console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
-						}
-					})());
-                    console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ 200 OK ] | Azione: ${(finalStrategy === 'SWR' && cached) ? 'Erogazione da Cache 📦 + Update differito in Background ♻️🔄' : 'Erogazione da Rete WEB 🌐'}. Risorsa: ${finalPath}`);
-                    if(!(finalStrategy === 'SWR' && cached)){
-                        // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser
-        return injectSecurityHeaders(networkResponse);
-
-                    }
-					// 🗄️ Decade Verso la SEZIONE III
+                if (lastMod && ((localLastMod && lastMod === localLastMod) || (UserlocalLastMod && lastMod === UserlocalLastMod))) {
+                    return;
                 }
-                if (networkResponse && networkResponse.status === 404) {
-                    if (cached) {
-                        console.info("📦♻️ SW: 404 Online, Resilienza ON: ", finalPath);
 
-                    } else {
-                        // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-                        return injectSecurityHeaders(networkResponse);
+                const check = await isValidBlob(responseToProcess, contentType, 0, false, controllerSignal);
+                if (check.valid) {
+                    let finalBlob = check.blob;
+                    const updatedHeaders = new Headers(responseToProcess.headers);
+                    updatedHeaders.set('X-PWA-Date', Date.now().toString());
+                    if (lastMod) updatedHeaders.set('X-PWA-LastMod', lastMod);
+
+                    console.info(`🔄💾 SW: [ ${targetCache} ], ♻️ File: ${finalPath}`);
+
+                    if (shouldBeEncrypted) {
+                        finalBlob = await encryptBlob(finalBlob);
+                        updatedHeaders.set('X-PWA-Encrypted', 'true');
                     }
+
+                    const targetCacheObj = shouldBeEncrypted ? mainCache : userCache;
+                    let bufferToClear = (finalBlob instanceof Uint8Array) ? finalBlob : null;
+
+                    try {
+                        await targetCacheObj.put(finalPath, new Response(finalBlob, {
+                            status: responseToProcess.status,
+                            statusText: responseToProcess.statusText,
+                            headers: updatedHeaders
+                        }));
+                        console.info(`✅🔄💾 SW: [ ${targetCache} ], Aggiornamento - File: ${finalPath}`);
+                    } catch (cacheError) {
+                        // 🏴‍☠️ ACCECAMENTO INTERMEDIO:
+                        const cleanCacheErr = {};
+                        Object.defineProperties(cleanCacheErr, {
+                            name: { value: "CacheWriteError", enumerable: true },
+                            message: { value: "Impossibile allocare la risorsa nel segmento isolato", enumerable: true },
+                            stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+                        });
+                        Object.freeze(cleanCacheErr);
+                        console.error(`💥⚠️ SW: Fallimento scrittura in ${targetCache} - File: ${finalPath}`, cleanCacheErr);
+                        if (await QuotaExceeded_User_Assets(cacheError) !== false) {
+                            try {
+                                await targetCacheObj.put(finalPath, new Response(finalBlob, {
+                                    status: responseToProcess.status,
+                                    statusText: responseToProcess.statusText,
+                                    headers: updatedHeaders
+                                }));
+                                console.info(`✅🔄💾 SW: [ ${targetCache} ], Salvataggio riuscito dopo pulizia: ${finalPath}`);
+                            } catch (retryError) {
+                                // 🏴‍☠️ ACCECAMENTO SUL RETRY: Distruzione dello Stack Trace sul fallimento definitivo
+                                const cleanRetryErr = {};
+                                Object.defineProperties(cleanRetryErr, {
+                                    name: { value: "FatalCacheStorageError", enumerable: true },
+                                    message: { value: "Saturazione persistente o violazione del perimetro di archiviazione", enumerable: true },
+                                    stack: { value: undefined, configurable: false, writable: false, enumerable: false }
+                                });
+                                Object.freeze(cleanRetryErr);
+                                console.error("🧹❌ SW: Fallimento critico anche dopo pulizia:", cleanRetryErr);
+                                throw cleanRetryErr; // Rilanciamo l'errore già accecato verso il catch superiore
+                            }
+                        } else {
+                            console.warn("📦⚠️ SW: Update cache fallito:", cleanCacheErr);
+                            throw cleanRetryErr; // Rilanciamo l'errore già accecato verso il catch superiore
+                        }
+                    } finally {
+                        if (bufferToClear) {
+                            bufferToClear.fill(0);
+                            console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
+                        }
+                    }
+                } else {
+                    throw new Error(`Integrità/DNA Fallito per ${finalPath}`);
                 }
-            } catch (e) {
-                // 🪝🛡️⏱️ INNESTO TEMPORALE IN CASO DI CRASH DURANTE IL FETCH DI RETE
-				if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 25);
+            } catch (err) {
+                // 🪝🛡️⏱️ INNESTO TEMPORALE ANTI-PROFILING NELLA PIPELINE DI BACKGROUND
+                if (typeof injectTimingNoise === 'function') await injectTimingNoise(startNetworkTime, 30);
+
+                // 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
+                console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
-        }
+        };
+
+        // 🎯 STRATEGIA: SWR se c'è cache (zero attese su 2G/3G), altrimenti Network-First
+		const netProfile = getNetworkProfile(self.navigator);
+		const profiles = CONFIG.networkResilient.profiles;
+		const profileName = Object.keys(profiles).find(key =>
+				profiles[key].limit === netProfile.limit &&
+				profiles[key].timeout === netProfile.timeout
+			) || 'Medium';
+		const isDegradedNetwork = ( netProfile === 'Verylow' || netProfile === 'Low' );
 		if (cached) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
@@ -2099,16 +2109,16 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-        } else {
-			// 🖼️ SEZIONE IV: FILTRO MULTIMEDIALE ED EROGAZIONE PLACEHOLDER (GRAPHIC RESILIENCE)
+        } else if(!cached) {
+			// 🖼️ SEZIONE IV: FILTRO MULTIMEDIALE
 			// Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
-			// 1) Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
-			// 2) Fallback finale con iniezione del vettore statico base64 (CONFIG.fallbackImage) in caso di assenza totale.
+			// Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
             const dotIdx = finalPath.lastIndexOf('.');
+			let altPath = null;
             if (dotIdx !== -1) {
                 const basePath = finalPath.substring(0, dotIdx);
                 for (let variantExt of CONFIG.extensions) {
-                    const altPath = basePath + '.' + variantExt;
+                    altPath = basePath + '.' + variantExt;
 
                     if (altPath === finalPath) continue;
                     const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
@@ -2126,7 +2136,7 @@ self.addEventListener('fetch', (event) => {
                                     const variantExtLower = variantExt.toLowerCase();
                                     const
                                     secureHeaders = new Headers({
-                                        'Content-Type': detectedContentType,
+                                        'Content-Type': contentTypeIMG,
                                         'X-PWA-Source': 'Bunker-Decrypted',
                                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                                         'Pragma': 'no-cache',
@@ -2146,56 +2156,102 @@ self.addEventListener('fetch', (event) => {
 
                                 return altCached.clone();
                             } catch (decryptErr) {
-                                console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
-                                continue;
+								console.log(`SW Recovery: ${decryptErr} `);
+
+								console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
+								continue;
                             }
                         }
                     }
                 }
             }
-        }
-        const contentsType = event.request.headers.get('Accept') || "";
-        const isHTML = contentsType.includes('text/html');
-        const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
-        const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
-        const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
-        const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
-        if (isImageRequest || isHTML) {
-            const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
-            const placeholder = await caches.match(placeholderPath);
-            if (placeholder) {
-                try {
-					if (globalPlaceholderBlob === null) {
-						if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
-							const buffer = await placeholder.arrayBuffer();
-							let decrypted = await decryptBuffer(buffer);
-							globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
-							decrypted = null;
-						} else {
-							globalPlaceholderBlob = await placeholder.blob();
-						}
-					}
-                    if (isImageRequest && !isHTML && !isExcluded) {
-                        console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
-                        return new Response(globalPlaceholderBlob, {
-                            headers: {
-                                'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
-                                'X-PWA-Source': 'Bunker-Placeholder'
-                            }
-                        });
-                    }
-                } catch (err) {
-                    console.error("❌ SW: Errore decriptazione placeholder:", err);
+		}
+		const isOnline = await checkRealOnline('fetch');
+		if (isOnline) { //console.log("SWR network !");
+			// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
+            // CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
+            try {
+				if (!isLogicEnabled || isSyncing) {
+					// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
+					//return; // ⏩ Delegato direttamente al browser
+
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(await fetch(event.request));
+				}
+
+                const currentProfile = getNetworkProfile(self.navigator);
+				const TIMEOUT_MS = currentProfile.timeout * 1000;
+                const controller = new AbortController();
+                const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+				const fetchSignal = globalAbortController
+                ? AbortSignal.any([globalAbortController?.signal, controller?.signal])
+                : controller?.signal;
+
+                const networkResponse = await fetch(event.request, {
+                    cache: 'no-cache',
+                    signal: fetchSignal
+                });
+                clearTimeout(tId);
+
+                if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
+                    const responseClone = networkResponse.clone();
+                    event.waitUntil(processAndStore(responseClone, fetchSignal));
+
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+                    return injectSecurityHeaders(networkResponse);
+                } else if (networkResponse && networkResponse.status === 404) {
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(networkResponse);
                 }
-            } else {
-                if (isImageRequest && !isHTML && !isExcluded) {
-                    console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
-                    return new Response(GLOBAL_BROKEN_BLOB, {
-                        headers: {
-                            'Content-Type': 'image/svg+xml',
-                            'X-PWA-Source': 'SW-Emergency-SVG'
+            } catch (e) {
+                // Gestione crash rete
+            }
+        } else {
+			// 🖼️ SEZIONE IV.I: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
+				// Fallback finale con iniezione del vettore statico base64 (CONFIG.fallbackImage) in caso di assenza totale.
+			const contentsType = event.request.headers.get('Accept') || "";
+				  isHTML = contentsType.includes('text/html');
+				  isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
+			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
+			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
+				  isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
+			if (isImageRequest || isHTML) {
+				const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
+				const placeholder = await caches.match(placeholderPath);
+				if (placeholder) {
+					try {
+						if (globalPlaceholderBlob === null) {
+							if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
+								const buffer = await placeholder.arrayBuffer();
+								let decrypted = await decryptBuffer(buffer);
+								globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
+								decrypted = null;
+							} else {
+								globalPlaceholderBlob = await placeholder.blob();
+							}
 						}
-					});
+						if (isImageRequest && !isHTML && !isExcluded) {
+							console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
+							return new Response(globalPlaceholderBlob, {
+								headers: {
+									'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
+									'X-PWA-Source': 'Bunker-Placeholder'
+								}
+							});
+						}
+					} catch (err) {
+						console.error("❌ SW: Errore decriptazione placeholder:", err);
+					}
+				} else if (finalStrategy !== 'NetworkFirst') {
+					if (isImageRequest && !isHTML && !isExcluded) {
+						console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
+						return new Response(GLOBAL_BROKEN_BLOB, {
+							headers: {
+								'Content-Type': 'image/svg+xml',
+								'X-PWA-Source': 'SW-Emergency-SVG'
+							}
+						});
+					}
 				}
 			}
 		}
@@ -2203,7 +2259,7 @@ self.addEventListener('fetch', (event) => {
     // Isola l'ambiente di runtime in caso di avaria totale (assenza di rete e di cache). Evita il crash
     // erogando l'interfaccia di cortesia sterile a tolleranza di guasto (503) con marcatura forense.
 		if (!isImageRequest && isExcluded) {
-			console.info("📦❌ SW: Recupero fallito per:", finalPath);
+			console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
 		}
 		if (isCoreAsset && !isNewInstallation) {
 			console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
@@ -2212,11 +2268,14 @@ self.addEventListener('fetch', (event) => {
         if (isHTML) {
             return await generateErrorPage(globalPlaceholderBlob, url.pathname);
         }
-        return new Response('📡🚫 Offline', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: { 'Content-Type': 'text/plain' }
-        });
+		const fall_onlineCheck = await checkRealOnline('fetch');
+		if (fall_onlineCheck) {
+			return new Response('📡🚫 Offline', {
+				status: 503,
+				statusText: 'Service Unavailable',
+				headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+			});
+		}
 
     })());
 });
