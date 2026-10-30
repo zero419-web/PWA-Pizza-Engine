@@ -1929,7 +1929,7 @@ self.addEventListener('fetch', (event) => {
 	// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 	// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
-
+        
 		//console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ ${isOnline} ]`);
 		//console.info(`👮‍♂⚡️ SW: Azione: Erogazione Risorsa: ${finalPath} da ${cached ? 'WEB 🌐' : 'Cached 🗄️' }`);
 
@@ -2033,7 +2033,7 @@ self.addEventListener('fetch', (event) => {
 				profiles[key].timeout === netProfile.timeout
 			) || 'Medium';
 		const isDegradedNetwork = ( netProfile === 'Verylow' || netProfile === 'Low' );
-		if (cached) {
+		if (cached && ( finalStrategy === 'SWR' || isDegradedNetwork ) ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
@@ -2109,7 +2109,7 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-        } else if(!cached) {
+        } else if( !cached ) {
 			// 🖼️ SEZIONE IV: FILTRO MULTIMEDIALE
 			// Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 			// Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
@@ -2156,8 +2156,7 @@ self.addEventListener('fetch', (event) => {
 
                                 return altCached.clone();
                             } catch (decryptErr) {
-								console.log(`SW Recovery: ${decryptErr} `);
-
+								//console.log(`SW Recovery: ${decryptErr} `);
 								console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
 								continue;
                             }
@@ -2166,8 +2165,8 @@ self.addEventListener('fetch', (event) => {
                 }
             }
 		}
-		const isOnline = await checkRealOnline('fetch');
-		if (isOnline) { //console.log("SWR network !");
+		const isOnline = ( isDegradedNetwork ? false : await checkRealOnline('fetch') );
+		if ( isOnline ) { //console.log("SWR network !");
 			// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
             // CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
             try {
