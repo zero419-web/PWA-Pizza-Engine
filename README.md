@@ -1,13 +1,14 @@
-![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.0.0200-1f4e79)
+![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.1-1f4e79)
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_x_PA-af0000)
-![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.1+-4f4f00)
+![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.5+-4f4f00)
 
 > [!Important]
->   - 🔃 **Last Update :** `v1.7.2`
+>   - 🔃 **Last Update :** `v1.8`
 > 
 > 🌀🧪 **Questo SDK + DashBoard e un PoC**
 > 
-> 📦 **FrameWork Panzer <br> SDK BETA v1.0.0200 :**
+> 📦 **FrameWork Panzer <br> SDK BETA v1.1 :**
+>     - **Update: molte migliorie di bug...**
 > 
 > - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'**SDK aggiornata con:**
 >    - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo `dopo 7s minimo`, o Massimo personalizzato di Time-out per dichiarare lo stato **Incognito del Browser!**
@@ -60,6 +61,10 @@
 🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
+
+ - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 Sessione di BUG...`
+    - 🪳 **Molti Bug Fixed & SWR Strategia migliorata.**
+    - 🚀 **SWR, Strategia migliorata su reti degradate.**
 
   - **🪖 NOVITÀ v7.9+ :** <br> `Sessione di 🪨 Hardening Mirato contro il Red-Team 🔴`
     - 🔍 **1. Validazione Forense Blob (`isValidBlob`)**
