@@ -1782,6 +1782,9 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
         profiles[key].limit === netProfile.limit &&
         profiles[key].timeout === netProfile.timeout
     ) || 'Medium';
+
+	const isDegradedNetwork = ( netProfile === 'Verylow' || netProfile === 'Low' );
+
     switch (profileName) {
         case 'Ultrafast':
         case 'Fast':
@@ -1791,8 +1794,8 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
         case 'Low':
         case 'Verylow':
         default:
-            if (hasCache) {
-                console.info(`🌐👮‍♂️ SW: Rete Degradata, [ ${profileName} ].\n SWR(Sate-While-Revlidate), ON per continuità operativa...`);
+            if ( hasCache || isDegradedNetwork ) {
+                console.info(`🌐👮‍♂️ SW: Rete Degradata, [ ${profileName} ].\n SWR(Sate-While-Revalidate), ON per continuità operativa...`);
                 return 'SWR';
             }
             return 'NetworkFirst';
@@ -1925,13 +1928,6 @@ self.addEventListener('fetch', (event) => {
 		if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
-	// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE
-	// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
-	// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
-		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
-        
-		//console.info(`⚡👮‍♂️ SW: [ ${targetCache} ] | Strategia Esecutiva: [ ${finalStrategy} ] \n 🌐 Rete: status [ ${isOnline} ]`);
-		//console.info(`👮‍♂⚡️ SW: Azione: Erogazione Risorsa: ${finalPath} da ${cached ? 'WEB 🌐' : 'Cached 🗄️' }`);
 
         // 🛡️ BLOCCO CONDIVISO: Elaborazione, validazione forense, cifratura e salvataggio nel bunker/magazzino
         const processAndStore = async (responseToProcess, controllerSignal) => {
@@ -2023,17 +2019,69 @@ self.addEventListener('fetch', (event) => {
                 // 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
+			await waitTillIdle();
         };
+		const SWR_SAVE = async (event) => {
+			const isOnline = await checkRealOnline('fetch');
+			//console.info(`⚡👮‍♂️ SW: [ ${finalStrategy} ] \n 🌐 Rete: status [ ${isOnline} ]`);
+			if ( isOnline ) {
+				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
+				// CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
+				try {
+					const currentProfile = getNetworkProfile(self.navigator);
+					const TIMEOUT_MS = currentProfile.timeout * 1000;
+					const controller = new AbortController();
+					const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+					const fetchSignal = globalAbortController
+					? AbortSignal.any([globalAbortController?.signal, controller?.signal])
+					: controller?.signal;
 
-        // 🎯 STRATEGIA: SWR se c'è cache (zero attese su 2G/3G), altrimenti Network-First
-		const netProfile = getNetworkProfile(self.navigator);
-		const profiles = CONFIG.networkResilient.profiles;
-		const profileName = Object.keys(profiles).find(key =>
-				profiles[key].limit === netProfile.limit &&
-				profiles[key].timeout === netProfile.timeout
-			) || 'Medium';
-		const isDegradedNetwork = ( netProfile === 'Verylow' || netProfile === 'Low' );
-		if (cached && ( finalStrategy === 'SWR' || isDegradedNetwork ) ) {
+					const networkResponse = await fetch(event.request, {
+						cache: 'no-cache',
+						signal: fetchSignal
+					});
+					clearTimeout(tId);
+
+					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
+						const responseClone = networkResponse.clone();
+						event.waitUntil(processAndStore(responseClone, fetchSignal));
+						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+						return injectSecurityHeaders(networkResponse);
+					} else if (networkResponse && networkResponse.status === 404) {
+						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+						return injectSecurityHeaders(networkResponse);
+					}
+				} catch (e) {
+					// 🛡️ Fallback in caso di crash rete
+					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, { status: 504, headers: { 'Content-Type': 'text/plain' } });
+				}
+			}
+		};
+		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
+		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
+		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
+		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
+		// 🎯 STRATEGIA: SWR se c'è cache ( zero attese su reti lente ), altrimenti Network-First
+		if( finalStrategy === 'SWR' ){
+			event.waitUntil( SWR_SAVE(event) );
+			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
+			console.info(`👮‍♂⚡️ SW: Erogazione Risorsa da Cached 🗄 :\n ${finalPath} \n [ ${targetCache} ]`);
+		}else{
+			// 🌐 NetworkFirst
+			// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
+			if (!isLogicEnabled || isSyncing) {
+				console.info(`👮‍♂⚡️ SW: Erogazione Risorsa da WEB:\n 🌐 ${finalPath} `);
+				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+				return injectSecurityHeaders(await fetch(event.request));
+			}
+
+			// 🌐 NetworkFirst & Save Backgroud...
+			console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
+
+			await waitTillIdle();
+			return await SWR_SAVE(event);
+		}
+		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
@@ -2110,7 +2158,7 @@ self.addEventListener('fetch', (event) => {
                 return cached;
             }
         } else if( !cached ) {
-			// 🖼️ SEZIONE IV: FILTRO MULTIMEDIALE
+			// 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 			// Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 			// Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
             const dotIdx = finalPath.lastIndexOf('.');
@@ -2164,50 +2212,8 @@ self.addEventListener('fetch', (event) => {
                     }
                 }
             }
-		}
-		const isOnline = ( isDegradedNetwork ? false : await checkRealOnline('fetch') );
-		if ( isOnline ) { //console.log("SWR network !");
-			// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
-            // CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
-            try {
-				if (!isLogicEnabled || isSyncing) {
-					// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
-					//return; // ⏩ Delegato direttamente al browser
-
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					return injectSecurityHeaders(await fetch(event.request));
-				}
-
-                const currentProfile = getNetworkProfile(self.navigator);
-				const TIMEOUT_MS = currentProfile.timeout * 1000;
-                const controller = new AbortController();
-                const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-				const fetchSignal = globalAbortController
-                ? AbortSignal.any([globalAbortController?.signal, controller?.signal])
-                : controller?.signal;
-
-                const networkResponse = await fetch(event.request, {
-                    cache: 'no-cache',
-                    signal: fetchSignal
-                });
-                clearTimeout(tId);
-
-                if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-                    const responseClone = networkResponse.clone();
-                    event.waitUntil(processAndStore(responseClone, fetchSignal));
-
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-                    return injectSecurityHeaders(networkResponse);
-                } else if (networkResponse && networkResponse.status === 404) {
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					return injectSecurityHeaders(networkResponse);
-                }
-            } catch (e) {
-                // Gestione crash rete
-            }
-        } else {
-			// 🖼️ SEZIONE IV.I: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
-				// Fallback finale con iniezione del vettore statico base64 (CONFIG.fallbackImage) in caso di assenza totale.
+			// 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
+			// Fallback finale con iniezione del vettore statico base64 (CONFIG.fallbackImage) in caso di assenza totale.
 			const contentsType = event.request.headers.get('Accept') || "";
 				  isHTML = contentsType.includes('text/html');
 				  isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
@@ -2567,7 +2573,7 @@ const verifyVaultIntegrity = async () => {
                 break;
             }
             // applica la pausa proporzionale al carico hardware
-            await waitTillIdle(200, 2000);
+            await waitTillIdle(200, 5000);
         }
         return encryptionKey !== null;
     }
