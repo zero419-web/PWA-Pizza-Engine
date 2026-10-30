@@ -63,7 +63,7 @@
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
 
  - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 Sessione di BUG...`
-    - 🪳 **Molti Bug Fixed & SWR Strategia migliorata.**
+    - 🪳 **Molti Bug Fixed**
     - 🚀 **SWR, Strategia migliorata su reti degradate.**
 
   - **🪖 NOVITÀ v7.9+ :** <br> `Sessione di 🪨 Hardening Mirato contro il Red-Team 🔴`
