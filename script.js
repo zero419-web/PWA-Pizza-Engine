@@ -1,4 +1,4 @@
-// v4.7.4
+// v4.9.5
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -106,7 +106,7 @@ const checkPwaInstallabilityCriteria = async () => {
     const manifestLink = document.querySelector('link[rel="manifest"]');
     if (!manifestLink) return false;
     try {
-        const response = await fetch(manifestLink.href, { method: 'GET'});
+        const response = await fetch(manifestLink.href);
         if (!response.ok) return false;
         const manifest = await response.json();
 
@@ -333,30 +333,114 @@ function fillPlaceholder(template, placeholder, value) {
     return template.replaceAll(placeholder, value);
 }
 
+// Utility globale per attendere che il SW prenda il controllo se è in fase di attivazione (max 1.5 secondi per non rallentare le reti lente)
+async function waitForServiceWorker() {
+    if (!('serviceWorker' in navigator)) return false;
+    if (navigator.serviceWorker.controller) return true;
+    try {
+        // Mettiamo un timeout di sicurezza (es. 1500ms) per evitare blocchi eterni su reti lentissime
+        await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 1500))
+        ]);
+        return !!navigator.serviceWorker.controller;
+    } catch (e) {
+        // Se scade il timeout o non c'è SW, restituiamo lo stato attuale del controller
+        return !!navigator.serviceWorker.controller;
+    }
+}
+
 async function loadImageAsync(imgElement, folder, ID) {
     imgElement.src = window.APP_CONFIG.svg_loading;
-    const checks = FORMATS.map(async (ext) => {
-        const cleanExt = ext.replace(/^\./, "");
-        const url = `${folder}${ID}.${cleanExt}`;
-        try {
-            const response = await fetch(url, {
-				method: 'HEAD',
-				cache: 'default',
-				headers: { 'Cache-Control': 'max-age=600' }
-			});
-            if (response && response.ok) {
-                const pwaSource = response.headers.get('X-PWA-Source');
-                if (pwaSource === 'Bunker-Placeholder') return null;
-                return url;
+    const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
+    const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
+
+    let hasActiveSW = null;
+    try {
+        hasActiveSW = await waitForServiceWorker();
+        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
+            await hasActiveSW.catch(() => {});
+        }
+    } catch (e) {
+        hasActiveSW = null;
+    }
+
+    let validUrl = null;
+
+    // 1. Tentativo tramite Service Worker (se attivo)
+    if (hasActiveSW) {
+        for (const ext of prioritizedExts) {
+            const cleanExt = ext.replace(/^\./, "");
+            const testUrl = `${folder}${ID}.${cleanExt}`;
+            try {
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    cache: 'force-cache'
+                });
+                if (response && response.ok) {
+                    const pwaSource = response.headers.get('X-PWA-Source');
+                    if (pwaSource === 'Bunker-Placeholder') {
+                        continue;
+                    }
+                    const isValidBlobImg = await new Promise((resolve) => {
+                        const tempImg = new Image();
+                        tempImg.onload = () => resolve(true);
+                        tempImg.onerror = () => resolve(false);
+                        tempImg.src = testUrl;
+                    });
+                    if (isValidBlobImg) {
+                        validUrl = testUrl;
+                        break;
+                    }
+                }
+            } catch (err) {
+                // Ignora l'errore di rete puntuale e passa alla prossima estensione
             }
-        } catch (err) {}
-        return null;
-    });
-    const results = await Promise.all(checks);
-    const validUrl = results.find(url => url !== null);
+        }
+    }
+    // 2. Fallback sequenziale sicuro (se non c'è SW o se la ricerca via SW non ha dato esito)
+    // Eseguito in modo SEQUENZIALE per non intasare reti, server locale (503)
+    if (!validUrl) {
+        for (const ext of prioritizedExts) {
+            const cleanExt = ext.replace(/^\./, "");
+            const url = `${folder}${ID}.${cleanExt}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    cache: 'default',
+                    headers: { 'Cache-Control': 'max-age=600' }
+                });
+                if (response && response.ok) {
+                    const pwaSource = response.headers.get('X-PWA-Source');
+                    if (pwaSource === 'Bunker-Placeholder') {
+                        continue;
+                    }
+
+                    // Verifica finale con l'oggetto Image per sicurezza binaria
+                    const isValidImg = await new Promise((resolve) => {
+                        const checkImg = new Image();
+                        checkImg.onload = () => resolve(true);
+                        checkImg.onerror = () => resolve(false);
+                        checkImg.src = url;
+                    });
+
+                    if (isValidImg) {
+                        validUrl = url;
+                        break;
+                    }
+                }
+            } catch (err) {
+                // Continua con l'estensione successiva senza bloccare
+            }
+        }
+    }
     if (validUrl) {
         imgElement.src = validUrl;
         return true;
+    }
+    // Fallback estremo se nessun formato è disponibile
+    if (window.APP_CONFIG && window.APP_CONFIG.svg_fallback) {
+        imgElement.src = window.APP_CONFIG.svg_fallback;
     }
     return false;
 }
@@ -401,7 +485,7 @@ async function init() {
     try {
 		if (!DATA) {
 			try {
-				const response = await fetch(File_Json_DB, { method: 'GET'});
+				const response = await fetch(File_Json_DB);
 				console.log("PWA - fetch: ", File_Json_DB);
 				if (!response.ok) {
 					throw new Error(`Error HTTP! state: ${response.status}`);
@@ -1065,13 +1149,16 @@ async function _checkRealOnlineStatus() {
         const response = await fetch(File_Json_DB, {
             method: 'HEAD',
             cache: 'default',
-            headers: { 'Cache-Control': 'max-age=30' }
+            headers: { 'Cache-Control': 'max-age=300' }
         });
         return response.ok;
     } catch (e) {
         return false;
     }
 }
+
+// image loader for any res image...
+const _loaderGif = "data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOdKcyKyvJWwiS6EHQHiuFAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRG9rxBQSOCqyK6xPLSm72Z1G2LIuE8kyVP6AkAAAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pL5ezPXIEMHnEfVIBhYQrJkaaqCAqaJEcCZ7DRGKAq7d6r6DL3WJ6is6RVOfpAlKMBIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqSUs96YpDT9f0f98S8Zctf00Sg5BCfscRAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOdKcyKyvJWwiS6EHQHiuFAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRG9rxBQSOCqyK6xPLSm72Z1G2LIuE8kyVP6AkAAAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pL5ezPXIEMHnEfVIBhYQrJkaaqCAqaJEcCZ7DRGKAq7d6r6DL3WJ6is6RVOfpAlKMBIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqSUs96YpDT9f0f98S8Zctf00Sg5BCfscRAAA7";
 
 let initGallery_OnLine = null;
 async function initGallery() {
@@ -1083,83 +1170,115 @@ async function initGallery() {
     root.innerHTML = "";
 
     const realGalleryCount = (DATA && DATA.gallery) ? DATA.gallery.length : 0;
-
     const MAX_ATTEMPTS = 20;
+    const loaderGif = window.APP_CONFIG.svg_loading;
+
+    let hasActiveSW = null;
+    try {
+        hasActiveSW = await waitForServiceWorker();
+        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
+            await hasActiveSW.catch(() => {});
+        }
+    } catch (e) {
+        hasActiveSW = null;
+    }
+
+    const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
+    const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
+
+    const resolveGalleryImage = async (basePath) => {
+        let finalSrc = null;
+        for (const ext of prioritizedExts) {
+            const cleanExt = ext.replace(/^\./, "");
+            const testUrl = `${basePath}.${cleanExt}`;
+
+            try {
+                if (hasActiveSW) {
+                    // ⚡ SE SW ATTIVO: Verifica tramite oggetto Image nativo in modo sequenziale
+                    const isValid = await new Promise((resolve) => {
+                        const tempImg = new Image();
+                        tempImg.onload = () => resolve(true);
+                        tempImg.onerror = () => resolve(false);
+                        tempImg.src = testUrl;
+                    });
+                    if (isValid) {
+                        finalSrc = testUrl;
+                        break;
+                    }
+                } else {
+                    // 🌐 FALLBACK SENZA SW: Chiamata HEAD di rete sicura
+                    const response = await fetch(testUrl, {
+                        method: 'HEAD',
+                        cache: 'default',
+                        headers: { 'Cache-Control': 'max-age=600' }
+                    });
+                    if (response && response.ok) {
+                        const pwaSource = response.headers.get('X-PWA-Source');
+                        if (pwaSource !== 'Bunker-Placeholder') {
+                            finalSrc = testUrl;
+                            break;
+                        }
+                    }
+                }
+            } catch (err) {
+                // Ignora e passa all'estensione successiva
+            }
+        }
+        return finalSrc;
+    };
 
     const loadSlot = async (id) => {
         try {
-            if (!initGallery_OnLine && id > realGalleryCount) {
-                return null;
-            }
+            if (!initGallery_OnLine && id > realGalleryCount) return null;
 
             const wrap = document.createElement('div');
             wrap.className = 'gal-card';
-            const img = document.createElement('img');
+            const itemData = (DATA?.gallery?.[id - 1] && DATA.gallery[id - 1][lang]) ? DATA.gallery[id - 1][lang] : "";
+            wrap.innerHTML = `
+                <div class="gal-img-wrapper">
+                    <img src="${loaderGif}" class="gal-img" loading="lazy" alt="${itemData}">
+                </div>
+                <div class="zoom-icon-badge" title="Zoom">${ICONS.zoom}</div>
+            `;
+            root.appendChild(wrap);
+            const imgEl = wrap.querySelector('.gal-img');
+            const basePath = `${DATA?.config?.paths?.gallery}${id}`;
+            const resolvedSrc = await resolveGalleryImage(basePath);
 
-            const found = await loadImageAsync(img, DATA?.config?.paths?.gallery, id);
-            if (found) {
-                if (!initGallery_OnLine) {
-                    try {
-                        const response = await fetch(img.src, {
-							method: 'HEAD',
-							cache: 'default',
-							headers: { 'Cache-Control': 'max-age=600' }
-						});
-                        const isPlaceholder = response.headers.get('X-PWA-Source') === 'Bunker-Placeholder';
-                        if (isPlaceholder) {
-                            if (id > realGalleryCount) return null;
-                            wrap.classList.add('img-corrupted');
-                            wrap.style.border = "2px dashed red";
-                        }
-                    } catch (e) {
-                        if (id > realGalleryCount) return null;
-                    }
-                }
-
-                const itemData = (DATA?.gallery?.[id - 1] && DATA.gallery[id - 1][lang]) ? DATA.gallery[id - 1][lang] : "";
-
-                wrap.innerHTML = `
-                    <div class="gal-img-wrapper">
-                        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                             class="gal-img"
-                             loading="lazy"
-                             alt="${itemData}">
-                    </div>
-                    <div class="zoom-icon-badge" title="Zoom">${ICONS.zoom}</div>
-                `;
-                const imgWrapper = wrap.querySelector('.gal-img-wrapper');
-                const dummyImg = imgWrapper.querySelector('.gal-img');
-
-                img.className = 'gal-img';
-                img.loading = 'lazy';
-                img.alt = itemData;
-
-                if (imgWrapper && dummyImg) {
-                    imgWrapper.replaceChild(img, dummyImg);
-                }
-
-                wrap.onclick = () => openZoom(img.src, itemData);
-                return wrap;
+            if (!resolvedSrc) {
+                wrap.remove();
+                return null;
             }
-            return null;
+            imgEl.src = resolvedSrc;
+            wrap.onclick = () => openZoom(imgEl.src, itemData);
+            return wrap;
         } catch (err) {
             return null;
         }
     };
 
+    let consecutiveMissing = 0;
     for (let i = 1; i <= MAX_ATTEMPTS; i++) {
         if (!initGallery_OnLine && i > realGalleryCount) break;
         try {
-            const slotDOM = await loadSlot(i);
-            if (slotDOM) {
-                root.appendChild(slotDOM);
+            const result = await loadSlot(i);
+            if (!result) {
+                consecutiveMissing++;
+                if (consecutiveMissing >= 2) break;
+            } else {
+                consecutiveMissing = 0;
             }
-        } catch (loopErr) {}
+        } catch (loopErr) {
+            return null;
+        }
     }
 }
 
-const _loaderGif = "data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOdKcyKyvJWwiS6EHQHiuFAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRG9rxBQSOCqyK6xPLSm72Z1G2LIuE8kyVP6AkAAAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pL5ezPXIEMHnEfVIBhYQrJkaaqCAqaJEcCZ7DRGKAq7d6r6DL3WJ6is6RVOfpAlKMBIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqSUs96YpDT9f0f98S8Zctf00Sg5BCfscRAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOdKcyKyvJWwiS6EHQHiuFAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRG9rxBQSOCqyK6xPLSm72Z1G2LIuE8kyVP6AkAAAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pL5ezPXIEMHnEfVIBhYQrJkaaqCAqaJEcCZ7DRGKAq7d6r6DL3WJ6is6RVOfpAlKMBIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqSUs96YpDT9f0f98S8Zctf00Sg5BCfscRAAA7";
+let checkSpecials_OnLine = null;
 async function checkSpecials(isManual = false, shouldShow = true) {
+    if (checkSpecials_OnLine === null) {
+        checkSpecials_OnLine = await _checkRealOnlineStatus();
+    }
     const container = document.getElementById('specials-container');
     const popup = document.getElementById('specials-popup');
     if (!container || !popup) return;
@@ -1176,7 +1295,58 @@ async function checkSpecials(isManual = false, shouldShow = true) {
     container.innerHTML = "";
     let foundAny = false;
 
-    const internalRenderSet = async (items, prefix, title) => {
+    let hasActiveSW = null;
+    try {
+        hasActiveSW = await waitForServiceWorker();
+        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
+            await hasActiveSW.catch(() => {});
+        }
+    } catch (e) {
+        hasActiveSW = null;
+    }
+
+    const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
+    const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
+    const loaderGif = window.APP_CONFIG.svg_loading;
+
+    const resolveSpecialImage = async (basePath) => {
+        let finalSrc = null;
+        for (const ext of prioritizedExts) {
+            const cleanExt = ext.replace(/^\./, "");
+            const testUrl = `${basePath}.${cleanExt}`;
+
+            try {
+                if (hasActiveSW) {
+                    const isValid = await new Promise((resolve) => {
+                        const tempImg = new Image();
+                        tempImg.onload = () => resolve(true);
+                        tempImg.onerror = () => resolve(false);
+                        tempImg.src = testUrl;
+                    });
+                    if (isValid) {
+                        finalSrc = testUrl;
+                        break;
+                    }
+                } else {
+                    const response = await fetch(testUrl, {
+                        method: 'HEAD',
+                        cache: 'default',
+                        headers: { 'Cache-Control': 'max-age=600' }
+                    });
+                    if (response && response.ok) {
+                        const pwaSource = response.headers.get('X-PWA-Source');
+                        if (pwaSource !== 'Bunker-Placeholder') {
+                            finalSrc = testUrl;
+                            break;
+                        }
+                    }
+                }
+            } catch(err){}
+        }
+        return finalSrc;
+    };
+
+    const renderSpecialSet = async (items, prefix, title) => {
         if (!items || items.length === 0) return;
 
         const h = document.createElement('div');
@@ -1184,53 +1354,55 @@ async function checkSpecials(isManual = false, shouldShow = true) {
         h.innerText = title;
         container.appendChild(h);
 
-        const cardProx = items.map(async (item) => {
-            const card = document.createElement('div');
-            card.className = 'special-item-card';
-            const titolo = lang === 'it' ? item.it_t : item.en_t;
-            const desc = lang === 'it' ? item.it_d : item.en_d;
+        for (const item of items) {
+            try {
+                const card = document.createElement('div');
+                card.className = 'special-item-card';
+                const titolo = lang === 'it' ? item.it_t : item.en_t;
+                const desc = lang === 'it' ? item.it_d : item.en_d;
 
-            card.innerHTML = `
-                <div class="special-top-area">
-                    <div class="special-card-img-wrapper">
-                        <img id="img-${prefix}${item.id}" src="" alt="${titolo}" class="special-img" loading="lazy">
+                card.innerHTML = `
+                    <div class="special-top-area">
+                        <div class="special-card-img-wrapper">
+                            <img id="img-${prefix}${item.id}" src="${loaderGif}" alt="${titolo}" class="special-img" loading="lazy">
+                        </div>
+                        <div class="zoom-icon-badge">${ICONS.zoom}</div>
                     </div>
-                    <div class="zoom-icon-badge">${ICONS.zoom}</div>
-                </div>
-                <div class="special-text-content">
-                    <h4>${titolo}</h4>
-                    <div class="divider-oro"></div>
-                    <p>${desc}</p>
-                </div>`;
+                    <div class="special-text-content">
+                        <h4>${titolo}</h4>
+                        <div class="divider-oro"></div>
+                        <p>${desc}</p>
+                    </div>`;
 
-            container.appendChild(card);
-            const imgEl = card.querySelector('.special-img');
-            const imgWrapper = card.querySelector('.special-card-img-wrapper');
+                container.appendChild(card);
+                const imgEl = card.querySelector('.special-img');
+                const imgWrapper = card.querySelector('.special-card-img-wrapper');
+                const basePath = `${DATA?.config?.paths?.specials}${prefix}${item.id}`;
 
-            const found = await loadImageAsync(imgEl, DATA.config.paths.specials, prefix + item.id);
-            if (found) {
+                const resolvedSrc = await resolveSpecialImage(basePath);
+                if (!resolvedSrc) {
+                    imgWrapper.style.display = 'none';
+                    card.style.borderRadius = "12px";
+                    continue;
+                }
+
                 foundAny = true;
+                imgEl.src = resolvedSrc;
                 card.style.cursor = "pointer";
-                card.onclick = () => openZoom(imgEl.src, titolo);
-            } else {
-
-                imgWrapper.style.display = 'none';
-                card.style.borderRadius = "12px";
-            }
-        });
-
-        await Promise.all(cardProx);
+                card.onclick = () => openZoom(resolvedSrc, titolo);
+            } catch(err){}
+        }
     };
 
     if (DATA?.config) {
         const sMap = DATA.config.specials_map || {};
-
-        await Promise.all([
-            internalRenderSet(DATA.specials.pizze, sMap.pizze || 'pz_', DATA[lang].specials_pizze_title),
-            internalRenderSet(DATA.specials.piatti, sMap.piatti || 'pi_', DATA[lang].specials_piatti_title)
-        ]);
+        if (DATA?.specials?.pizze) {
+            await renderSpecialSet(DATA.specials.pizze, sMap.pizze || 'pz_', DATA[lang].specials_pizze_title);
+        }
+        if (DATA?.specials?.piatti) {
+            await renderSpecialSet(DATA.specials.piatti, sMap.piatti || 'pi_', DATA[lang].specials_piatti_title);
+        }
     }
-
     if (!foundAny && popup.style.display === 'flex' && !isManual) {
         closeSpecials();
     }
@@ -1255,7 +1427,7 @@ function handleDoc(fileName, btn) {
     }
 }
 
-function openZoom(src, description = "") {
+async function openZoom(src, description = "") {
     const popup = document.getElementById('legal-popup');
     const iframe = document.getElementById('legal-iframe');
     const loaderGif = window.APP_CONFIG.svg_loading;
@@ -1281,8 +1453,10 @@ function openZoom(src, description = "") {
 
     const lastDot = src.lastIndexOf('.');
     let basePath = src;
+    let originalExt = '';
     if (lastDot !== -1 && (src.length - lastDot) <= 6) {
         basePath = src.substring(0, lastDot);
+        originalExt = src.substring(lastDot).toLowerCase();
     }
 
     const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
@@ -1301,33 +1475,92 @@ function openZoom(src, description = "") {
         if (typeof toggleFloatingButtons === "function") toggleFloatingButtons(false);
     }
 
-    const tryNextFormat = async (index) => {
-        if (index >= prioritizedExts.length) {
-            zoomImg.src = window.APP_CONFIG.svg_logo;
-            return;
+    let hasActiveSW = null;
+    try {
+        hasActiveSW = await waitForServiceWorker();
+        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
+            await hasActiveSW.catch(() => {});
         }
+    } catch (e) {
+        hasActiveSW = null;
+    }
 
-        const targetSrc = `${basePath}${prioritizedExts[index]}`;
+    let finalSrc = null;
 
-        try {
-            const response = await fetch(targetSrc, {
-                method: 'HEAD',
-                cache: 'default',
-                headers: { 'Cache-Control': 'max-age=600' }
-            });
+    // ☑️ test intelligente: priorità all'estensione originale se valida
+    const testOrder = [];
+    if (originalExt && prioritizedExts.includes(originalExt)) {
+        testOrder.push(originalExt);
+    }
+    prioritizedExts.forEach(ext => {
+        if (!testOrder.includes(ext)) testOrder.push(ext);
+    });
 
-            if (response && response.ok) {
-                const pwaSource = response.headers.get('X-PWA-Source');
-                if (pwaSource === 'Bunker-Placeholder') {
-                    return tryNextFormat(index + 1);
+    if (hasActiveSW) {
+        // ⚡ CON SERVICE WORKER ATTIVO ( Test sequenziale con oggetto Image )
+        for (const ext of testOrder) {
+            const cleanExt = ext.replace(/^\./, "");
+            const testUrl = `${basePath}.${cleanExt}`;
+            try {
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    cache: 'force-cache'
+                });
+
+                if (response && response.ok) {
+                    const pwaSource = response.headers.get('X-PWA-Source');
+                    if (pwaSource === 'Bunker-Placeholder') {
+                        continue;
+                    }
+
+                    const isValidImg = await new Promise((resolve) => {
+                        const tempImg = new Image();
+                        tempImg.onload = () => resolve(true);
+                        tempImg.onerror = () => resolve(false);
+                        tempImg.src = testUrl;
+                    });
+
+                    if (isValidImg) {
+                        finalSrc = testUrl;
+                        break;
+                    }
                 }
-                zoomImg.src = targetSrc;
-                return;
-            }
-        } catch (err) {}
-        return tryNextFormat(index + 1);
-    };
-    tryNextFormat(0);
+            } catch (err) {}
+        }
+    } else {
+        // 🌐 SENZA SERVICE WORKER ( Test HEAD sequenziale per evitare sovraccarichi 503 )
+        for (const ext of testOrder) {
+            const cleanExt = ext.replace(/^\./, "");
+            const targetUrl = `${basePath}.${cleanExt}`;
+            try {
+                const response = await fetch(targetUrl, {
+                    method: 'HEAD',
+                    cache: 'default',
+                    headers: { 'Cache-Control': 'max-age=600' }
+                });
+                if (response && response.ok) {
+                    const pwaSource = response.headers.get('X-PWA-Source');
+                    if (pwaSource !== 'Bunker-Placeholder') {
+
+                        // Doppia verifica di integrità con Image()
+                        const isValidImg = await new Promise((resolve) => {
+                            const checkImg = new Image();
+                            checkImg.onload = () => resolve(true);
+                            checkImg.onerror = () => resolve(false);
+                            checkImg.src = targetUrl;
+                        });
+
+                        if (isValidImg) {
+                            finalSrc = targetUrl;
+                            break;
+                        }
+                    }
+                }
+            } catch (err) {}
+        }
+    }
+    zoomImg.onerror = null;
+    zoomImg.src = finalSrc || (window.APP_CONFIG && window.APP_CONFIG.svg_logo ? window.APP_CONFIG.svg_logo : src);
 }
 
 function closeLegal() {
@@ -1779,7 +2012,7 @@ navigator.serviceWorker.addEventListener('message', hSwMessages);
 
             if (!X) {
                 if (!DATA) {
-					const response = await fetch(File_Json_DB, { method: 'GET'});
+					const response = await fetch(File_Json_DB);
 					DATA = await response.json();
 					console.log("PWA: Data Ready...");
                 }
@@ -2232,8 +2465,8 @@ const ICONS = {
     safety: `<svg class="svg-ui" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>`,
     orari: `<svg class="svg-ui" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>`,
     call: `<svg class="svg-ui" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`,
-    tel_fisso: `<svg class="svg-ui" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 9c1.38 0 2.5-1.12 2.5-2.5S20.88 4 19.5 4h-15C3.12 4 2 5.12 2 6.5S3.12 9 4.5 9h2c.55 0 1-.45 1-1V7h9v1c0 .55.45 1 1 1h2z"/><path fill-rule="evenodd" d="M21 19v-2c0-2.21-1.79-4-4-4H7c-2.21 0-4 1.79-4 4v2c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-4.8a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6zm0 1a0.6 0 1 1 0 1.2 0.6 0.6 0 0 1 0-1.2zm1.6 0.4a0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm0.7 1.3a0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-0.7 1.3a0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-1.6 0.4a0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-1.6-0.4a0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-0.7-1.3a0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm0.7-1.3a0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1z" clip-rule="evenodd"/></svg>`,
-    legal_nav: `<svg class="svg-ui" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
+    tel_fisso: `<svg class="svg-ui" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 9c1.38 0 2.5-1.12 2.5-2.5S20.88 4 19.5 4h-15C3.12 4 2 5.12 2 6.5S3.12 9 4.5 9h2c.55 0 1-.45 1-1V7h9v1c0 .55.45 1 1 1h2z"/><path fill-rule="evenodd" d="M21 19v-2c0-2.21-1.79-4-4-4H7c-2.21 0-4 1.79-4 4v2c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-4.8a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6zm0 1a0.6 0.6 0 1 1 0 1.2 0.6 0.6 0 0 1 0-1.2zm1.6 0.4a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm0.7 1.3a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-0.7 1.3a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-1.6 0.4a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-1.6-0.4a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm-0.7-1.3a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1zm0.7-1.3a0.5 0.5 0 1 1 0 1 0.5 0.5 0 0 1 0-1z" clip-rule="evenodd"/></svg>`,
+	legal_nav: `<svg class="svg-ui" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
     vcard: `<svg class="svg-ui" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>`,
     PWA: `<svg class="svg-ui" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" fill="none" /><g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 2L4 6v8l8 4 8-4V6l-8-4z"/><path d="M12 18V10"/><path d="M20 6l-8 4-8-4"/></g><text x="12" y="23" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="5" font-weight="900" stroke="none" fill="currentColor" style="user-select: none; letter-spacing: 0.5px;">PWA</text></svg>`,
     mail: `<svg class="svg-ui" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>`,
