@@ -8,7 +8,8 @@
 > 🌀🧪 **Questo SDK + DashBoard e un PoC**
 > 
 > 📦 **FrameWork Panzer <br> SDK BETA v1.1 :**
->    - **Update: molte migliorie di bug 🪳🐛**
+>    - **Update: 🪳🐛 BUG Fix ServiceWorker. ( ⚙️🪖 Panzer )**
+>    - **Update: 🪳🐛 BUG Fix, ( 🔒 Sandbox CSP )**
 > 
 > - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'**SDK aggiornata con:**
 >    - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo `dopo 7s minimo`, o Massimo personalizzato di Time-out per dichiarare lo stato **Incognito del Browser!**
@@ -62,10 +63,12 @@
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
 
- - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 Sessione di BUG...`
-    - 🪳 **Molti Bug Fixed**
+ - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 Sessione di BUG Fix`
+    - 🪳 **Molti Bug Fixed !**
     - 🚀 **SWR, Strategia migliorata su reti degradate.**
-
+    - 🔀🎭 **Fix: Regolatore di Flusso Polimorfo, ora si adatta alle reti degradate e decide la strategia migliore.**
+    - 🎯 **Riorganizzazione Del Evento Fetch Del SW ( ⚙️🪖 ), Per Il NetworkFirst/SaveBackground, SWR, CacheFirst ( Off-line )**
+ 
   - **🪖 NOVITÀ v7.9+ :** <br> `Sessione di 🪨 Hardening Mirato contro il Red-Team 🔴`
     - 🔍 **1. Validazione Forense Blob (`isValidBlob`)**
     - 🧹 **SVG & Anti-Polyglot:** Blocco tag ostili (`<script>`, `<iframe>`), event handler inline (`onload=`) e signature di script in immagini raster (es. `PNG`, `WEBP`, `JPEG`).
