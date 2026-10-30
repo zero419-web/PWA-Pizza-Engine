@@ -1,11 +1,11 @@
 /**
  * 🛡️ PanzerSDK - Beta v1.0.0200
- * 
+ *
  * Client Bridge v1.4.3 ( Bunker Mode 🛡️📦 )
- * 
+ *
  * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
- * 
+ *
  * 📜 License: EUPL-1.2
  */
 export class PanzerSDK {
@@ -54,7 +54,7 @@ export class PanzerSDK {
         this.onLogMessage = options.onLogMessage || (() => {});
 
         this._registerSW();
-        
+
         // 🕵️‍♂️ Avvio automatico del watchdog ambientale e anti-incognito all'istanza dell'SDK usando il timeout configurabile
         this.initPwaEnvironmentCheck(this.checkTimeout);
     }
@@ -127,7 +127,7 @@ const checkPwaInstallabilityCriteria = async () => {
     if (isStandalone) return false;
     return true;
 };
-        
+
         const pwaEventRace = new Promise((resolve) => {
             const timer = setTimeout(() => {
                 window.removeEventListener('beforeinstallprompt', eventHandler);
@@ -164,7 +164,7 @@ const checkPwaInstallabilityCriteria = async () => {
 			this.onLogMessage('warn', "PWA: Rilevata modalità Incognito / Sandbox restrittiva su Chromium.");
             return;
         }
-    
+
         if (!installEventTriggered) {
             if (isChromium && !PWAisInstall) {
                 if( !window.matchMedia('(display-mode: standalone)').matches ){
@@ -188,7 +188,7 @@ const checkPwaInstallabilityCriteria = async () => {
     _showIncognitoBlocker() {
         const cfg = this.incognitoBlocker;
         if (document.getElementById(cfg.ID)) return;
-        
+
         // 🔒 Blocca lo scroll della pagina su tutti i livelli
         document.body.style.overflow = 'hidden';
         if (document.documentElement) {
@@ -276,7 +276,7 @@ const checkPwaInstallabilityCriteria = async () => {
         const targetRoot = document.documentElement || document.body;
         targetRoot.appendChild(blocker);
     }
-    
+
     /**
       * 🧬 UTILITY PROFILO: Recupero dettagliato dei Client Hints del browser
      **/
@@ -342,7 +342,17 @@ const checkPwaInstallabilityCriteria = async () => {
             let retries = 0;
 
             for (const rawUrl of combinedUrls) {
-                const normalizedUrl = new URL(rawUrl, window.location.origin).href;
+                const resolveUrl = (rawUrl, baseUrl = window.location.href) => {
+				  try {
+					  return new URL(rawUrl, baseUrl).href;
+					}catch (e) {
+						//console.error("URL non valido:", rawUrl);
+						this.onLogMessage('error', `❌ URL non valido: ${rawUrl}`);
+						return null;
+					}
+				};
+
+				const normalizedUrl = resolveUrl(rawUrl);
                 let success = false;
 
                 // Tolleranza ai guasti con tentativi di Retry (max 3)
@@ -358,10 +368,10 @@ const checkPwaInstallabilityCriteria = async () => {
                         }
                     } catch (err) {
                         retries++;
-                        this.onSyncRetry({ 
-                            retries, 
-                            request_failed: failed, 
-                            message: `Retry ${attempt}/3 per: ${rawUrl}` 
+                        this.onSyncRetry({
+                            retries,
+                            request_failed: failed,
+                            message: `Retry ${attempt}/3 per: ${rawUrl}`
                         });
                         this.onLogMessage('warn', `⚠️ Tentativo ${attempt}/3 fallito per ${rawUrl}: ${err.message}`);
                     }

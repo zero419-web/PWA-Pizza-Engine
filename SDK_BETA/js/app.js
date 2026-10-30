@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8.1
+ * v1.8.2
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -15,10 +15,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnPurge = document.getElementById('PA-btn-purge');
     const btnClearLog = document.getElementById('PA-btn-clear-log');
     const btnRefreshStorage = document.getElementById('PA-btn-refresh-storage');
-    
+
     const progressBar = document.getElementById('PA-progress-bar');
     const progressText = document.getElementById('PA-progress-text');
-    
+
     const metricCompleted = document.getElementById('metric-completed');
     const metricTotal = document.getElementById('metric-total');
     const metricFailed = document.getElementById('metric-failed');
@@ -43,14 +43,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        '/PWA-Pizza-Engine/SDK_BETA/',
-        '/PWA-Pizza-Engine/SDK_BETA/index.html',
-        '/PWA-Pizza-Engine/SDK_BETA/js/app.js',
-        '/PWA-Pizza-Engine/SDK_BETA/js/SDK.js',
-        '/PWA-Pizza-Engine/SDK_BETA/ServiceWorker.js',
-        '/PWA-Pizza-Engine/SDK_BETA/PA_PWA.webmanifest',
-        '/PWA-Pizza-Engine/SDK_BETA/icon.png',
-        '/PWA-Pizza-Engine/SDK_BETA/Res-PA-manifest.json'
+        '../SDK_BETA/',
+        '../SDK_BETA/index.html',
+        '../SDK_BETA/js/app.js',
+        '../SDK_BETA/js/SDK.js',
+        '../SDK_BETA/ServiceWorker.js',
+        '../SDK_BETA/PA_PWA.webmanifest',
+        '../SDK_BETA/icon.png',
+        '../SDK_BETA/Res-PA-manifest.json'
     ];
 
     const logToTerminal = (level, text) => {
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const applyZoom = () => {
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
-            
+
             // Gestione zoom per PDF (Canvas)
             const canvases = iframeDoc.querySelectorAll('canvas');
             if (canvases.length > 0) {
@@ -151,18 +151,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <html>
                     <head>
                         <meta charset="UTF-8">
-                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; style-src 'unsafe-inline';">
+                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; style-src 'unsafe-inline'; frame-src blob:; object-src blob:;">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
+                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; }
                             body, html { width:100%; height:100%; background:#000; overflow:auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
                             #img-container { display:flex; justify-content:center; align-items:center; min-width:100%; min-height:100%; width:max-content; margin:0 auto; padding:40px 50vw; touch-action: pan-x pan-y; }
-                            img { max-width:100%; height:auto; object-fit:contain; -webkit-touch-callout:none; touch-action: pan-x pan-y; flex-shrink: 0; }
+                            img { max-width:100%; height:auto; object-fit:contain; -webkit-touch-callout:none; touch-action: pan-x pan-y; flex-shrink: 0; pointer-events: none; }
                         </style>
                     </head>
-                    <body oncontextmenu="return false;" ondragstart="return false;">
-                        <div id="img-container">
-                            <img src="${activeObjectUrl}" alt="Risorsa Cifrata Protetta" onload="this.dataset.naturalWidth=this.naturalWidth; this.dataset.naturalHeight=this.naturalHeight; this.style.width=this.naturalWidth+'px';" />
+                    <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
+                        <div id="img-container" oncontextmenu="return false;">
+                            <img src="${activeObjectUrl}"
+                            alt="Risorsa Cifrata Protetta"
+                            oncontextmenu="return false;"
+                            ondragstart="return false;"
+                            onload="this.dataset.naturalWidth=this.naturalWidth; this.dataset.naturalHeight=this.naturalHeight; this.style.width=this.naturalWidth+'px';" />
                         </div>
+                        <script>
+                            document.addEventListener('contextmenu', e => e.preventDefault());
+                            document.addEventListener('dragstart', e => e.preventDefault());
+                            document.addEventListener('keydown', e => {
+                                if ((e.ctrlKey || e.metaKey) && ['s', 'p', 'u', 'i', 'c'].includes(e.key.toLowerCase())) {
+                                    e.preventDefault();
+                                }
+                            });
+                        </script>
                     </body>
                     </html>
                 `;
@@ -176,36 +189,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; connect-src blob: data:;">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body, html { 
-                                width: 100%; 
-                                height: 100%; 
-                                background: #111; 
-                                overflow: auto; 
-                                font-family: sans-serif; 
-                                -webkit-overflow-scrolling: touch; 
-                                touch-action: pan-x pan-y; 
+                            body, html {
+                                width: 100%;
+                                height: 100%;
+                                background: #111;
+                                overflow: auto;
+                                font-family: sans-serif;
+                                -webkit-overflow-scrolling: touch;
+                                touch-action: pan-x pan-y;
                             }
-                            #pdf-container { 
-                                display: flex; 
-                                flex-direction: column; 
-                                align-items: center; 
-                                padding: 40px 50vw; 
-                                min-width: 100%; 
-                                min-height: 100%; 
-                                width: max-content; 
-                                margin: 0 auto; 
-                                gap: 20px; 
-                                touch-action: pan-x pan-y; 
+                            #pdf-container {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                padding: 40px 50vw;
+                                min-width: 100%;
+                                min-height: 100%;
+                                width: max-content;
+                                margin: 0 auto;
+                                gap: 20px;
+                                touch-action: pan-x pan-y;
                             }
-                            canvas { 
-                                max-width: none; 
-                                height: auto; 
-                                box-shadow: 0 4px 15px rgba(0,0,0,0.8); 
-                                background: #fff; 
-                                border-radius: 4px; 
-                                -webkit-touch-callout: none; 
-                                touch-action: pan-x pan-y; 
-                                flex-shrink: 0; 
+                            canvas {
+                                max-width: none;
+                                height: auto;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+                                background: #fff;
+                                border-radius: 4px;
+                                -webkit-touch-callout: none;
+                                touch-action: pan-x pan-y;
+                                flex-shrink: 0;
                             }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
                         </style>
@@ -284,11 +297,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             sandboxFrame.removeAttribute('sandbox');
-            sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts'); 
+            sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             sandboxFrame.srcdoc = renderedContentHtml;
 
             sandboxTitle.textContent = `🔒 Visore Cifrato Read-Only — ${fileName || url}`;
-            
+
             sandboxModal.classList.add('active');
 
             logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente al 100% di default con supporto touch e scroll bidirezionale.`);
@@ -301,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sandboxModal.classList.remove('active');
         sandboxFrame.srcdoc = '';
         sandboxFrame.src = 'about:blank';
-        
+
         if (activeObjectUrl) {
             URL.revokeObjectURL(activeObjectUrl);
             activeObjectUrl = null;
@@ -313,8 +326,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
-        swPath: '/PWA-Pizza-Engine/SDK_BETA/ServiceWorker.js',
-        scope: '/PWA-Pizza-Engine/SDK_BETA/',
+        swPath: '../SDK_BETA/ServiceWorker.js',
+        scope: '../SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
@@ -339,13 +352,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             buttonBg: "#2563eb",
             buttonTextCol: "#ffffff"
         },
-        
+
         onLogMessage: (level, msg) => logToTerminal(level, msg),
-        
+
         onSyncStart: () => {
             setStatusBadge('⚡ Sincronizzazione...', 'badge-sync');
         },
-        
+
         onProgress: (details) => {
             if (details) {
                 const pct = details.percent ? Math.round(details.percent) : 0;
@@ -366,7 +379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (details.request_failed !== undefined) metricFailed.textContent = details.request_failed;
             }
         },
-        
+
         onComplete: (data) => {
             progressBar.value = 100;
             progressText.textContent = '100% (Completato)';
@@ -453,12 +466,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
 
         storageTbody.innerHTML = '';
-        
+
         for (const { asset, isCached } of assetsWithCacheState) {
             const tr = document.createElement('tr');
             const sizeFormatted = asset.size ? (asset.size / 1024).toFixed(1) + ' KB' : 'N/A (Core)';
-            const cacheBadge = isCached 
-                ? `<span style="color: var(--accent-green); font-weight: bold;">🟢 Cifrato & Locale</span>` 
+            const cacheBadge = isCached
+                ? `<span style="color: var(--accent-green); font-weight: bold;">🟢 Cifrato & Locale</span>`
                 : `<span style="color: var(--text-muted);">⚪ Non Presente</span>`;
 
             tr.innerHTML = `
@@ -491,10 +504,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         logToTerminal('info', '📦 Recupero file [ ./Res-PA-manifest.json ] ...');
         const res = await fetch('./Res-PA-manifest.json');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
+
         manifestCache = await res.json();
         logToTerminal('success', `✅ Manifesto caricato: ${manifestCache.ente} (v${manifestCache.version})`);
-        
+
         const totalCombinedCount = new Set([...getDefinedCoreAssets(), ...manifestCache.assets.map(a => a.url)]).size;
         metricTotal.textContent = totalCombinedCount;
 
