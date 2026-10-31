@@ -44,6 +44,7 @@
 | 🌐 Google Chrome |  Supportato ✅ |
 | 🌐 Chromium |  Supportato ✅ |
 | 🧭 Safari | **Non supportato** ❌ |
+| 🦊 FireFox | **Non supportato** ❌ |
 
 > [!TIP]
 > 💡 **Nota:** Progetto pienamente compatibile con altri Browser :
