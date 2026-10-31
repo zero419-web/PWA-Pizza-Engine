@@ -231,7 +231,7 @@
 "pwa_incognito_alert": "⚠️ SISTEMA DI RESILIENZA 🛡️\n\n● 🕵️ STATUS: Privato (Incognito) 🕵️\n● 📡 RETE: Connessione Limitata 🚫\n● 🚀 SPEED: Prestazioni Ridotte 🐢\n● 🌐 WEB: No Resiliente (No Cache) 💾\n● 📜 MODO: Filtro Seppia Attivo (Old-Tech) 🎨\n\n✅ AZIONE NECESSARIA:\n\n● 📑 SCHEDA: Apri in modalità Normale... 🚫🕵️\n● ⚡ POWER: Attiva la Cache-First 📦🔥\n\n🐢 Vuoi continuare comunque in modalità lenta e sbiadita?",
 "pwa_incognito_trash": "🔗 URL copiato!\n\n 🚫 Chiudi questa scheda 📑\nIncolla (🔗 URL) in una Scheda Normale !\nPer la Massima Velocità. 🚀",
 "ErrMsgBox_warning": "⚠️ Attenzione: Rilevato problema di archiviazione. Se sei in Incognito, le funzioni Offline non saranno disponibili.",
-"ErrMsgBox_msg1": "🛡 Modalità Privata Rilevata. 🕵 \n\nAbbiamo notato che stai navigando in Incognito. In questa modalità:\n• 🧹 La cache verrà eliminata alla chiusura.\n• 🚫 Il sito NON sarà disponibile offline.\n• 📲 L'installazione PWA potrebbe fallire."
+"ErrMsgBox_msg1": "🛡 Possibile Modalità Privata Rilevata. ❔🕵 \n\nAbbiamo notato che forse stai navigando in Incognito. In questa modalità:\n• 🧹 La cache verrà eliminata alla chiusura.\n• 🚫 Il sito NON sarà disponibile offline.\n• 📲 Installa La PWA. se Dsponibile..."
   },
   "en": {
     "site_title": "{name}",
@@ -305,6 +305,6 @@
 "pwa_incognito_alert": "⚠️ RESILIENCE SYSTEM 🛡️\n\n● 🕵️ STATUS: Private (Incognite) 🕵️\n● 📡 NETWORK: Limited Connection 🚫\n● 🚀 SPEED: Reduced Performance 🐢\n● 🌐 WEB: Not Resilient (No Cache) 💾\n● 📜 MODE: Sepia Filter Active (Old-Tech) 🎨\n\n✅ REQUIRED ACTION:\n\n● 📑 TAB: Open in Standard Mode... 🚫🕵️\n● ⚡ POWER: Enable Cache-First 📦🔥\n\n🐢 Do you want to continue in slow and faded mode anyway?",
 "pwa_incognito_trash": "🔗 URL copied!\n\n 🚫 Close this tab 📑\nPaste (🔗 URL) into a Standard Tab !\nFor Maximum Speed. 🚀",
 "ErrMsgBox_warning": "⚠️ Warning: Storage issue detected. If you are in Incognito mode, Offline features will not be available.",
-"ErrMsgBox_msg1": "🛡️ Private Mode Detected. 🕵 \n\nWe noticed you are browsing in Incognito mode. In this mode:\n• 🧹 Cache will be cleared upon closing.\n• 🚫 The site will NOT be available offline.\n• 📲 PWA installation may fail."
-  }
+"ErrMsgBox_msg1": "🛡 Possible Private Mode Detected. ❔🕵 \n\nWe noticed that you might be browsing in Incognito mode. In this mode:\n• 🧹 The cache will be cleared when closed.\n• 🚫 The site will NOT be available offline.\n• 📲 Install the PWA, if available..."
+	}
 }
