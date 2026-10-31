@@ -1,4 +1,4 @@
-// v4.9.5
+// v4.9.6
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -16,15 +16,24 @@ let isTransitioning = false;
 
 window.addEventListener('load', () => {
 
-if (window.matchMedia('(display-mode: standalone)').matches) {
-console.log('PWA: Già in esecuzione come app.');
+	if (window.matchMedia('(display-mode: standalone)').matches) {
+		console.log('📲 PWA: Già in esecuzione come APP.');
+		const os = getMobileOS();
+		if (os === 'iOS' || os === 'macOS_safari') {
+			enablePWAButton();
+			const msg1 = d?.ErrMsgBox_msg1 ?? '';
+			if(msg1 !== ''){
+			   showErrorPanel(msg1);
+			}
+			SetupdatePwaStatus('sw_not_work');
+			console.log('📲 PWA: ❌🪖 SW Panzer, Not Supported for Safari( WebKit ) Browser !');
+			return;
+		}
 
-        Sw_PwA_calls(1);
-        return;
-    }
-
-    initPwaCheck(7000);
-
+		Sw_PwA_calls(1);
+		return;
+	}
+		initPwaCheck(7000);
 });
 
 async function Sw_PwA_calls(X = 0){
@@ -71,10 +80,6 @@ const isChromium = profile.brands?.some(item =>
 item.brand.toLowerCase().includes('chrome') ||
 item.brand.toLowerCase().includes('chromium')) || false;
 
-//const estimate = await navigator.storage.estimate();
-//const qMB = Math.round(estimate.quota / (1024 * 1024));
-//alert( 'MB quota: '+ qMB +'n\GB quota: '+ (qMB * 1024) );
-
 let isSuspiciousQuota = false;
 if (isChromium) {
 	isChromium_Browser = true;
@@ -87,7 +92,6 @@ if (isChromium) {
         if(msg1 !== ''){
 		   showErrorPanel(msg1);
 	    }
-        //Sw_PwA_calls(1);
 		SetupdatePwaStatus('sw_not_work');
         return;
 	}
