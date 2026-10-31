@@ -1,4 +1,4 @@
-// v4.9.6
+// v4.9.7
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -20,11 +20,6 @@ window.addEventListener('load', () => {
 		console.log('📲 PWA: Già in esecuzione come APP.');
 		const os = getMobileOS();
 		if (os === 'iOS' || os === 'macOS_safari') {
-			enablePWAButton();
-			const msg1 = d?.ErrMsgBox_msg1 ?? '';
-			if(msg1 !== ''){
-			   showErrorPanel(msg1);
-			}
 			SetupdatePwaStatus('sw_not_work');
 			console.log('📲 PWA: ❌🪖 SW Panzer, Not Supported for Safari( WebKit ) Browser !');
 			return;
