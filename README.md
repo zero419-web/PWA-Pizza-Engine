@@ -2,22 +2,17 @@
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_x_PA-af0000)
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.5+-4f4f00)
 
-# 🌐 Os & Browser Supportati !
-| Os or Browser | Name | Stato |
-| :--- | :--- | :--- |
-| **Sistemi Operativi** | 💻 Windows |  Supportato |
-| | 🍏 macOS |  Supportato |
-| | 🐧 Linux ( Ubuntu, Debian, ecc. ) |  Supportato |
-| | 🤖 Android |  Supportato |
-| | 📱 iOS / iPadOS | ❌ **Non supportato** *( Usa WebKit/Safari 🧭 )* |
-| **Browser** | 🌐 Google Chrome |  Supportato |
-| | 🌐 Chromium |  Supportato |
-| | 🧭 Safari | ❌ **Non supportato** |
+# 🌐 Browser Supportati !
+| Browser | Stato |
+| :--- | :--- |
+| 🌐 Google Chrome |  Supportato |
+| 🌐 Chromium |  Supportato |
+| 🧭 Safari | ❌ **Non supportato** |
 
 > [!TIP]
-> 💡 **Nota:** Il progetto è pienamente compatibile con qualsiasi altro Browser
+> 💡 **Nota:** Progetto pienamente compatibile con altri Browser :
 > 
->  basato sul motore **🌐 Chromium** (` es. Edge, Brave, Opera, Vivaldi, Arc `).
+> Motore di **🌐 Chromium : js V8** (` es. Edge, Brave, Opera, Vivaldi, Arc `).
 
 ***
 
