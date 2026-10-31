@@ -2637,10 +2637,8 @@ const getStoredKey = async () => {
                 const store = transaction.objectStore("keys");
                 const getReq = store.get("master_key");
                 getReq.onsuccess = async () => {
-                    let storedData = getReq.result;
-                    let key = null;
-
-                    if (!storedData) {
+                    let key = getReq.result;
+                    if (!key) {
                         if (vaultExists) {
 							// 💥 FORENSIC ALERT: DB presente ma chiave assente. Possibile attacco di estrazione forzata. Blocco dell'istanza.
                             console.error("⚠️💣 ANOMALIA CRITICA: Vault compromesso, chiave sparita!");
@@ -2650,44 +2648,13 @@ const getStoredKey = async () => {
                             return;
                         }
                         console.info("🔑 SW: Primo avvio, inizializzazione chiave...");
-                        
-                        // Generiamo con extractable: true temporaneo per consentire l'esportazione raw cross-browser
-                        const tempKey = await crypto.subtle.generateKey(
-                            { name: "AES-GCM", length: 256 },
-                            true,
-                            ["encrypt", "decrypt"]
-                        );
-                        
-                        // Esportiamo i byte grezzi per salvarli in modo sicuro su IndexedDB.
-                        const rawKeyBytes = await crypto.subtle.exportKey("raw", tempKey);
-                        store.put(rawKeyBytes, "master_key");
-
-                        // Reimportiamo la chiave impostandola definitivamente come non esportabile (extractable: false)
-                        key = await crypto.subtle.importKey(
-                            "raw",
-                            rawKeyBytes,
+                        key = await crypto.subtle.generateKey(
                             { name: "AES-GCM", length: 256 },
                             false,
                             ["encrypt", "decrypt"]
                         );
-                        
-                        // Bonifica dei byte in RAM
-                        new Uint8Array(rawKeyBytes).fill(0);
-                    } else {
-                        // Retrocompatibilità: se è un oggetto CryptoKey ( Js V8 ) lo usiamo direttamente, altrimenti lo reimportiamo dai byte grezzi
-                        if (storedData instanceof CryptoKey) {
-                            key = storedData;
-                        } else {
-                            key = await crypto.subtle.importKey(
-                                "raw",
-                                storedData,
-                                { name: "AES-GCM", length: 256 },
-                                false,
-                                ["encrypt", "decrypt"]
-                            );
-                        }
+                        store.put(key, "master_key");
                     }
-
                     encryptionKey = key;
                     transaction.oncomplete = () => db.close();
                     resolve(key);
@@ -2716,7 +2683,6 @@ const getStoredKey = async () => {
     });
 };
 Object.freeze(getStoredKey);
-
 
 /**
  * 🔐 ARCHITETTURA BUNKER: Cifratura asincrona dei flussi di memoria.
