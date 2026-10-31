@@ -1517,7 +1517,7 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
         }
         // 🪨️ HARDENING 3: Micro-pausa ogni X nodi per non congelare il worker...
         if (nodeState.count % 250 === 0) {
-			 sleep(10);
+			 await sleep(10);
         }
 
         if (typeof val === 'object' && val !== null) {
@@ -1563,9 +1563,12 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
                     targets.push(normalize(CONFIG.ROOT + d.replace(/^(\.\.\/|\.\/)+/, '') + valStr));
                 });
             }
-            await Promise.all([...new Set(targets)].map(async (url) => {
 
-                if (scanSet.has(url) || manifestList.includes(url)) return;
+            // 🚀 Esecuzione sequenziale controllata per evitare saturazione socket e stallo del thread
+            const uniqueTargets = [...new Set(targets)];
+            for (const url of uniqueTargets) {
+                if (syncAbortController?.signal.aborted) break;
+                if (scanSet.has(url) || manifestList.includes(url)) continue;
 
                 try {
                     const timeoutSignal = AbortSignal.timeout(2500);
@@ -1585,10 +1588,10 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
                             const nextUrl = url.replace(/\d+/, n => parseInt(n) + 1);
                             if (!scanSet.has(nextUrl) && !manifestList.includes(nextUrl)) {
                                 const nextProbe = await fetch(nextUrl, {
-                                        method: 'HEAD',
-                                        cache: 'no-cache',
-                                        signal: combinedSignal
-                                    });
+                                    method: 'HEAD',
+                                    cache: 'no-cache',
+                                    signal: combinedSignal
+                                });
                                 if (nextProbe.ok && nextProbe.status === 200) scanSet.add(nextUrl);
                             }
                         }
@@ -1597,7 +1600,7 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
                     // 🪝🛡️⏱️ INNESTO:
                     await injectTimingNoise(startNetworkTime, 45);
                 }
-            }));
+            }
         }
     }
 };
