@@ -1485,7 +1485,7 @@ self.addEventListener('message', (event) => {
                 const knownDirs = new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
 /**
- * 🧠🧬 Universal Object Scanner
+ * 🧠🧬 Universal Object Scanner - v3.0
  * Deep Validation ( 🪨 Hardened 🪖 v7.9+ ).
  * Esegue la scansione ricorsiva polimorfa del database fornito in input il file db.json,
  * isolando chiavi identificative e percorsi per agganciare in modo predittivo gli asset extra correlati.
@@ -1502,7 +1502,7 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
 
     const MAX_NODES_LIMIT = 999;
     
-    // Recupero in sicurezza delle directory note dal contesto di mappatura globale
+    // 🛡️ Sicurezza assoluta dello scope: recupero in sicurezza delle directory note
     const activeKnownDirs = typeof knownDirs !== 'undefined' ? knownDirs : new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
     for (const [key, val] of Object.entries(obj)) {
@@ -1567,42 +1567,48 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
                 });
             }
 
-            // 🚀 Esecuzione sequenziale...
             const uniqueTargets = [...new Set(targets)];
-            for (const url of uniqueTargets) {
+            
+            // 🚀 SMART BATCHING:
+            const BATCH_SIZE = 6;
+            for (let i = 0; i < uniqueTargets.length; i += BATCH_SIZE) {
                 if (syncAbortController?.signal.aborted) break;
-                if (scanSet.has(url) || manifestList.includes(url)) continue;
+                const chunk = uniqueTargets.slice(i, i + BATCH_SIZE);
 
-                try {
-                    const timeoutSignal = AbortSignal.timeout(2500);
-                    const combinedSignal = syncAbortController ?
-                        AbortSignal.any([syncAbortController.signal, timeoutSignal]) :
-                        timeoutSignal;
-                    const probe = await fetch(url, {
-                        method: 'HEAD',
-                        cache: 'no-cache',
-                        signal: combinedSignal
-                    });
-                    if (probe.ok && probe.status === 200) {
-                        scanSet.add(url);
-                        console.info(`🎯🕵️‍♂️ SW Scanner: Asset Agganciato -> ${url}`);
+                await Promise.all(chunk.map(async (url) => {
+                    if (scanSet.has(url) || manifestList.includes(url)) return;
 
-                        if (logic.isSequential && /\d+/.test(fileToProbe)) {
-                            const nextUrl = url.replace(/\d+/, n => parseInt(n) + 1);
-                            if (!scanSet.has(nextUrl) && !manifestList.includes(nextUrl)) {
-                                const nextProbe = await fetch(nextUrl, {
-                                    method: 'HEAD',
-                                    cache: 'no-cache',
-                                    signal: combinedSignal
-                                });
-                                if (nextProbe.ok && nextProbe.status === 200) scanSet.add(nextUrl);
+                    try {
+                        const timeoutSignal = AbortSignal.timeout(2500);
+                        const combinedSignal = syncAbortController ?
+                            AbortSignal.any([syncAbortController.signal, timeoutSignal]) :
+                            timeoutSignal;
+                        const probe = await fetch(url, {
+                            method: 'HEAD',
+                            cache: 'no-cache',
+                            signal: combinedSignal
+                        });
+                        if (probe.ok && probe.status === 200) {
+                            scanSet.add(url);
+                            console.info(`🎯🕵️‍♂️ SW Scanner: Asset Agganciato -> ${url}`);
+
+                            if (logic.isSequential && /\d+/.test(fileToProbe)) {
+                                const nextUrl = url.replace(/\d+/, n => parseInt(n) + 1);
+                                if (!scanSet.has(nextUrl) && !manifestList.includes(nextUrl)) {
+                                    const nextProbe = await fetch(nextUrl, {
+                                            method: 'HEAD',
+                                            cache: 'no-cache',
+                                            signal: combinedSignal
+                                        });
+                                    if (nextProbe.ok && nextProbe.status === 200) scanSet.add(nextUrl);
+                                }
                             }
                         }
+                    } catch (e) {
+                        // 🪝🛡️⏱️ INNESTO:
+                        await injectTimingNoise(startNetworkTime, 45);
                     }
-                } catch (e) {
-                    // 🪝🛡️⏱️ INNESTO:
-                    await injectTimingNoise(startNetworkTime, 45);
-                }
+                }));
             }
         }
     }
