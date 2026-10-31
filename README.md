@@ -2,20 +2,6 @@
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_x_PA-af0000)
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.5+-4f4f00)
 
-# 🌐 Browser Supportati !
-| Browser | Stato |
-| :--- | :--- |
-| 🌐 Google Chrome |  Supportato |
-| 🌐 Chromium |  Supportato |
-| 🧭 Safari | ❌ **Non supportato** |
-
-> [!TIP]
-> 💡 **Nota:** Progetto pienamente compatibile con altri Browser :
-> 
-> Motore di **🌐 Chromium : js V8** (` es. Edge, Brave, Opera, Vivaldi, Arc `).
-
-***
-
 > [!Important]
 >   - 🔃 **Last Update :** `v1.8`
 > 
@@ -52,7 +38,21 @@
 <p align="center"><img src="https://raw.githubusercontent.com/zero419-web/PWA-Pizza-Engine/main/sw_logo.svg" width="200" alt="Panzer v7.x+ Core Logo"></p>
 
 ---
+# 🌐 Browser Supportati !
+| 🌐 Browser | 🔎 Stato |
+| :--- | :--- |
+| 🌐 Google Chrome |  Supportato ✅ |
+| 🌐 Chromium |  Supportato ✅ |
+| 🧭 Safari | **Non supportato** ❌ |
 
+> [!TIP]
+> 💡 **Nota:** Progetto pienamente compatibile con altri Browser :
+> 
+> ⚙️🌐 Motore di **Chromium : js V8 ⚡**
+>
+> `Es. Edge, Brave, Opera, Vivaldi, Arc `.
+
+***
 # 🍕 PIZZA ENGINE <br> PWA Resiliente ad Alta Sicurezza <br> ( ⚙️🪖 **Motore Panzer v7.x+** )
   - 🌀 **Proof of Concept :** <br> ( *PoC* ) di un'architettura software sovrana per <br>Progressive Web App ( 📲 **PWA** ) nel settore della ristorazione, progettata in modalità *🔐 Zero-Trust*. Il sistema garantisce **massima resilienza informatica**, immunità forense ai guasti hardware e piena conformità alle linee guida tecniche 📑 **AgID** e al **📜 Codice dell'Amministrazione Digitale** ( *CAD* ).
 
