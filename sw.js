@@ -1501,6 +1501,9 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
     if (syncAbortController?.signal.aborted) return;
 
     const MAX_NODES_LIMIT = 999;
+    
+    // Recupero in sicurezza delle directory note dal contesto di mappatura globale
+    const activeKnownDirs = typeof knownDirs !== 'undefined' ? knownDirs : new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
     for (const [key, val] of Object.entries(obj)) {
         if (syncAbortController?.signal.aborted) return;
@@ -1559,12 +1562,12 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
             const targets = [primaryUrl];
 
             if (isExplicitFile) {
-                knownDirs.forEach(d => {
+                activeKnownDirs.forEach(d => {
                     targets.push(normalize(CONFIG.ROOT + d.replace(/^(\.\.\/|\.\/)+/, '') + valStr));
                 });
             }
 
-            // 🚀 Esecuzione sequenziale controllata per evitare saturazione socket e stallo del thread
+            // 🚀 Esecuzione sequenziale...
             const uniqueTargets = [...new Set(targets)];
             for (const url of uniqueTargets) {
                 if (syncAbortController?.signal.aborted) break;
