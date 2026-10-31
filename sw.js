@@ -2660,15 +2660,7 @@ const getStoredKey = async () => {
                         
                         // Esportiamo i byte grezzi per salvarli in modo sicuro su IndexedDB.
                         const rawKeyBytes = await crypto.subtle.exportKey("raw", tempKey);
-                        
-                        // 🛠️ Apriamo una transazione readwrite dedicata per il put, prevenendo l'auto-commit sugli await
-                        await new Promise((resPut, rejPut) => {
-                            const putTx = db.transaction("keys", "readwrite");
-                            const putStore = putTx.objectStore("keys");
-                            const putReq = putStore.put(rawKeyBytes, "master_key");
-                            putTx.oncomplete = () => resPut();
-                            putTx.onerror = () => rejPut(putTx.error);
-                        });
+                        store.put(rawKeyBytes, "master_key");
 
                         // Reimportiamo la chiave impostandola definitivamente come non esportabile (extractable: false)
                         key = await crypto.subtle.importKey(
@@ -2697,7 +2689,7 @@ const getStoredKey = async () => {
                     }
 
                     encryptionKey = key;
-                    try { db.close(); } catch (err) {}
+                    transaction.oncomplete = () => db.close();
                     resolve(key);
                 };
                 getReq.onerror = async () => {
