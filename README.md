@@ -76,45 +76,45 @@
 ## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.x+ )
 🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
 
-- **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
-
-- **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 Sessione di BUG Fix`
-    - 🪳 **Bug Fixed : Evento Fetch Del SW ( ⚙️🪖 ),**
-       - **➕ `Content-Length`, risposta del `SW` alle Risorse da servire al Browser.**
+- **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 BUG Fix`
+    - 🪳 **Bug Fixed : `Evento Fetch` Del SW ( ⚙️🪖 ),**
+       - ➕ **`Content-Length`, risposta del `SW` alle Risorse da servire al Browser.**
     - 🐺️🐤 **WATCHDOG DI SICUREZZA :**
        - ➕ **Controllo, 3 tentativi prima di dichiarare se la 🔑 di cifratura e compromessa veramente.**
  
- - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 Sessione di BUG Fix`
+ - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 BUG Fix`
     - 🪳 **Molti Bug Fixed !**
     - 🚀 **SWR, Strategia migliorata su reti degradate.**
-    - 🔀🎭 **Fix: Regolatore di Flusso Polimorfo, ora si adatta alle reti degradate e decide la strategia migliore.**
-    - 🎯 **Riorganizzazione Del Evento Fetch Del SW ( ⚙️🪖 ), Per Il NetworkFirst/SaveBackground, SWR, CacheFirst ( Off-line )**
+    - 🔀🎭 **Fix: `Regolatore di Flusso Polimorfo`, ora si adatta alle reti degradate e decide la strategia migliore.**
+    - 🎯 **Riorganizzazione Del `Evento Fetch` Del SW ( ⚙️🪖 ), Per Il `NetworkFirst/SaveBackground, SWR, CacheFirst ( Off-line )`**
  
-  - **🪖 NOVITÀ v7.9+ :** <br> `Sessione di 🪨 Hardening Mirato contro il Red-Team 🔴`
+  - **🪖 NOVITÀ v7.9+ :** <br> `🪨 Hardening contro il Red-Team 🔴`
     - 🔍 **1. Validazione Forense Blob (`isValidBlob`)**
-    - 🧹 **SVG & Anti-Polyglot:** Blocco tag ostili (`<script>`, `<iframe>`), event handler inline (`onload=`) e signature di script in immagini raster (es. `PNG`, `WEBP`, `JPEG`).
-    - 📄 **PDF, PAdES & CAdES De-Obfuscated:** Finestra di analisi estesa a **4096 byte** per header e footer (per tollerare firme digitali, aggiornamenti incrementali e buste crittografiche `.p7m`), soglia minima a **2 KB** (`2048` byte), decodifica esadecimale, strip commenti/spazi, blocco stream compressi (`/flatedecode`, `/lzwdecode`, ecc.) e isolamento pattern malevoli da `CONFIG.pdf`.
-    - 🧠 **RAM Zero-Out:** Bonifica della memoria con `.fill(0)` sui buffer attivi gestita tramite blocchi `finally` sicuri subito dopo l'analisi o in caso di eccezione.
+       - 🧹 **SVG & Anti-Polyglot:** Blocco tag ostili (`<script>`, `<iframe>`), event handler inline (`onload=`) e signature di script in immagini raster (es. `PNG`, `WEBP`, `JPEG`).
+       - 📄 **PDF, PAdES & CAdES De-Obfuscated:** Finestra di analisi estesa a **4096 byte** per header e footer (per tollerare firme digitali, aggiornamenti incrementali e buste crittografiche `.p7m`), soglia minima a **2 KB** (`2048` byte), decodifica esadecimale, strip commenti/spazi, blocco stream compressi (`/flatedecode`, `/lzwdecode`, ecc.) e isolamento pattern malevoli da `CONFIG.pdf`.
+       - 🧠 **RAM Zero-Out:** Bonifica della memoria con `.fill(0)` sui buffer attivi gestita tramite blocchi `finally` sicuri subito dopo l'analisi o in caso di eccezione.
 
-  - 🧠 **2. Deep Scanner IPC (`universalScanner`):**
-    - 🛑 **Cap Nodi & Profilo:** Limite massimo di **999 nodi per albero** e vincolo tassativo a **12 livelli** di profondità ( *Anti-JSON-Bomb* ).
-    - 🛡️ **Anti-Path Traversal:** Sanitizzazione e scarto di chiavi e percorsi con risalite directory (`../`, `..\`) o null byte (`\0`).
-    - ⚡ **CPU Yielding:** Pausa non-blocking dell'Event Loop ogni 10 nodi per preservare la reattività del thread worker.
+    - 🧠 **2. Deep Scanner IPC (`universalScanner`):**
+       - 🛑 **Cap Nodi & Profilo:** Limite massimo di **999 nodi per albero** e vincolo tassativo a **12 livelli** di profondità ( *Anti-JSON-Bomb* ).
+       - 🛡️ **Anti-Path Traversal:** Sanitizzazione e scarto di chiavi e percorsi con risalite directory (`../`, `..\`) o null byte (`\0`).
+       - ⚡ **CPU Yielding:** Pausa non-blocking dell'Event Loop ogni 10 nodi per preservare la reattività del thread worker.
 
-  - 🔒 **3. Iniezione Security Headers (`injectSecurityHeaders`):**
-    - 🌐 **Fetch Response Hardening:** Riscrittura automatica in-flight degli header HTTP (`nosniff`, `DENY`, `strict-origin-when-cross-origin`, `same-origin`) su ogni risposta intercettata.
+    - 🔒 **3. Iniezione Security Headers (`injectSecurityHeaders`):**
+       - 🌐 **Fetch Response Hardening:** Riscrittura automatica in-flight degli header HTTP (`nosniff`, `DENY`, `strict-origin-when-cross-origin`, `same-origin`) su ogni risposta intercettata.
 
-  
-  - **🪖 NOVITÀ v7.8+ :** <br> **Sessione di 🪨 Hardening generale contro il Red-Team 🔴**
+  - **🪖 NOVITÀ v7.8+ :** <br> `🪨 Hardening TOTALE contro il Red-Team 🔴`
 
-  - **🪖 NOVITÀ v7.7+ :** <br> 🔬🧬 SW Forensics ( DNA Check & Binary Validation )
-Sintesi delle novità di hardening 🪨 implementate in isValidBlob: <br>
-🤯 **Testa ( Header 512 Byte ) :** <br> Analisi dei primi 512 byte del file per la verifica stringente dei Magic Bytes reali, bloccando sul nascere lo spoofing del MIME-type e le estensioni camuffate. <br>
-👣 **Coda ( Tail Check ) :** <br> Test di lettura a basso livello sul terminatore finale via `blob.slice(-5).arrayBuffer()` per escludere troncamenti, file corrotti o stream incompleti. <br>
-🪵 **Corpo & Anti-PDF Obfuscation ( ❌📜 ) :** Scansione dei payload PDF con supporto alla decodifica di tecniche di offuscamento (stringhe esadecimali/ottali, annotazioni annidate, flussi encodati) ed eradicazione di vettori malevoli (/JS, /JavaScript, /OpenAction, /Launch). <br>
-**✅ Risultato :** <br> Neutralizza il Cache Poisoning ☠️, azzera i crash silenziosi del Service Worker dovuti a eccezioni di lettura e forza l'azzeramento della memoria di lavoro ( *wipeRAM()* ) in caso di fallimento o abort dell'operazione.
+  - **🪖 NOVITÀ v7.7+ :** <br> `🪨 Hardening contro il Red-Team 🔴`
+     - 🔬🧬 **SW Forensics ( DNA Check & Binary Validation ), in isValidBlob() :**
+     - 🤯 **Testa ( Header 512 Byte ) :** <br> Analisi dei primi 512 byte del file per la verifica stringente dei Magic Bytes reali, bloccando sul nascere lo spoofing del MIME-type e le estensioni camuffate.
+     - 👣 **Coda ( Tail Check ) :** <br> Test di lettura a basso livello sul terminatore finale via `blob.slice(-5).arrayBuffer()` per escludere troncamenti, file corrotti o stream incompleti.
+     - 🪵 **Corpo & Anti-PDF Obfuscation ( ❌📜 ) :** Scansione dei payload PDF con supporto alla decodifica di tecniche di offuscamento (`stringhe esadecimali/ottali, annotazioni annidate, flussi encodati`) ed eradicazione di vettori malevoli (`/JS, /JavaScript, /OpenAction, /Launch`). <br>
+**✅ Risultato :** <br> Neutralizza il Cache Poisoning ☠️, azzera i crash silenziosi del Service Worker dovuti a eccezioni di lettura e forza l'azzeramento della memoria di lavoro ( *wipeRAM()* 🧽 ) in caso di fallimento o abort dell'operazione.
 
-  - **🪖 NOVITÀ v7.6+ :** <br> Integrazione di protocolli <br> **🏴‍☠️ Anti-Profiling :** <br>Ogni punto di errore è stato convertito in un " 🕳️ *Black Hole* " informativo; la **sterilizzazione degli stack trace e l'iniezione di rumore temporale 💉⏱️** previene attacchi di tipo *side-channel* e la profilazione del **🏴‍☠️🔴 Red Team.**
+  - **🪖 NOVITÀ v7.6+ :** <br> `➕ Funzionalità...`
+     - **Integrazione di protocolli 🏴‍☠️ Anti-Profiling :** <br>Ogni punto di errore è stato convertito in un " 🕳️ *Black Hole* " informativo; la **sterilizzazione degli stack trace e l'iniezione di rumore temporale 💉⏱️** previene attacchi di tipo *side-channel* e la profilazione del **🏴‍☠️🔴 Red Team.**
+
+- **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
 
 - **🔄🌐🛡️🔗 Dynamic Adaptive Network Resiliency :** <br> Algoritmo proprietario che adatta dinamicamente i timeout di rete basandosi su 5 profili telemetrici hardware di velocità della connessione.
 
