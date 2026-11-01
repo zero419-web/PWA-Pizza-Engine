@@ -2056,9 +2056,14 @@ self.addEventListener('fetch', (event) => {
 						status: 504,
 						statusText: 'Service Unavailable',
 						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+					});
 				}
 			}else{
-				return false;
+				return new Response(`❌🌐 ERROR: NetworkFirst ❌📡🤥`, { 
+					status: 504,
+					statusText: 'Service Unavailable',
+				    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+			    });
 			}
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
@@ -2076,17 +2081,14 @@ self.addEventListener('fetch', (event) => {
 			}
 			// 🌐💾 NetworkFirst & Save Backgroud ...
 			//await waitTillIdle();
-			const SWR_SAVE_RESP = await SWR_SAVE(event);
-			if( SWR_SAVE_RESP !== false ){
-				return SWR_SAVE_RESP;
-			}
-		}else if( finalStrategy === 'SWR' ){
+			return await SWR_SAVE(event);
+		} else if( finalStrategy === 'SWR' ){
 			// SWR 💾🔍
 		  	// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
 			if ( !isLogicEnabled ) {
 				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 				return injectSecurityHeaders(await fetch(event.request));
-			}else{
+			} else {
 				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
 				if( !isSyncing ){
 					event.waitUntil( SWR_SAVE(event) );
@@ -2238,8 +2240,7 @@ self.addEventListener('fetch', (event) => {
 		    // 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 		    // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
 		    const contentsType = event.request.headers.get('Accept') || "";
-		    isHTML = contentsType.includes('text/html');
-		    isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
+uuuuuuuuuu7hhhhhhhhhhhhhhhhhhhhh		    isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
 		    const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
 		    const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
 		    isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
