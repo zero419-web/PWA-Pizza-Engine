@@ -73,9 +73,7 @@
  </a>
 </h2>
 
-## 🛠️ Caratteristiche Core :<br>( ⚙️🪖 v7.x+ )
-🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
-
+## 📣⚙️🪖 NOVITÀ & BUG Fix & Altro...
 - **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 BUG Fix`
     - 🪳 **Bug Fixed : `Evento Fetch` Del SW ( ⚙️🪖 ),**
        - ➕ **`Content-Length`, risposta del `SW` alle Risorse da servire al Browser.**
@@ -114,7 +112,12 @@
   - **🪖 NOVITÀ v7.6+ :** <br> `➕ Funzionalità...`
      - **Integrazione di protocolli 🏴‍☠️ Anti-Profiling :** <br>Ogni punto di errore è stato convertito in un " 🕳️ *Black Hole* " informativo; la **sterilizzazione degli stack trace e l'iniezione di rumore temporale 💉⏱️** previene attacchi di tipo *side-channel* e la profilazione del **🏴‍☠️🔴 Red Team.**
 
-- **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
+***
+
+## 🛠️ Caratteristiche :<br>( ⚙️🪖 v7.x+ )
+🔹💜 Il cuore del sistema è un **Service Worker** ( `sw.js` ) ad altissima specializzazione, operante come entità autonoma tramite i seguenti moduli nativi :
+
+- **🔐🌡️🛡️ Jittered Thermal Shield Race :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
 
 - **🔄🌐🛡️🔗 Dynamic Adaptive Network Resiliency :** <br> Algoritmo proprietario che adatta dinamicamente i timeout di rete basandosi su 5 profili telemetrici hardware di velocità della connessione.
 
