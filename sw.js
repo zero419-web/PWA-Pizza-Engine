@@ -1784,7 +1784,7 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
         profiles[key].timeout === netProfile.timeout
     ) || 'Medium';
 
-	const isDegradedNetwork = ( netProfile === 'Verylow' || netProfile === 'Low' );
+	const isDegradedNetwork = ( netProfile !== 'Ultrafast' || netProfile !== 'Fast' );
 
     switch (profileName) {
         case 'Ultrafast':
@@ -1796,7 +1796,6 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
         case 'Verylow':
         default:
             if ( hasCache || isDegradedNetwork ) {
-                //console.info(`🌐👮‍♂️ SW: Rete Degradata, [ ${profileName} ].\n SWR(Sate-While-Revalidate), ON per continuità operativa...`);
                 return 'SWR';
             }
             return 'NetworkFirst';
@@ -2002,7 +2001,7 @@ self.addEventListener('fetch', (event) => {
                             }
                         } else {
                             console.warn("📦⚠️ SW: Update cache fallito:", cleanCacheErr);
-                            throw cleanRetryErr; // Rilanciamo l'errore già accecato verso il catch superiore
+                            throw cleanCacheErr; // Rilanciamo l'errore già accecato verso il catch superiore
                         }
                     } finally {
                         if (bufferToClear) {
@@ -2069,25 +2068,27 @@ self.addEventListener('fetch', (event) => {
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
-		// 🎯 STRATEGIA: SWR se c'è cache ( zero attese su reti lente ), altrimenti Network-First
-		if( finalStrategy === 'SWR' ){
-			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if ( !(!isLogicEnabled || isSyncing) ) {
-				event.waitUntil( SWR_SAVE(event) );
-				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached :\n ${finalPath} \n [ ${targetCache} ]`);
-			}
-		}else{
-		  	// 🌐 NetworkFirst ...
+		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
+		if( finalStrategy === 'NetworkFirst' ){
+			// 🌐 NetworkFirst ...
 			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
 			if (!isLogicEnabled || isSyncing) {
 				//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
 				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 				return injectSecurityHeaders(await fetch(event.request));
 			}
-			// 🌐 NetworkFirst & Save Backgroud ...
-			await waitTillIdle(50);
+			// 🌐💾 NetworkFirst & Save Backgroud ...
+			//await waitTillIdle(50);
 			return await SWR_SAVE(event);
+		}else if( finalStrategy === 'SWR' ){
+			// SWR 💾🔍
+		  	// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+			if ( !(!isLogicEnabled || isSyncing) ) {
+				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
+				event.waitUntil(SWR_SAVE(event));
+				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
+				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
+			}
 		}
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
