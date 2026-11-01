@@ -1900,12 +1900,6 @@ self.addEventListener('fetch', (event) => {
 			return; // ⏩ Delegato direttamente al browser
 		}
 		*/
-		// 🎯🗄️ Se il vault non è ancora sbloccato all'avvio dopo un reload, 
-	    // diamo priorità al network o bypassiamo temporaneamente per evitare la schermata bianca/offline.
-	    if (!encryptionKey && CORE_ASSETS_SET.has(cleanPath)) {
-	        event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
-	        return;
-	    }
     } catch (e) {
         return; // 🛑 Blocco difensivo in caso di URL telematico corrotto o non parsabile
     }
@@ -2178,133 +2172,137 @@ self.addEventListener('fetch', (event) => {
                 return cached;
             }
         } else if( !cached ) {
-			// 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
-			// Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
-			// Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
-            const dotIdx = finalPath.lastIndexOf('.');
-			let altPath = null;
-            if (dotIdx !== -1) {
-                const basePath = finalPath.substring(0, dotIdx);
-                for (let variantExt of CONFIG.extensions) {
-                    altPath = basePath + '.' + variantExt;
-
-                    if (altPath === finalPath) continue;
-                    const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
-                                      await userCache.match(altPath, { ignoreSearch: true });
-                    if (altCached) {
-                        const contentTypeIMG = altCached.headers.get('Content-Type') || '';
-
-                        if (contentTypeIMG.includes('image/')) {
-                            console.info(`🛸🎯 SW Recovery: Trovata variante -> ${altPath}`);
-                            try {
-                                if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
-                                    const buffer = await altCached.clone().arrayBuffer();
-                                    let decrypted = await decryptBuffer(buffer);
-
-                                    const variantExtLower = variantExt.toLowerCase();
-                                    const exactBuffer = decrypted.buffer.slice(
-					                        decrypted.byteOffset, 
-					                        decrypted.byteOffset + decrypted.byteLength
-					                    );
-					                    const contentLength = exactBuffer.byteLength;
-					                    const secureHeaders = new Headers({
-					                        'Content-Type': detectedContentType,
-					                        'X-PWA-Source': 'Bunker-Decrypted', 
-					                        'Content-Length': contentLength.toString(),
-					                        'Cache-Control': 'private, no-cache, max-age=0',
-					                        'Pragma': 'no-cache',
-					                        'Expires': '0'
-					                    });
-
-                                    if (CONFIG.extExlPHr.includes(variantExtLower)) {
-                                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
-                                    }
-
-                                    const outResponse = new Response(decrypted, { headers: secureHeaders });
-									new Uint8Array(buffer).fill(0);
-                                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
-                                    decrypted = null;
-									return outResponse;
-                                }
-
-                                return altCached.clone();
-                            } catch (decryptErr) {
-								//console.log(`SW Recovery: ${decryptErr} `);
-								console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
-								continue;
-                            }
-                        }
-                    }
-                }
-            }
-			// 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
-			// Fallback finale con iniezione del vettore statico base64 (CONFIG.fallbackImage) in caso di assenza totale.
-			const contentsType = event.request.headers.get('Accept') || "";
-				  isHTML = contentsType.includes('text/html');
-				  isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
-			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
-			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
-				  isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
-			if (isImageRequest || isHTML) {
-				const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
-				const placeholder = await caches.match(placeholderPath);
-				if (placeholder) {
-					try {
-						if (globalPlaceholderBlob === null) {
-							if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
-								const buffer = await placeholder.arrayBuffer();
-								let decrypted = await decryptBuffer(buffer);
-								globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
-								decrypted = null;
-							} else {
-								globalPlaceholderBlob = await placeholder.blob();
-							}
-						}
-						if (isImageRequest && !isHTML && !isExcluded) {
-							console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
-							return new Response(globalPlaceholderBlob, {
-								headers: {
-									'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
-									'X-PWA-Source': 'Bunker-Placeholder'
-								}
-							});
-						}
-					} catch (err) {
-						console.error("❌ SW: Errore decriptazione placeholder:", err);
-					}
-				} else if (finalStrategy !== 'NetworkFirst') {
-					if (isImageRequest && !isHTML && !isExcluded) {
-						console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
-						return new Response(GLOBAL_BROKEN_BLOB, {
-							headers: {
-								'Content-Type': 'image/svg+xml',
-								'X-PWA-Source': 'SW-Emergency-SVG'
-							}
-						});
-					}
-				}
-			}
+		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
+		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
+		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
+		    const dotIdx = finalPath.lastIndexOf('.');
+		    let altPath = null;
+		    if (dotIdx !== -1) {
+		        const basePath = finalPath.substring(0, dotIdx);
+		        for (let variantExt of CONFIG.extensions) {
+		            altPath = basePath + '.' + variantExt;
+		
+		            if (altPath === finalPath) continue;
+		            const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
+		                              await userCache.match(altPath, { ignoreSearch: true });
+		            if (altCached) {
+		                const contentTypeIMG = altCached.headers.get('Content-Type') || '';
+		
+		                if (contentTypeIMG.includes('image/')) {
+		                    console.info(`🛸🎯 SW Recovery: Trovata variante -> ${altPath}`);
+		                    try {
+		                        if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
+		                            const buffer = await altCached.clone().arrayBuffer();
+		                            let decrypted = await decryptBuffer(buffer);
+		
+		                            const variantExtLower = variantExt.toLowerCase();
+		                            const exactBuffer = decrypted.buffer.slice(
+		                                decrypted.byteOffset, 
+		                                decrypted.byteOffset + decrypted.byteLength
+		                            );
+		                            const contentLength = exactBuffer.byteLength;
+		                            
+		                            const secureHeaders = new Headers({
+		                                'Content-Type': contentTypeIMG,
+		                                'X-PWA-Source': 'Bunker-Decrypted', 
+		                                'Content-Length': contentLength.toString(),
+		                                'Cache-Control': 'private, no-cache, max-age=0',
+		                                'Pragma': 'no-cache',
+		                                'Expires': '0'
+		                            });
+		
+		                            if (CONFIG.extExlPHr.includes(variantExtLower)) {
+		                                secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
+		                            }
+		
+		                            const outResponse = new Response(exactBuffer, { headers: secureHeaders });
+		                            new Uint8Array(buffer).fill(0);
+		                            if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+		                            decrypted = null;
+		                            return outResponse;
+		                        }
+		
+		                        return altCached.clone();
+		                    } catch (decryptErr) {
+		                        console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
+		                        continue;
+		                    }
+		                }
+		            }
+		        }
+		    }
+		    // 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
+		    // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
+		    const contentsType = event.request.headers.get('Accept') || "";
+		    isHTML = contentsType.includes('text/html');
+		    isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
+		    const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
+		    const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
+		    isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
+		    
+		    if (isImageRequest || isHTML) {
+		        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
+		        const placeholder = await caches.match(placeholderPath);
+		        if (placeholder) {
+		            try {
+		                if (globalPlaceholderBlob === null) {
+		                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
+		                        const buffer = await placeholder.arrayBuffer();
+		                        let decrypted = await decryptBuffer(buffer);
+		                        
+		                        // Pulizia sicura anche per il placeholder
+		                        const exactPlaceholderBuf = decrypted.buffer.slice(decrypted.byteOffset, decrypted.byteOffset + decrypted.byteLength);
+		                        globalPlaceholderBlob = new Blob([exactPlaceholderBuf], { type: placeholder.headers.get('Content-Type') });
+		                        new Uint8Array(buffer).fill(0);
+		                        decrypted = null;
+		                    } else {
+		                        globalPlaceholderBlob = await placeholder.blob();
+		                    }
+		                }
+		                if (isImageRequest && !isHTML && !isExcluded) {
+		                    console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
+		                    return new Response(globalPlaceholderBlob, {
+		                        headers: {
+		                            'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
+		                            'X-PWA-Source': 'Bunker-Placeholder'
+		                        }
+		                    });
+		                }
+		            } catch (err) {
+		                console.error("❌ SW: Errore decriptazione placeholder:", err);
+		            }
+		        }
+		        
+		        // 🎯 FALLBACK DI EMERGENZA UNIVERSALE (Funziona offline sia su Safari che su Chromium)
+		        if (isImageRequest && !isHTML && !isExcluded) {
+		            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
+		            return new Response(GLOBAL_BROKEN_BLOB, {
+		                headers: {
+		                    'Content-Type': 'image/svg+xml',
+		                    'X-PWA-Source': 'SW-Emergency-SVG'
+		                }
+		            });
+		        }
+		    }
 		}
-	// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
-    // Isola l'ambiente di runtime in caso di avaria totale (assenza di rete e di cache). Evita il crash
-    // erogando l'interfaccia di cortesia sterile a tolleranza di guasto (503) con marcatura forense.
+		// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
 		if (!isImageRequest && isExcluded) {
-			console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
+		    console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
 		}
 		if (isCoreAsset && !isNewInstallation) {
-			console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
-			CoreAssets_Destroy_Caches();
+		    console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
+		    CoreAssets_Destroy_Caches();
 		}
-        if (isHTML) {
-            return await generateErrorPage(globalPlaceholderBlob, url.pathname);
-        }
+		if (isHTML) {
+		    return await generateErrorPage(globalPlaceholderBlob, url.pathname);
+		}
 		const fall_onlineCheck = await checkRealOnline('fetch');
-		if (fall_onlineCheck) {
-			return new Response('📡🚫 Offline', {
-				status: 503,
-				statusText: 'Service Unavailable',
-				headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-			});
+		if (!fall_onlineCheck) {
+		    return new Response('📡🚫 Offline', {
+		        status: 503,
+		        statusText: 'Service Unavailable',
+		        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+		    });
 		}
 
     })());
