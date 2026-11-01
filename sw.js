@@ -2043,11 +2043,12 @@ self.addEventListener('fetch', (event) => {
 					clearTimeout(tId);
 
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
+						console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
 						const responseClone = networkResponse.clone();
 						event.waitUntil(processAndStore(responseClone, fetchSignal));
-						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-						return injectSecurityHeaders(networkResponse);
-					} else if (networkResponse && networkResponse.status === 404) {
+					} 
+					//else if (networkResponse && networkResponse.status === 404) { }
+					if (networkResponse){
 						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 						return injectSecurityHeaders(networkResponse);
 					}
@@ -2065,19 +2066,17 @@ self.addEventListener('fetch', (event) => {
 		if( finalStrategy === 'SWR' ){
 			event.waitUntil( SWR_SAVE(event) );
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			console.info(`👮‍♂⚡️ SW: Erogazione Risorsa da Cached 🗄 :\n ${finalPath} \n [ ${targetCache} ]`);
+			console.info(`👮‍♂🗄 SW: Erogazione Risorsa da Cached:\n ${finalPath} \n [ ${targetCache} ]`);
 		}else{
 			// 🌐 NetworkFirst
 			// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
 			if (!isLogicEnabled || isSyncing) {
-				console.info(`👮‍♂⚡️ SW: Erogazione Risorsa da WEB:\n 🌐 ${finalPath} `);
+				console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB:\n 🌐 ${finalPath} `);
 				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 				return injectSecurityHeaders(await fetch(event.request));
 			}
 
 			// 🌐 NetworkFirst & Save Backgroud...
-			console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
-
 			await waitTillIdle();
 			return await SWR_SAVE(event);
 		}
