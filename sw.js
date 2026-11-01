@@ -2622,7 +2622,7 @@ const verifyVaultIntegrity = async () => {
                 break;
             }
             // applica la pausa proporzionale al carico hardware
-            await waitTillIdle(200, 1000);
+            await waitTillIdle(200, 5000);
         }
         return encryptionKey !== null;
     }
