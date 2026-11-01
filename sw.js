@@ -2070,28 +2070,29 @@ self.addEventListener('fetch', (event) => {
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
 			// 🌐 NetworkFirst ...
-			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+			// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
 			if (!isLogicEnabled || isSyncing) {
 				//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
 				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 				return injectSecurityHeaders(await fetch(event.request));
 			}
 			// 🌐💾 NetworkFirst & Save Backgroud ...
-			await waitTillIdle();
+			//await waitTillIdle();
 			const SWR_SAVE_RESP = await SWR_SAVE(event);
 			if( SWR_SAVE_RESP !== 0 ){
 				return SWR_SAVE_RESP;
 			}
 		}else if( finalStrategy === 'SWR' ){
 			// SWR 💾🔍
-		  	// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if ( !(!isLogicEnabled || isSyncing) ) {
+		  	// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+			if ( !isLogicEnabled ) {
+				return;
+			}else{
 				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
 				const SWR_SAVE_RESP = await SWR_SAVE(event);
-				if( SWR_SAVE_RESP !== 0 ){
+				if( SWR_SAVE_RESP !== 0 && !isSyncing ){
 					event.waitUntil(SWR_SAVE_RESP);
 				}
-				await waitTillIdle();
 				//await waitTillIdle(300, 600);
 				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
@@ -2623,7 +2624,7 @@ const verifyVaultIntegrity = async () => {
                 break;
             }
             // applica la pausa proporzionale al carico hardware
-            await waitTillIdle(200, 5000);
+            await waitTillIdle(200, 1000);
         }
         return encryptionKey !== null;
     }
