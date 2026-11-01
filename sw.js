@@ -1894,10 +1894,18 @@ self.addEventListener('fetch', (event) => {
 		   ) {
 			return; // ⏩ Delegato direttamente al browser
 		}
+		/*
 		if(currentMethod === 'HEAD'){
-			//console.info(`✅ SW: HEAD Request !\n⏩ Delegato direttamente al browser`);
-			//return; // ⏩ Delegato direttamente al browser
+			console.info(`✅ SW: HEAD Request !\n⏩ Delegato direttamente al browser`);
+			return; // ⏩ Delegato direttamente al browser
 		}
+		*/
+		// 🎯🗄️ Se il vault non è ancora sbloccato all'avvio dopo un reload, 
+	    // diamo priorità al network o bypassiamo temporaneamente per evitare la schermata bianca/offline.
+	    if (!encryptionKey && CORE_ASSETS_SET.has(cleanPath)) {
+	        event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+	        return;
+	    }
     } catch (e) {
         return; // 🛑 Blocco difensivo in caso di URL telematico corrotto o non parsabile
     }
