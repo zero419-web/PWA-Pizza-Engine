@@ -79,8 +79,9 @@
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
 
 - **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 Sessione di BUG Fix`
-    - 🪳 **Bug Fixed : Evento Fetch Del SW ( ⚙️🪖 ).**
-    - 🐺️🐤 **WATCHDOG DI SICUREZZA:
+    - 🪳 **Bug Fixed : Evento Fetch Del SW ( ⚙️🪖 ),**
+       - **➕ `Content-Length`, risposta del `SW` alle Risorse da servire al Browser.**
+    - 🐺️🐤 **WATCHDOG DI SICUREZZA :**
        - ➕ **Controllo, 3 tentativi prima di dichiarare se la 🔑 di cifratura e compromessa veramente.**
  
  - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 Sessione di BUG Fix`
