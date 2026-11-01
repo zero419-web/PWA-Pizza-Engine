@@ -1,4 +1,4 @@
-// v4.9.9
+// v5.0.0
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -18,16 +18,6 @@ window.addEventListener('load', () => {
 
 	if (window.matchMedia('(display-mode: standalone)').matches) {
 		console.log('📲 PWA: Già in esecuzione come APP.');
-		
-		/*
-		const os = getMobileOS();
-		if (os === 'iOS' || os === 'macOS_safari') {
-			SetupdatePwaStatus('sw_not_work');
-			console.log('📲 PWA: ❌🪖 SW Panzer, Not Supported for Safari( WebKit ) Browser !');
-			return;
-		}
-		*/
-		
 		Sw_PwA_calls(1);
 		return;
 	}
@@ -173,7 +163,7 @@ const savedPoint = localStorage.getItem('pwa_check_point');
     }else{
 
         try {
-localStorage.setItem('pwa_check_point', now);
+			localStorage.setItem('pwa_check_point', now);
         } catch(e) {}
     }
 
@@ -267,7 +257,6 @@ async function getFullBrowserProfile() {
 
 const getMobileOS = () => {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
-    
     // Rilevamento Firefox (inclusi FxiOS su iOS e Fennec/Firefox su Android/Desktop)
     if (/Firefox|FxiOS|Fennec/i.test(ua)) return 'Firefox';
 
@@ -276,7 +265,6 @@ const getMobileOS = () => {
         const isIOSPreferences = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
         return isIOSPreferences ? 'iOS_safari' : 'iOS';
     }
-
     const isMacDesktop = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua);
     if (isMacDesktop) {
         const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
@@ -301,8 +289,8 @@ let IsTheme = (function() {
     const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
     const defaultTheme = prefersLight ? 'light' : 'dark';
     if (defaultTheme === 'light') document.body.classList.add('light-theme');
-    localStorage.setItem('user_preferred_theme', defaultTheme);
-    return defaultTheme;
+    	localStorage.setItem('user_preferred_theme', defaultTheme);
+    	return defaultTheme;
     } catch (e) {
         return 'dark';
     }
@@ -313,8 +301,8 @@ let lang = (function() {
     const savedLang = localStorage.getItem('user_preferred_lang');
     if (savedLang) return savedLang;
 
-const browserLang = navigator.language || navigator.userLanguage;
-const defaultLang = browserLang.startsWith('it') ? 'it' : 'en';
+	const browserLang = navigator.language || navigator.userLanguage;
+	const defaultLang = browserLang.startsWith('it') ? 'it' : 'en';
 
     localStorage.setItem('user_preferred_lang', defaultLang);
     return defaultLang;
@@ -334,14 +322,13 @@ function resetSpecialsTimer() {
 window.onerror = function(msg, url, line) {
 
     if (msg.includes("ServiceWorker") || msg.includes("QuotaExceededError") || msg.includes("IDBDatabase")) {
-const d = DATA?.[lang];
-const warning = d?.ErrMsgBox_warning ?? '';
-if(warning !== ''){ showErrorPanel(warning); }
-    } else {
-const report = `⚠️ : ${msg}\n ↳📍 [ ${line} ]\n 🌐  ➔ ${url}`;
-        showErrorPanel(report);
-    }
-
+		const d = DATA?.[lang];
+		const warning = d?.ErrMsgBox_warning ?? '';
+		if(warning !== ''){ showErrorPanel(warning); }
+   		 } else {
+			const report = `⚠️ : ${msg}\n ↳📍 [ ${line} ]\n 🌐  ➔ ${url}`;
+        	showErrorPanel(report);
+   		 }
     return false;
 };
 
