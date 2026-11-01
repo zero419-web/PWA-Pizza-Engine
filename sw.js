@@ -1644,6 +1644,7 @@ Object.freeze(universalScanner);
                     const group = uniqueList.slice(i, i + limit);
 
 					console.info(`🗃️🚀 SW: Sync 🗂️ [ ${Math.floor(i/limit) + 1} / ${Math.ceil(List_File_Download/limit)} ] (${group.length} 📄)`);
+					await waitTillIdle(50);
 
 					let abortListener;
 					const abortPromise = new Promise((_, reject) => {
@@ -1661,7 +1662,7 @@ Object.freeze(universalScanner);
 							abortPromise
 						]);
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
-						await waitTillIdle();
+						//await waitTillIdle();
 					} catch (raceError) {
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
 						throw raceError;
@@ -2103,7 +2104,7 @@ self.addEventListener('fetch', (event) => {
                         'Content-Type': detectedContentType,
                         'X-PWA-Source': 'Bunker-Decrypted', 
                         'Content-Length': contentLength.toString(),
-                        'Cache-Control': 'private, no-cache, must-revalidate, max-age=0',
+                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                         'Pragma': 'no-cache',
                         'Expires': '0'
                     });
@@ -2188,7 +2189,7 @@ self.addEventListener('fetch', (event) => {
                                         'Content-Type': contentTypeIMG,
                                         'X-PWA-Source': 'Bunker-Decrypted',
                                          'Content-Length': contentLength.toString(),
-                                        'Cache-Control': 'private, no-cache, must-revalidate, max-age=0',
+                                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                                         'Pragma': 'no-cache',
                                         'Expires': '0'
                                     });
