@@ -2020,7 +2020,7 @@ self.addEventListener('fetch', (event) => {
                 // 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
-			await waitTillIdle();
+			await waitTillIdle(200);
         };
 		const SWR_SAVE = async (event) => {
 			const isOnline = await checkRealOnline('fetch');
@@ -2045,19 +2045,24 @@ self.addEventListener('fetch', (event) => {
 
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
 						console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
-						const responseClone = networkResponse.clone();
-						event.waitUntil(processAndStore(responseClone, fetchSignal));
-					} 
-					//else if (networkResponse && networkResponse.status === 404) { }
-					if (networkResponse){
-						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-						return injectSecurityHeaders(networkResponse);
+						event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
 					}
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(networkResponse);
 				} catch (e) {
 					// 🛡️ Fallback in caso di crash rete
-					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, { status: 504, headers: { 'Content-Type': 'text/plain' } });
+					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, { 
+						status: 504,
+						statusText: 'Service Unavailable',
+						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+					});
 				}
 			}
+			return new Response('📡🚫 Off-line', {
+				status: 503,
+				statusText: 'Service Unavailable',
+				headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+			});
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
@@ -2067,18 +2072,17 @@ self.addEventListener('fetch', (event) => {
 		if( finalStrategy === 'SWR' ){
 			event.waitUntil( SWR_SAVE(event) );
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			console.info(`👮‍♂🗄 SW: Erogazione Risorsa da Cached:\n ${finalPath} \n [ ${targetCache} ]`);
+			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached :\n ${finalPath} \n [ ${targetCache} ]`);
 		}else{
-			// 🌐 NetworkFirst
-			// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
+		  	// 🌐 NetworkFirst ...
+			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
 			if (!isLogicEnabled || isSyncing) {
-				//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB:\n 🌐 ${finalPath} `);
+				//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
 				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 				return injectSecurityHeaders(await fetch(event.request));
 			}
-
-			// 🌐 NetworkFirst & Save Backgroud...
-			//await waitTillIdle(50);
+			// 🌐 NetworkFirst & Save Backgroud ...
+			await waitTillIdle(50);
 			return await SWR_SAVE(event);
 		}
 		if ( cached ) {
