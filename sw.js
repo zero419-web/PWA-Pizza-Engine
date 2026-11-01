@@ -2058,12 +2058,6 @@ self.addEventListener('fetch', (event) => {
 						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 					});
 				}
-			}else{
-				return new Response('📡🚫 Off-line', {
-					status: 503,
-					statusText: 'Service Unavailable',
-					headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-				});
 			}
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
@@ -2088,6 +2082,7 @@ self.addEventListener('fetch', (event) => {
 			if ( !(!isLogicEnabled || isSyncing) ) {
 				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
 				event.waitUntil(SWR_SAVE(event));
+				//await waitTillIdle(300, 600);
 				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
 			}
@@ -2273,7 +2268,7 @@ self.addEventListener('fetch', (event) => {
 		            }
 		        }
 		        
-		        // 🎯 FALLBACK DI EMERGENZA UNIVERSALE (Funziona offline sia su Safari che su Chromium)
+		        // 🎯 FALLBACK DI EMERGENZA.
 		        if (isImageRequest && !isHTML && !isExcluded) {
 		            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
 		            return new Response(GLOBAL_BROKEN_BLOB, {
