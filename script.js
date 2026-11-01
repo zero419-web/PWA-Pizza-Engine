@@ -1,4 +1,4 @@
-// v4.9.8
+// v4.9.9
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -391,7 +391,7 @@ async function loadImageAsync(imgElement, folder, ID) {
             const testUrl = `${folder}${ID}.${cleanExt}`;
             try {
                 const response = await fetch(testUrl, {
-                    method: 'GET',
+                    method: 'HEAD',
                     cache: 'force-cache'
                 });
                 if (response && response.ok) {
@@ -404,6 +404,7 @@ async function loadImageAsync(imgElement, folder, ID) {
                 }
             } catch (err) {
                 // Ignora l'errore di rete puntuale e passa alla prossima estensione
+				continue;
             }
         }
     }
@@ -440,6 +441,7 @@ async function loadImageAsync(imgElement, folder, ID) {
                 }
             } catch (err) {
                 // Continua con l'estensione successiva senza bloccare
+				continue;
             }
         }
     }
