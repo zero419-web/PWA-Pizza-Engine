@@ -2050,13 +2050,14 @@ self.addEventListener('fetch', (event) => {
 					}
 					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 					return injectSecurityHeaders(networkResponse);
-				} catch (e) {
+				} catch (e) { /*
 					// 🛡️ Fallback in caso di crash rete
 					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, { 
 						status: 504,
 						statusText: 'Service Unavailable',
 						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-					});
+					 */
+					return 0;
 				}
 			}else{
 				return 0;
@@ -2076,8 +2077,8 @@ self.addEventListener('fetch', (event) => {
 				return injectSecurityHeaders(await fetch(event.request));
 			}
 			// 🌐💾 NetworkFirst & Save Backgroud ...
+			await waitTillIdle();
 			const SWR_SAVE_RESP = await SWR_SAVE(event);
-			//await waitTillIdle();
 			if( SWR_SAVE_RESP !== 0 ){
 				return SWR_SAVE_RESP;
 			}
@@ -2087,10 +2088,10 @@ self.addEventListener('fetch', (event) => {
 			if ( !(!isLogicEnabled || isSyncing) ) {
 				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
 				const SWR_SAVE_RESP = await SWR_SAVE(event);
-				//await waitTillIdle();
 				if( SWR_SAVE_RESP !== 0 ){
 					event.waitUntil(SWR_SAVE_RESP);
 				}
+				await waitTillIdle();
 				//await waitTillIdle(300, 600);
 				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
