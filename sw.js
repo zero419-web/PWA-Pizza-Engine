@@ -2104,7 +2104,7 @@ self.addEventListener('fetch', (event) => {
                         'Content-Type': detectedContentType,
                         'X-PWA-Source': 'Bunker-Decrypted', 
                         'Content-Length': contentLength.toString(),
-                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                        'Cache-Control': 'private, no-cache, must-revalidate, max-age=0',
                         'Pragma': 'no-cache',
                         'Expires': '0'
                     });
@@ -2189,7 +2189,7 @@ self.addEventListener('fetch', (event) => {
                                         'Content-Type': contentTypeIMG,
                                         'X-PWA-Source': 'Bunker-Decrypted',
                                          'Content-Length': contentLength.toString(),
-                                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                                        'Cache-Control': 'private, no-cache, must-revalidate, max-age=0',
                                         'Pragma': 'no-cache',
                                         'Expires': '0'
                                     });
