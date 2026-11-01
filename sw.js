@@ -2020,7 +2020,7 @@ self.addEventListener('fetch', (event) => {
                 // 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
-			//await waitTillIdle();
+			await waitTillIdle(50);
         };
 		const SWR_SAVE = async (event) => {
 			const isOnline = await checkRealOnline('fetch');
@@ -2046,7 +2046,6 @@ self.addEventListener('fetch', (event) => {
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
 						console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
 						const responseClone = networkResponse.clone();
-						await waitTillIdle(50);
 						event.waitUntil(processAndStore(responseClone, fetchSignal));
 					} 
 					//else if (networkResponse && networkResponse.status === 404) { }
