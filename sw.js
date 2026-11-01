@@ -2057,12 +2057,13 @@ self.addEventListener('fetch', (event) => {
 						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 					});
 				}
+			}else{
+				return new Response('📡🚫 Off-line', {
+					status: 503,
+					statusText: 'Service Unavailable',
+					headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+				});
 			}
-			return new Response('📡🚫 Off-line', {
-				status: 503,
-				statusText: 'Service Unavailable',
-				headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-			});
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
@@ -2070,9 +2071,12 @@ self.addEventListener('fetch', (event) => {
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		// 🎯 STRATEGIA: SWR se c'è cache ( zero attese su reti lente ), altrimenti Network-First
 		if( finalStrategy === 'SWR' ){
-			event.waitUntil( SWR_SAVE(event) );
-			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached :\n ${finalPath} \n [ ${targetCache} ]`);
+			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+			if ( !(!isLogicEnabled || isSyncing) ) {
+				event.waitUntil( SWR_SAVE(event) );
+				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
+				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached :\n ${finalPath} \n [ ${targetCache} ]`);
+			}
 		}else{
 		  	// 🌐 NetworkFirst ...
 			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
