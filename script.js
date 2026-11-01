@@ -1,4 +1,4 @@
-// v4.9.7
+// v4.9.8
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -18,13 +18,16 @@ window.addEventListener('load', () => {
 
 	if (window.matchMedia('(display-mode: standalone)').matches) {
 		console.log('📲 PWA: Già in esecuzione come APP.');
+		
+		/*
 		const os = getMobileOS();
 		if (os === 'iOS' || os === 'macOS_safari') {
 			SetupdatePwaStatus('sw_not_work');
 			console.log('📲 PWA: ❌🪖 SW Panzer, Not Supported for Safari( WebKit ) Browser !');
 			return;
 		}
-
+		*/
+		
 		Sw_PwA_calls(1);
 		return;
 	}
@@ -81,13 +84,18 @@ if (isChromium) {
 	isSuspiciousQuota = true;
 }else{
 	const os = getMobileOS();
-    if (os === 'iOS' || os === 'macOS_safari') {
+    if (os === 'iOS_safari' || os === 'macOS_safari') {
 		enablePWAButton();
 		const msg1 = d?.ErrMsgBox_msg1 ?? '';
         if(msg1 !== ''){
 		   showErrorPanel(msg1);
 	    }
-		SetupdatePwaStatus('sw_not_work');
+		Sw_PwA_calls(1);
+		//SetupdatePwaStatus('sw_not_work');
+        return;
+	}else if(os === 'Firefox'){
+	    console.log('📲 PWA: ❌🪖 SW Panzer,\nNot Supported for \n 🦊 Firefox Browser !');
+	    SetupdatePwaStatus('sw_not_work');
         return;
 	}
 }
@@ -189,7 +197,7 @@ if( checkPwaInstallabilityCriteria === false ){
 }
 
 if (isSuspiciousQuota && !installEventTriggered && isSWRA) {
-	console.log("PWA: Quota sospetta e nessun evento. Attendo timeout...");
+	console.log("PWA: Sospetto O nessun evento. Attendo timeout...");
 	await new Promise(res => setTimeout(res, 333 ));
 }
 
@@ -259,15 +267,25 @@ async function getFullBrowserProfile() {
 
 const getMobileOS = () => {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
-    if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'iOS';
-	const isMacDesktop = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua);
+    
+    // Rilevamento Firefox (inclusi FxiOS su iOS e Fennec/Firefox su Android/Desktop)
+    if (/Firefox|FxiOS|Fennec/i.test(ua)) return 'Firefox';
+
+    // Rilevamento iOS (iPhone, iPad, iPod) e distinzione specifica per Safari su iOS
+    if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+        const isIOSPreferences = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+        return isIOSPreferences ? 'iOS_safari' : 'iOS';
+    }
+
+    const isMacDesktop = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua);
     if (isMacDesktop) {
         const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
         if (isSafari) {
             return 'macOS_safari';
         }
         return 'macOS';
-	}
+    }
+
     if (/android/i.test(ua)) return 'Android';
     return 'Desktop';
 };
@@ -1412,7 +1430,7 @@ function handleDoc(fileName, btn) {
     let baseDir = DATA?.config?.paths?.docs?.[lang]?.dir || '';
     const fullUrl = urlsPaths + baseDir + fileName;
     const os = getMobileOS();
-    if (window.innerWidth < 768 || os === 'iOS') {
+    if (window.innerWidth < 768 || os === 'iOS_safari') {
         window.open(fullUrl, '_blank');
         return;
     }
@@ -1629,7 +1647,7 @@ function switchTheme() {
         }
         localStorage.setItem('user_preferred_theme', IsTheme);
         const os = getMobileOS();
-        if (os === 'iOS' || os === 'macOS_safari') {
+        if (os === 'iOS_safari' || os === 'macOS_safari') {
 			render();
 			SetupdatePwaStatus('ok');
 			enablePWAButton();
@@ -1860,7 +1878,7 @@ if ((window.deferredPrompt || PWAisInstall !== 'true') && isChromium_Browser ) {
   }
     //window.deferredPrompt = null;
     } else {
-        if (os === 'iOS' || os === 'macOS_safari') {
+        if (os === 'iOS_safari' || os === 'macOS_safari') {
             const c = DATA.config;
             handleDoc(c.pdf?.[lang]?.pdfPWA);
         } else if (isAlreadyInstalled) {
@@ -1888,7 +1906,7 @@ async function enablePWAButton() {
         const btn = document.querySelector('.vcard-btn-premium_Disabled');
         if (btn) {
             const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
-            if (((window.deferredPrompt || (os === 'iOS' || os === 'macOS_safari')) && PWAisInstall !== 'true')) {
+            if (((window.deferredPrompt || (os === 'iOS_safari' || os === 'macOS_safari')) && PWAisInstall !== 'true')) {
                 btn.classList.remove('vcard-btn-premium_Disabled');
                 return true;
             }
