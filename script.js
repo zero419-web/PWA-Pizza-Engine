@@ -399,16 +399,8 @@ async function loadImageAsync(imgElement, folder, ID) {
                     if (pwaSource === 'Bunker-Placeholder') {
                         continue;
                     }
-                    const isValidBlobImg = await new Promise((resolve) => {
-                        const tempImg = new Image();
-                        tempImg.onload = () => resolve(true);
-                        tempImg.onerror = () => resolve(false);
-                        tempImg.src = testUrl;
-                    });
-                    if (isValidBlobImg) {
-                        validUrl = testUrl;
-                        break;
-                    }
+                    validUrl = testUrl;
+                    break;
                 }
             } catch (err) {
                 // Ignora l'errore di rete puntuale e passa alla prossima estensione
@@ -1174,7 +1166,7 @@ async function _checkRealOnlineStatus() {
     }
 }
 
-// image loader for any res image...
+// 💾 image loader for any res image...
 const _loaderGif = "data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOdKcyKyvJWwiS6EHQHiuFAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRG9rxBQSOCqyK6xPLSm72Z1G2LIuE8kyVP6AkAAAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pL5ezPXIEMHnEfVIBhYQrJkaaqCAqaJEcCZ7DRGKAq7d6r6DL3WJ6is6RVOfpAlKMBIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqSUs96YpDT9f0f98S8Zctf00Sg5BCfscRAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOdKcyKyvJWwiS6EHQHiuFAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRG9rxBQSOCqyK6xPLSm72Z1G2LIuE8kyVP6AkAAAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pL5ezPXIEMHnEfVIBhYQrJkaaqCAqaJEcCZ7DRGKAq7d6r6DL3WJ6is6RVOfpAlKMBIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqSUs96YpDT9f0f98S8Zctf00Sg5BCfscRAAA7";
 
 let initGallery_OnLine = null;
@@ -1188,61 +1180,6 @@ async function initGallery() {
 
     const realGalleryCount = (DATA && DATA.gallery) ? DATA.gallery.length : 0;
     const MAX_ATTEMPTS = 20;
-    const loaderGif = window.APP_CONFIG.svg_loading;
-
-    let hasActiveSW = null;
-    try {
-        hasActiveSW = await waitForServiceWorker();
-        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
-            await hasActiveSW.catch(() => {});
-        }
-    } catch (e) {
-        hasActiveSW = null;
-    }
-
-    const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
-    const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
-
-    const resolveGalleryImage = async (basePath) => {
-        let finalSrc = null;
-        for (const ext of prioritizedExts) {
-            const cleanExt = ext.replace(/^\./, "");
-            const testUrl = `${basePath}.${cleanExt}`;
-
-            try {
-                if (hasActiveSW) {
-                    // ⚡ SE SW ATTIVO: Verifica tramite oggetto Image nativo in modo sequenziale
-                    const isValid = await new Promise((resolve) => {
-                        const tempImg = new Image();
-                        tempImg.onload = () => resolve(true);
-                        tempImg.onerror = () => resolve(false);
-                        tempImg.src = testUrl;
-                    });
-                    if (isValid) {
-                        finalSrc = testUrl;
-                        break;
-                    }
-                } else {
-                    // 🌐 FALLBACK SENZA SW: Chiamata HEAD di rete sicura
-                    const response = await fetch(testUrl, {
-                        method: 'HEAD',
-                        cache: 'default',
-                        headers: { 'Cache-Control': 'max-age=600' }
-                    });
-                    if (response && response.ok) {
-                        const pwaSource = response.headers.get('X-PWA-Source');
-                        if (pwaSource !== 'Bunker-Placeholder') {
-                            finalSrc = testUrl;
-                            break;
-                        }
-                    }
-                }
-            } catch (err) {
-                // Ignora e passa all'estensione successiva
-            }
-        }
-        return finalSrc;
-    };
 
     const loadSlot = async (id) => {
         try {
@@ -1253,20 +1190,22 @@ async function initGallery() {
             const itemData = (DATA?.gallery?.[id - 1] && DATA.gallery[id - 1][lang]) ? DATA.gallery[id - 1][lang] : "";
             wrap.innerHTML = `
                 <div class="gal-img-wrapper">
-                    <img src="${loaderGif}" class="gal-img" loading="lazy" alt="${itemData}">
+                    <img class="gal-img" loading="lazy" alt="${itemData}">
                 </div>
                 <div class="zoom-icon-badge" title="Zoom">${ICONS.zoom}</div>
             `;
             root.appendChild(wrap);
             const imgEl = wrap.querySelector('.gal-img');
-            const basePath = `${DATA?.config?.paths?.gallery}${id}`;
-            const resolvedSrc = await resolveGalleryImage(basePath);
+            const folderPath = DATA?.config?.paths?.gallery;
 
-            if (!resolvedSrc) {
+            // 🎯 loadImageAsync per gestire il caricamento sicuro.
+            const success = await loadImageAsync(imgEl, folderPath, id);
+
+            if (!success) {
                 wrap.remove();
                 return null;
             }
-            imgEl.src = resolvedSrc;
+            
             wrap.onclick = () => openZoom(imgEl.src, itemData);
             return wrap;
         } catch (err) {
@@ -1312,57 +1251,6 @@ async function checkSpecials(isManual = false, shouldShow = true) {
     container.innerHTML = "";
     let foundAny = false;
 
-    let hasActiveSW = null;
-    try {
-        hasActiveSW = await waitForServiceWorker();
-        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
-            await hasActiveSW.catch(() => {});
-        }
-    } catch (e) {
-        hasActiveSW = null;
-    }
-
-    const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
-    const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
-    const loaderGif = window.APP_CONFIG.svg_loading;
-
-    const resolveSpecialImage = async (basePath) => {
-        let finalSrc = null;
-        for (const ext of prioritizedExts) {
-            const cleanExt = ext.replace(/^\./, "");
-            const testUrl = `${basePath}.${cleanExt}`;
-
-            try {
-                if (hasActiveSW) {
-                    const isValid = await new Promise((resolve) => {
-                        const tempImg = new Image();
-                        tempImg.onload = () => resolve(true);
-                        tempImg.onerror = () => resolve(false);
-                        tempImg.src = testUrl;
-                    });
-                    if (isValid) {
-                        finalSrc = testUrl;
-                        break;
-                    }
-                } else {
-                    const response = await fetch(testUrl, {
-                        method: 'HEAD',
-                        cache: 'default',
-                        headers: { 'Cache-Control': 'max-age=600' }
-                    });
-                    if (response && response.ok) {
-                        const pwaSource = response.headers.get('X-PWA-Source');
-                        if (pwaSource !== 'Bunker-Placeholder') {
-                            finalSrc = testUrl;
-                            break;
-                        }
-                    }
-                }
-            } catch(err){}
-        }
-        return finalSrc;
-    };
-
     const renderSpecialSet = async (items, prefix, title) => {
         if (!items || items.length === 0) return;
 
@@ -1381,7 +1269,7 @@ async function checkSpecials(isManual = false, shouldShow = true) {
                 card.innerHTML = `
                     <div class="special-top-area">
                         <div class="special-card-img-wrapper">
-                            <img id="img-${prefix}${item.id}" src="${loaderGif}" alt="${titolo}" class="special-img" loading="lazy">
+                            <img id="img-${prefix}${item.id}" class="special-img" alt="${titolo}" loading="lazy">
                         </div>
                         <div class="zoom-icon-badge">${ICONS.zoom}</div>
                     </div>
@@ -1394,19 +1282,21 @@ async function checkSpecials(isManual = false, shouldShow = true) {
                 container.appendChild(card);
                 const imgEl = card.querySelector('.special-img');
                 const imgWrapper = card.querySelector('.special-card-img-wrapper');
-                const basePath = `${DATA?.config?.paths?.specials}${prefix}${item.id}`;
+                const folderPath = DATA?.config?.paths?.specials;
+                const fileId = `${prefix}${item.id}`;
 
-                const resolvedSrc = await resolveSpecialImage(basePath);
-                if (!resolvedSrc) {
+                // 🎯 loadImageAsync per gestire il caricamento sicuro.
+                const success = await loadImageAsync(imgEl, folderPath, fileId);
+
+                if (!success) {
                     imgWrapper.style.display = 'none';
                     card.style.borderRadius = "12px";
                     continue;
                 }
 
                 foundAny = true;
-                imgEl.src = resolvedSrc;
                 card.style.cursor = "pointer";
-                card.onclick = () => openZoom(resolvedSrc, titolo);
+                card.onclick = () => openZoom(imgEl.src, titolo);
             } catch(err){}
         }
     };
@@ -1422,25 +1312,6 @@ async function checkSpecials(isManual = false, shouldShow = true) {
     }
     if (!foundAny && popup.style.display === 'flex' && !isManual) {
         closeSpecials();
-    }
-}
-
-function handleDoc(fileName, btn) {
-    const urlsPaths = DATA?.config?.paths?.docs?.base;
-    let baseDir = DATA?.config?.paths?.docs?.[lang]?.dir || '';
-    const fullUrl = urlsPaths + baseDir + fileName;
-    const os = getMobileOS();
-    if (window.innerWidth < 768 || os === 'iOS_safari') {
-        window.open(fullUrl, '_blank');
-        return;
-    }
-    const popup = document.getElementById('legal-popup');
-    const iframe = document.getElementById('legal-iframe');
-    if (popup && iframe) {
-        iframe.src = fullUrl;
-        popup.style.display = 'flex';
-        PopupModal();
-        toggleFloatingButtons(false);
     }
 }
 
@@ -1468,16 +1339,12 @@ async function openZoom(src, description = "") {
 
     if (iframe) iframe.style.display = 'none';
 
-    const lastDot = src.lastIndexOf('.');
-    let basePath = src;
-    let originalExt = '';
-    if (lastDot !== -1 && (src.length - lastDot) <= 6) {
-        basePath = src.substring(0, lastDot);
-        originalExt = src.substring(lastDot).toLowerCase();
-    }
-
-    const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
-    const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
+    // 🔍 Ricaviamo la cartella e l'ID/nome base dall'src passato.
+    const lastSlash = src.lastIndexOf('/');
+    const folder = src.substring(0, lastSlash + 1);
+    const fileName = src.substring(lastSlash + 1);
+    const lastDot = fileName.lastIndexOf('.');
+    const fileId = lastDot !== -1 ? fileName.substring(0, lastDot) : fileName;
 
     zoomImg.style.display = 'block';
     zoomImg.style.opacity = "1";
@@ -1492,92 +1359,31 @@ async function openZoom(src, description = "") {
         if (typeof toggleFloatingButtons === "function") toggleFloatingButtons(false);
     }
 
-    let hasActiveSW = null;
-    try {
-        hasActiveSW = await waitForServiceWorker();
-        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
-            await hasActiveSW.catch(() => {});
-        }
-    } catch (e) {
-        hasActiveSW = null;
+    // 🎯 loadImageAsync per la ricerca dell'estensione e il caricamento sicuro.
+    const success = await loadImageAsync(zoomImg, folder, fileId);
+
+    if (!success) {
+        zoomImg.src = (window.APP_CONFIG && window.APP_CONFIG.svg_logo) ? window.APP_CONFIG.svg_logo : src;
     }
+}
 
-    let finalSrc = null;
-
-    // ☑️ test intelligente: priorità all'estensione originale se valida
-    const testOrder = [];
-    if (originalExt && prioritizedExts.includes(originalExt)) {
-        testOrder.push(originalExt);
+function handleDoc(fileName, btn) {
+    const urlsPaths = DATA?.config?.paths?.docs?.base;
+    let baseDir = DATA?.config?.paths?.docs?.[lang]?.dir || '';
+    const fullUrl = urlsPaths + baseDir + fileName;
+    const os = getMobileOS();
+    if (window.innerWidth < 768 || os === 'iOS_safari') {
+        window.open(fullUrl, '_blank');
+        return;
     }
-    prioritizedExts.forEach(ext => {
-        if (!testOrder.includes(ext)) testOrder.push(ext);
-    });
-
-    if (hasActiveSW) {
-        // ⚡ CON SERVICE WORKER ATTIVO ( Test sequenziale con oggetto Image )
-        for (const ext of testOrder) {
-            const cleanExt = ext.replace(/^\./, "");
-            const testUrl = `${basePath}.${cleanExt}`;
-            try {
-                const response = await fetch(testUrl, {
-                    method: 'GET',
-                    cache: 'force-cache'
-                });
-
-                if (response && response.ok) {
-                    const pwaSource = response.headers.get('X-PWA-Source');
-                    if (pwaSource === 'Bunker-Placeholder') {
-                        continue;
-                    }
-
-                    const isValidImg = await new Promise((resolve) => {
-                        const tempImg = new Image();
-                        tempImg.onload = () => resolve(true);
-                        tempImg.onerror = () => resolve(false);
-                        tempImg.src = testUrl;
-                    });
-
-                    if (isValidImg) {
-                        finalSrc = testUrl;
-                        break;
-                    }
-                }
-            } catch (err) {}
-        }
-    } else {
-        // 🌐 SENZA SERVICE WORKER ( Test HEAD sequenziale per evitare sovraccarichi 503 )
-        for (const ext of testOrder) {
-            const cleanExt = ext.replace(/^\./, "");
-            const targetUrl = `${basePath}.${cleanExt}`;
-            try {
-                const response = await fetch(targetUrl, {
-                    method: 'HEAD',
-                    cache: 'default',
-                    headers: { 'Cache-Control': 'max-age=600' }
-                });
-                if (response && response.ok) {
-                    const pwaSource = response.headers.get('X-PWA-Source');
-                    if (pwaSource !== 'Bunker-Placeholder') {
-
-                        // Doppia verifica di integrità con Image()
-                        const isValidImg = await new Promise((resolve) => {
-                            const checkImg = new Image();
-                            checkImg.onload = () => resolve(true);
-                            checkImg.onerror = () => resolve(false);
-                            checkImg.src = targetUrl;
-                        });
-
-                        if (isValidImg) {
-                            finalSrc = targetUrl;
-                            break;
-                        }
-                    }
-                }
-            } catch (err) {}
-        }
+    const popup = document.getElementById('legal-popup');
+    const iframe = document.getElementById('legal-iframe');
+    if (popup && iframe) {
+        iframe.src = fullUrl;
+        popup.style.display = 'flex';
+        PopupModal();
+        toggleFloatingButtons(false);
     }
-    zoomImg.onerror = null;
-    zoomImg.src = finalSrc || (window.APP_CONFIG && window.APP_CONFIG.svg_logo ? window.APP_CONFIG.svg_logo : src);
 }
 
 function closeLegal() {
