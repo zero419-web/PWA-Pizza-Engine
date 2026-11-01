@@ -2106,14 +2106,16 @@ self.addEventListener('fetch', (event) => {
                     const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
 
                     const decryptedBytes = new Uint8Array(decrypted);
-                    const contentLength = decryptedBytes.byteLength;
-
-                    const secureHeaders = new
-                    Headers({
+                    const exactBuffer = decrypted.buffer.slice(
+                        decrypted.byteOffset, 
+                        decrypted.byteOffset + decrypted.byteLength
+                    );
+                    const contentLength = exactBuffer.byteLength;
+                    const secureHeaders = new Headers({
                         'Content-Type': detectedContentType,
                         'X-PWA-Source': 'Bunker-Decrypted', 
                         'Content-Length': contentLength.toString(),
-                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                        'Cache-Control': 'private, no-cache, max-age=0',
                         'Pragma': 'no-cache',
                         'Expires': '0'
                     });
@@ -2190,18 +2192,21 @@ self.addEventListener('fetch', (event) => {
                                 if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
                                     const buffer = await altCached.clone().arrayBuffer();
                                     let decrypted = await decryptBuffer(buffer);
-                                    const contentLength = decrypted.byteLength;
 
                                     const variantExtLower = variantExt.toLowerCase();
-                                    const
-                                    secureHeaders = new Headers({
-                                        'Content-Type': contentTypeIMG,
-                                        'X-PWA-Source': 'Bunker-Decrypted',
-                                         'Content-Length': contentLength.toString(),
-                                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-                                        'Pragma': 'no-cache',
-                                        'Expires': '0'
-                                    });
+                                    const exactBuffer = decrypted.buffer.slice(
+					                        decrypted.byteOffset, 
+					                        decrypted.byteOffset + decrypted.byteLength
+					                    );
+					                    const contentLength = exactBuffer.byteLength;
+					                    const secureHeaders = new Headers({
+					                        'Content-Type': detectedContentType,
+					                        'X-PWA-Source': 'Bunker-Decrypted', 
+					                        'Content-Length': contentLength.toString(),
+					                        'Cache-Control': 'private, no-cache, max-age=0',
+					                        'Pragma': 'no-cache',
+					                        'Expires': '0'
+					                    });
 
                                     if (CONFIG.extExlPHr.includes(variantExtLower)) {
                                         secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
