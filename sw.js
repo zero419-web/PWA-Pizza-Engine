@@ -2102,7 +2102,8 @@ self.addEventListener('fetch', (event) => {
                     const secureHeaders = new
                     Headers({
                         'Content-Type': detectedContentType,
-                        'X-PWA-Source': 'Bunker-Decrypted',
+                        'X-PWA-Source': 'Bunker-Decrypted', 
+                        'Content-Length': contentLength.toString(),
                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                         'Pragma': 'no-cache',
                         'Expires': '0'
@@ -2180,12 +2181,14 @@ self.addEventListener('fetch', (event) => {
                                 if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
                                     const buffer = await altCached.clone().arrayBuffer();
                                     let decrypted = await decryptBuffer(buffer);
+                                    const contentLength = decrypted.byteLength;
 
                                     const variantExtLower = variantExt.toLowerCase();
                                     const
                                     secureHeaders = new Headers({
                                         'Content-Type': contentTypeIMG,
                                         'X-PWA-Source': 'Bunker-Decrypted',
+                                         'Content-Length': contentLength.toString(),
                                         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                                         'Pragma': 'no-cache',
                                         'Expires': '0'
