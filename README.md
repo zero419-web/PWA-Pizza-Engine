@@ -1,6 +1,6 @@
 ![LOGO](https://img.shields.io/badge/🌀_PANZER_SDK_BETA-v1.1-1f4e79)
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_x_PA-af0000)
-![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.5+-4f4f00)
+![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.6+-4f4f00)
 
 > [!Important]
 >   - 🔃 **Last Update :** `v1.8`
@@ -78,6 +78,11 @@
 
 - **🔐🌡️🛡️ Jittered Thermal Shield Race & Hardening :** <br> Ispezione forense profonda sul modulo `deepVaultValidation()`. Implementa una gara asincrona tra l'interrogazione a IndexedDB e lo **🌡️🛡️ Scudo Termico Adattivo** ( `waitTillIdle` ).
 
+- **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 Sessione di BUG Fix`
+    - 🪳 **Bug Fixed : Evento Fetch Del SW ( ⚙️🪖 ).**
+    - 🐺️🐤 **WATCHDOG DI SICUREZZA:
+       - ➕ **Controllo, 3 tentativi prima di dichiarare se la 🔑 di cifratura e compromessa veramente.**
+ 
  - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 Sessione di BUG Fix`
     - 🪳 **Molti Bug Fixed !**
     - 🚀 **SWR, Strategia migliorata su reti degradate.**
