@@ -1253,12 +1253,12 @@ const checkRealOnline = async (mode = 'fetch') => {
         profiles[key].timeout === netProfile.timeout
     ) || 'Medium';
 
-    let timeoutMs = 3000;
+    let timeoutMs = 6000;
     if (mode === 'sync') {
         if (navigator.connection && navigator.connection.saveData) return false;
         timeoutMs = Math.min(netProfile.timeout * 1000, 15000);
     } else {
-        timeoutMs = (profileName === 'Fast' || profileName === 'ultrafast') ? 2500 : 5500;
+        timeoutMs = (profileName === 'Fast' || profileName === 'Ultrafast') ? 2500 : 5500;
     }
     try {
         const controller = new AbortController();
@@ -2058,6 +2058,8 @@ self.addEventListener('fetch', (event) => {
 						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 					});
 				}
+			}else{
+				return 0;
 			}
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
@@ -2074,14 +2076,21 @@ self.addEventListener('fetch', (event) => {
 				return injectSecurityHeaders(await fetch(event.request));
 			}
 			// 🌐💾 NetworkFirst & Save Backgroud ...
-			//await waitTillIdle(50);
-			return await SWR_SAVE(event);
+			const SWR_SAVE_RESP = await SWR_SAVE(event);
+			//await waitTillIdle();
+			if( SWR_SAVE_RESP !== 0 ){
+				return SWR_SAVE_RESP;
+			}
 		}else if( finalStrategy === 'SWR' ){
 			// SWR 💾🔍
 		  	// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
 			if ( !(!isLogicEnabled || isSyncing) ) {
 				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
-				event.waitUntil(SWR_SAVE(event));
+				const SWR_SAVE_RESP = await SWR_SAVE(event);
+				//await waitTillIdle();
+				if( SWR_SAVE_RESP !== 0 ){
+					event.waitUntil(SWR_SAVE_RESP);
+				}
 				//await waitTillIdle(300, 600);
 				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
