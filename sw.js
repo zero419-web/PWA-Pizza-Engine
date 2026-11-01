@@ -2020,7 +2020,7 @@ self.addEventListener('fetch', (event) => {
                 // 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
-			//await waitTillIdle(50);
+			await waitTillIdle(50);
         };
 		const SWR_SAVE = async (event) => {
 			const isOnline = await checkRealOnline('fetch');
@@ -2078,7 +2078,7 @@ self.addEventListener('fetch', (event) => {
 			}
 
 			// 🌐 NetworkFirst & Save Backgroud...
-			await waitTillIdle(50);
+			//await waitTillIdle(50);
 			//return await SWR_SAVE(event);
 			event.waitUntil( SWR_SAVE(event) );
 			// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
