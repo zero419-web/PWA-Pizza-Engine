@@ -2047,7 +2047,7 @@ self.addEventListener('fetch', (event) => {
 
 					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-						if ( isLogicEnabled || !isSyncing ) {
+						if ( isLogicEnabled && !isSyncing ) {
 							console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
 						}
@@ -2088,17 +2088,17 @@ self.addEventListener('fetch', (event) => {
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
-		if( finalStrategy === 'NetworkFirst' ){
+		if( finalStrategy === 'NetworkFirst' || isNewInstallation ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
-				 if ( isLogicEnabled || !isSyncing ) {
+				 if ( isLogicEnabled && !isSyncing ) {
 					return netRes;
 				 }
 			}
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
-		   if ( isLogicEnabled || !isSyncing ) {
+		   if ( !isSyncing ) {
 				event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
