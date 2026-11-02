@@ -2162,21 +2162,27 @@ self.addEventListener('fetch', (event) => {
 					const cleanDecryptErr = {};
 					const isVaultError = err && err.message && err.message.includes('VAULT');
 					const isDecryptionNull = err && err.message && err.message.includes('Decryption returned null');
+					
 					Object.defineProperties(cleanDecryptErr, {
 						name: { value: "CryptoShieldError", enumerable: true },
 						message: { value: isVaultError ? "VAULT_LOCKED_NO_KEY" : "Decryption integrity violation", enumerable: true },
 						stack: { value: undefined, configurable: false, writable: false, enumerable: false }
 					});
 					Object.freeze(cleanDecryptErr);
+					
+					if( isDecryptionNull ) {
+						throw cleanDecryptErr;
+					}
+
                     console.error(`❌🔑 SW: Decrittazione fallita per :\n ${finalPath}`);
                     if (isVaultError) {
 						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
                         return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
-                    } else if(isDecryptionNull) {
+                    } else {
                         const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
                         if (deletedMain) {
                             console.log(`⚠️🧹 SW: Risorsa Corrotta nel ( 🛡️ Bunker )\n✅ eliminata correttamente: ${finalPath}`);
-                            //return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
+                            return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
                         }
                     }
                     throw cleanDecryptErr; // Rilancia l'errore sterilizzato
