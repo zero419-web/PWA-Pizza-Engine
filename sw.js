@@ -1253,7 +1253,7 @@ const checkRealOnline = async (mode = 'fetch') => {
         profiles[key].timeout === netProfile.timeout
     ) || 'Medium';
 
-    let timeoutMs = 6000;
+    let timeoutMs = 3000;
     if (mode === 'sync') {
         if (navigator.connection && navigator.connection.saveData) return false;
         timeoutMs = Math.min(netProfile.timeout * 1000, 15000);
@@ -1784,7 +1784,7 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
         profiles[key].timeout === netProfile.timeout
     ) || 'Medium';
 
-	const isDegradedNetwork = ( netProfile !== 'Ultrafast' || netProfile !== 'Fast' );
+	const isDegradedNetwork = ( profileName !== 'Ultrafast' || profileName !== 'Fast' );
 
     switch (profileName) {
         case 'Ultrafast':
@@ -2027,7 +2027,6 @@ self.addEventListener('fetch', (event) => {
 		const SWR_SAVE = async (event) => {
 			//await waitTillIdle(50);
 			const isOnline = await checkRealOnline('fetch');
-			//console.info(`⚡👮‍♂️ SW: [ ${finalStrategy} ] \n 🌐 Rete: status [ ${isOnline} ]`);
 			if ( isOnline ) {
 				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
 				// CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
@@ -2046,16 +2045,19 @@ self.addEventListener('fetch', (event) => {
 					});
 					clearTimeout(tId);
 
-					// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-					if ( !isLogicEnabled || isSyncing ) {
-					} else {
-						if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
+					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
+					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
+						if (isLogicEnabled && !isSyncing) {
 							console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
 						}
+						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+						return injectSecurityHeaders(networkResponse);
+					} else {
+						// 🛑 Se la rete risponde con un errore (es. 404, 500) o non è ok, restituiamo null 
+						// costringendolo a passare pulito sulla cache o sulle varianti locali!
+						return null;
 					}
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					return injectSecurityHeaders(networkResponse);
 					
 				} catch (e) {
 					// 🛡️ Fallback in caso di crash rete o timeout: se abbiamo cached o varianti, proseguiamo verso la cache locale anziché dare errore 504
@@ -2089,10 +2091,12 @@ self.addEventListener('fetch', (event) => {
 		if( finalStrategy === 'NetworkFirst' ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event);
-			if (netRes) return netRes;
+			if ( netRes !== null ) {
+				return netRes;
+			}
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
-		   if( !isSyncing ){
+		   if (isLogicEnabled && !isSyncing) {
 				event.waitUntil( SWR_SAVE(event) );
 			}
 			//await waitTillIdle(300, 600);
