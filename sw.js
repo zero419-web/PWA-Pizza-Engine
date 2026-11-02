@@ -2102,14 +2102,15 @@ self.addEventListener('fetch', (event) => {
 			}
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
-		   if (isLogicEnabled && !isSyncing) {
+		   if (isLogicEnabled && !isSyncing ) {
 				event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
-			//await waitTillIdle(300, 600);
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
+			if( currentMethod !== 'HEAD' ) {
+				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
+			}
 		}
-		if ( cached ) {
+		if ( cached && currentMethod !== 'HEAD' ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
