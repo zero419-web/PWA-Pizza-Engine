@@ -70,8 +70,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.9.5',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.5',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.9.6',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.6',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
 	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: [
@@ -1791,7 +1791,6 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
         case 'Fast':
             return 'NetworkFirst';
         case 'Medium':
-            return hasCache ? 'SWR' : 'NetworkFirst';
         case 'Low':
         case 'Verylow':
         default:
@@ -1801,13 +1800,14 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
             return 'NetworkFirst';
     }
 }
+Object.freeze(assegnaFlussoPolimorfo);
 
+// normaliza file core...
 const CORE_ASSETS_SET = new Set(
     (CONFIG.coreAssets || []).map(asset => {
         return normalize(asset);
     })
 );
-Object.freeze(assegnaFlussoPolimorfo);
 
 /**
  * 🛡️ Security Headers Injector- v2.0
@@ -1922,9 +1922,6 @@ self.addEventListener('fetch', (event) => {
 		const isCoreAsset = CORE_ASSETS_SET.has(finalPath);
         const shouldBeEncrypted = isCoreAsset || existsInMain;
 		const targetCache = shouldBeEncrypted ? "📦🛡️ (Bunker)" : "📦🔓 (Magazzino)";
-		let isImageRequest = false;
-		let isExcluded = false;
-		let isHTML = false;
 
 		// Scarto Tecnico mio !
 		if (event.request.url.includes('favicon.ico')) {
@@ -2052,14 +2049,14 @@ self.addEventListener('fetch', (event) => {
 					return injectSecurityHeaders(networkResponse);
 				} catch (e) {
 					// 🛡️ Fallback in caso di crash rete
-					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, { 
+					return new Response(`❌🌐 NetworkFirst, ERROR: ${e}`, { 
 						status: 504,
 						statusText: 'Service Unavailable',
 						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 					});
 				}
 			}else{
-				return new Response(`❌🌐 ERROR: NetworkFirst ❌📡🤥`, { 
+				return new Response(`❌🌐 NetworkFirst, ERROR: off-line ❌📡🤥`, { 
 					status: 504,
 					statusText: 'Service Unavailable',
 				    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
@@ -2085,7 +2082,7 @@ self.addEventListener('fetch', (event) => {
 		} else if( finalStrategy === 'SWR' ){
 			// SWR 💾🔍
 		  	// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if ( !isLogicEnabled ) {
+			if (!isLogicEnabled || isSyncing) {
 				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 				return injectSecurityHeaders(await fetch(event.request));
 			} else {
@@ -2240,10 +2237,10 @@ self.addEventListener('fetch', (event) => {
 		    // 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 		    // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
 		    const contentsType = event.request.headers.get('Accept') || "";
-uuuuuuuuuu7hhhhhhhhhhhhhhhhhhhhh		    isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
+	        const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
 		    const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
 		    const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
-		    isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
+		    const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
 		    
 		    if (isImageRequest || isHTML) {
 		        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
@@ -2277,8 +2274,7 @@ uuuuuuuuuu7hhhhhhhhhhhhhhhhhhhhh		    isExcluded = CONFIG.extExlPHr.some(ext => 
 		                console.error("❌ SW: Errore decriptazione placeholder:", err);
 		            }
 		        }
-		        
-		        // 🎯 FALLBACK DI EMERGENZA.
+				// 🎯 FALLBACK DI EMERGENZA.
 		        if (isImageRequest && !isHTML && !isExcluded) {
 		            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
 		            return new Response(GLOBAL_BROKEN_BLOB, {
@@ -2289,25 +2285,25 @@ uuuuuuuuuu7hhhhhhhhhhhhhhhhhhhhh		    isExcluded = CONFIG.extExlPHr.some(ext => 
 		            });
 		        }
 		    }
-		}
-		// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
-		if (!isImageRequest && isExcluded) {
-		    console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
-		}
-		if (isCoreAsset && !isNewInstallation) {
-		    console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
-		    CoreAssets_Destroy_Caches();
-		}
-		if (isHTML) {
-		    return await generateErrorPage(globalPlaceholderBlob, url.pathname);
-		}
-		const fall_onlineCheck = await checkRealOnline('fetch');
-		if (!fall_onlineCheck) {
-		    return new Response('📡🚫 Off-line.', {
-		        status: 503,
-		        statusText: 'Service Unavailable',
-		        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-		    });
+		    // 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
+		    if (!isImageRequest && isExcluded) {
+		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
+		    }
+		    if (isCoreAsset && !isNewInstallation) {
+		        console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
+		        CoreAssets_Destroy_Caches();
+		    }
+		    if (isHTML) {
+		        return await generateErrorPage(globalPlaceholderBlob, url.pathname);
+		    }
+		    //const fall_onlineCheck = await checkRealOnline('fetch');
+		    //if (!fall_onlineCheck) {
+		        return new Response('📡🚫 Off-line.', {
+		           status: 503,
+		           statusText: 'Service Unavailable',
+		           headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+		        });
+			//}
 		}
 
     })());
