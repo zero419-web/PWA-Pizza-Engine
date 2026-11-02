@@ -2291,6 +2291,7 @@ self.addEventListener('fetch', (event) => {
 		    statusText: 'Service Unavailable',
 		    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 		    });
+        }
 		
     })());
 });
