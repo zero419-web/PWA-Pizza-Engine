@@ -2024,16 +2024,15 @@ self.addEventListener('fetch', (event) => {
 			await waitTillIdle(50);
         };
 		
-		const SWR_SAVE = async (event) => {
+		const SWR_SAVE = async (event, C_Method) => {
+			//await waitTillIdle(50);
 			const isOnline = await checkRealOnline('fetch');
 			if ( isOnline ) {
 				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
 				// CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
-				const currentMethod = event.request.method.toUpperCase();
-				IsHeadMethod  = ( currentMethod === 'HEAD' ? true : false );
 				try {
 					const currentProfile = getNetworkProfile(self.navigator);
-					const TIMEOUT_MS = IsHeadMethod ? (currentProfile.timeout * 100) : (currentProfile.timeout * 1000);
+					const TIMEOUT_MS = (currentProfile.timeout * 1000);
 					const controller = new AbortController();
 					const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 					const fetchSignal = globalAbortController
@@ -2046,54 +2045,42 @@ self.addEventListener('fetch', (event) => {
 					});
 					clearTimeout(tId);
 
-					if (networkResponse){
-						if( networkResponse.ok && networkResponse.status === 200) {
-							console.info(`👮‍♂⚡️ SW: SALVA RISORSA dal WEB in Background :\n 🌐💾 ${finalPath} `);
-							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
+					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
+					if ( networkResponse && networkResponse.ok ) {
+						if ( isLogicEnabled && !isSyncing ) {
+							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
+							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
-						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-						return injectSecurityHeaders(networkResponse);
+					}
+					if ( networkResponse ) {
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(networkResponse);
 					}
 				} catch (_) {
-					// 🛡️ Fallback in caso di crash rete
-					return new Response(null, {
-						status: 404,
-						statusText: 'Not Found',
-						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-					});
+						return null;
 				}
-			}else{
-				return new Response('📡🚫 Off-line', {
-					status: 503,
-					statusText: 'Service Unavailable',
-					headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-				});
 			}
+			return null;
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
+		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
-			// 🌐 NetworkFirst ...
-			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if ( !isLogicEnabled || isSyncing ) {
-				//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
-				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-				return injectSecurityHeaders(await fetch(event.request));
+			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
+			const netRes = await SWR_SAVE(event, currentMethod);
+			if ( netRes !== null ) {
+				return netRes;
 			}
-			// 🌐💾 NetworkFirst & Save Backgroud ...
-			return await SWR_SAVE(event);
-		}else if( finalStrategy === 'SWR' ){
-			// SWR 💾🔍
-		  	// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if ( isLogicEnabled && !isSyncing ) {
-				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
-				event.waitUntil(SWR_SAVE(event));
-				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached :\n ${finalPath} \n [ ${targetCache} ]`);
+		} else if( finalStrategy === 'SWR' ){
+			// 🚀 SWR Immediato: Save Background ...
+		   if ( !isSyncing ) {
+				event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
+			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
+			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
@@ -2243,7 +2230,7 @@ self.addEventListener('fetch', (event) => {
 			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
 			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
 			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
-			if( altCached_Find !== true && currentMethod !== 'HEAD' ) {
+			if( altCached_Find !== true ) {
 			    if (isImageRequest || isHTML) {
 			        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
 			        const placeholder = await caches.match(placeholderPath);
@@ -2284,18 +2271,18 @@ self.addEventListener('fetch', (event) => {
 	                        status: 200,
 			                headers: {
 			                    'Content-Type': 'image/svg+xml',
-			                    'X-PWA-Source': 'SW-Emergency-SVG'
+			                    'X-PWA-Source': 'Bunker-Placeholder'
 			                }
 			            });
 			        }
 			    }
 			}	
 		// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
-		    if (!isImageRequest && isExcluded) {
+		    if ( !isImageRequest && isExcluded ) {
 		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
 		    }
 		}
-		if ( !cached  && isCoreAsset && !isNewInstallation) {
+		if ( isCoreAsset && !isNewInstallation ) {
 		    console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
 		    CoreAssets_Destroy_Caches();
 		}			
@@ -2432,7 +2419,7 @@ const CoreAssets_Destroy_Caches = async (serverV = null) => {
 		});
 	} catch (err) {
 	    // 🏴‍☠️ ANTI-PROFILING:
-		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", clcreateCleanError("CacheEvacuationError", "Fallimento procedura di emergenza evacuazione"))
+		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", createCleanError("CacheEvacuationError", "Fallimento procedura di emergenza evacuazione"))
 	}
 };
 Object.freeze(CoreAssets_Destroy_Caches);
