@@ -2091,6 +2091,7 @@ self.addEventListener('fetch', (event) => {
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
+		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
