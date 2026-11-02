@@ -2046,17 +2046,19 @@ self.addEventListener('fetch', (event) => {
 					});
 					clearTimeout(tId);
 
-					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-						console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB_Background :\n 🌐💾 ${finalPath} `);
-						event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
+					if (networkResponse){
+						if( networkResponse.ok && networkResponse.status === 200) {
+							console.info(`👮‍♂⚡️ SW: SALVA RISORSA dal WEB in Background :\n 🌐💾 ${finalPath} `);
+							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
+						}
+						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+						return injectSecurityHeaders(networkResponse);
 					}
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					return injectSecurityHeaders(networkResponse);
-				} catch (e) {
+				} catch (_) {
 					// 🛡️ Fallback in caso di crash rete
-					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, {
-						status: 504,
-						statusText: 'Service Unavailable',
+					return new Response(null, {
+						status: 404,
+						statusText: 'Not Found',
 						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 					});
 				}
