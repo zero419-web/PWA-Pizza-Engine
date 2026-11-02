@@ -2051,8 +2051,6 @@ self.addEventListener('fetch', (event) => {
 							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
-					}
-					if ( networkResponse ) {
 					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 					return injectSecurityHeaders(networkResponse);
 					}
@@ -2277,23 +2275,22 @@ self.addEventListener('fetch', (event) => {
 			        }
 			    }
 			}	
-		// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
+		    // 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
 		    if ( !isImageRequest && isExcluded ) {
 		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
 		    }
-		}
-		if ( isCoreAsset && !isNewInstallation ) {
-		    console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
-		    CoreAssets_Destroy_Caches();
-		}			
-		 if (isHTML) {
-		    return await generateErrorPage(globalPlaceholderBlob, url.pathname);
-		}
-		return new Response('📡🚫 Off-line. ( Cache not Found ... ) ', {
+		    if ( isCoreAsset && !isNewInstallation ) {
+		        console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
+		        CoreAssets_Destroy_Caches();
+	     	}			
+	     	if (isHTML) {
+		        return await generateErrorPage(globalPlaceholderBlob, url.pathname);
+		    }
+		    return new Response('📡🚫 Off-line. ( Cache not Found ... ) ', {
 		    status: 503,
 		    statusText: 'Service Unavailable',
 		    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-		});
+		    });
 		
     })());
 });
