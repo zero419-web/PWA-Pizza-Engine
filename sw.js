@@ -2067,33 +2067,24 @@ self.addEventListener('fetch', (event) => {
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
+		// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+		if ( !isLogicEnabled || isSyncing ) {
+			//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
+			// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+			return injectSecurityHeaders(await fetch(event.request));
+		}
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
-			// 🌐 NetworkFirst ...
-			// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if (!isLogicEnabled || isSyncing) {
-				//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
-				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-				return injectSecurityHeaders(await fetch(event.request));
-			}
 			// 🌐💾 NetworkFirst & Save Backgroud ...
-			//await waitTillIdle();
 			return await SWR_SAVE(event);
 		} else if( finalStrategy === 'SWR' ){
-			// SWR 💾🔍
-		  	// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if (!isLogicEnabled || isSyncing) {
-				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-				return injectSecurityHeaders(await fetch(event.request));
-			} else {
-				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
-				if( !isSyncing ){
-					event.waitUntil( SWR_SAVE(event) );
-				}
-				//await waitTillIdle(300, 600);
-				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
+			// 🚀 SWR Immediato: Save Background ...
+		   if( !isSyncing ){
+				event.waitUntil( SWR_SAVE(event) );
 			}
+			//await waitTillIdle(300, 600);
+			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
+			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
 		}
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
