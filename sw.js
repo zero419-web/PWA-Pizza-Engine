@@ -2116,11 +2116,9 @@ self.addEventListener('fetch', (event) => {
 				event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			if( currentMethod !== 'HEAD' ) {
-				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
-			}
+			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
-		if ( cached && currentMethod !== 'HEAD' ) {
+		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
@@ -2201,8 +2199,8 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-        } else if( !cached && isLogicEnabled && !isSyncing && currentMethod !== 'HEAD' ){
-			// 🛡️ SBARRAMENTI : completamento del Sync... o Richiesta HEAD non in corso...
+        } else if( !cached && isLogicEnabled && !isSyncing ){
+			// 🛡️ SBARRAMENTI : completamento del Sync...
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
@@ -2270,7 +2268,7 @@ self.addEventListener('fetch', (event) => {
 			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
 			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
 			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
-			if( altCached_Find !== true ) {  
+			if( altCached_Find !== true && currentMethod !== 'HEAD' ) {
 			    if (isImageRequest || isHTML) {
 			        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
 			        const placeholder = await caches.match(placeholderPath);
