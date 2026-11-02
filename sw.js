@@ -2029,7 +2029,7 @@ self.addEventListener('fetch', (event) => {
 			if ( C_Method === 'HEAD' ) {
 				try {
 			        const response = await fetch(event.request);
-			        if (response && response.ok) {
+			        if ( response ) {
 						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 						return injectSecurityHeaders(response);
 			        }
