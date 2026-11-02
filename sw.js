@@ -2047,7 +2047,7 @@ self.addEventListener('fetch', (event) => {
 
 					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-						if (isLogicEnabled && !isSyncing) {
+						if ( isLogicEnabled || !isSyncing ) {
 							console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
 						}
@@ -2092,13 +2092,13 @@ self.addEventListener('fetch', (event) => {
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
-				 if (isLogicEnabled && !isSyncing) {
+				 if ( isLogicEnabled || !isSyncing ) {
 					return netRes;
 				 }
 			}
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
-		   if (isLogicEnabled && !isSyncing ) {
+		   if ( isLogicEnabled || !isSyncing ) {
 				event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
@@ -2114,38 +2114,37 @@ self.addEventListener('fetch', (event) => {
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
                     let decrypted = await decryptBuffer(buffer);
-
-                    if (!decrypted) throw new Error("Decryption returned null");
-
-                    const detectedContentType = cached.headers.get('Content-Type') || '';
-                    const dotIdx = finalPath.lastIndexOf('.');
-                    const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
-
-                    const decryptedBytes = new Uint8Array(decrypted);
-                    const exactBuffer = decrypted.buffer.slice(
-                        decrypted.byteOffset, 
-                        decrypted.byteOffset + decrypted.byteLength
-                    );
-                    const contentLength = exactBuffer.byteLength;
-                    const secureHeaders = new Headers({
-                        'Content-Type': detectedContentType,
-                        'X-PWA-Source': 'Bunker-Decrypted', 
-                        'Content-Length': contentLength.toString(),
-                        'Cache-Control': 'private, no-cache, max-age=0',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    });
-                    if (ext && CONFIG.extExlPHr.includes(ext)) {
-                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
-                    }
-
-                    const outResponse = new Response(decrypted, { headers: secureHeaders });
-					console.log(`🛡️🧹 SW: Bonifica RAM eseguita per :\n ${finalPath}`);
-					new Uint8Array(buffer).fill(0);
-                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
-                    decrypted = null;
-					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
-					return outResponse;
+					if (decrypted) {
+	                    const detectedContentType = cached.headers.get('Content-Type') || '';
+	                    const dotIdx = finalPath.lastIndexOf('.');
+	                    const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
+	
+	                    const decryptedBytes = new Uint8Array(decrypted);
+	                    const exactBuffer = decrypted.buffer.slice(
+	                        decrypted.byteOffset, 
+	                        decrypted.byteOffset + decrypted.byteLength
+	                    );
+	                    const contentLength = exactBuffer.byteLength;
+	                    const secureHeaders = new Headers({
+	                        'Content-Type': detectedContentType,
+	                        'X-PWA-Source': 'Bunker-Decrypted', 
+	                        'Content-Length': contentLength.toString(),
+	                        'Cache-Control': 'private, no-cache, max-age=0',
+	                        'Pragma': 'no-cache',
+	                        'Expires': '0'
+	                    });
+	                    if (ext && CONFIG.extExlPHr.includes(ext)) {
+	                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
+	                    }
+	
+	                    const outResponse = new Response(decrypted, { headers: secureHeaders });
+						console.log(`🛡️🧹 SW: Bonifica RAM eseguita per :\n ${finalPath}`);
+						new Uint8Array(buffer).fill(0);
+	                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+	                    decrypted = null;
+						console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
+						return outResponse;
+					}
                 } catch (err) {
                     	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
 					if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 40);
@@ -2161,19 +2160,12 @@ self.addEventListener('fetch', (event) => {
 					// 🏴‍☠️ ACCECAMENTO: Rimozione totale delle tracce crittografiche dall'oggetto errore
 					const cleanDecryptErr = {};
 					const isVaultError = err && err.message && err.message.includes('VAULT');
-					const isDecryptionNull = err && err.message && err.message.includes('Decryption returned null');
-					
 					Object.defineProperties(cleanDecryptErr, {
 						name: { value: "CryptoShieldError", enumerable: true },
 						message: { value: isVaultError ? "VAULT_LOCKED_NO_KEY" : "Decryption integrity violation", enumerable: true },
 						stack: { value: undefined, configurable: false, writable: false, enumerable: false }
 					});
 					Object.freeze(cleanDecryptErr);
-					
-					if( isDecryptionNull ) {
-						throw cleanDecryptErr;
-					}
-
                     console.error(`❌🔑 SW: Decrittazione fallita per :\n ${finalPath}`);
                     if (isVaultError) {
 						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
@@ -2191,8 +2183,8 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-        } else if( !cached && isLogicEnabled && !isSyncing ){
-			// 🛡️ SBARRAMENTI : completamento del Sync...
+			// 🛡️ SBARRAMENTO : completamento del Sync...
+        } else if( !cached && ( isLogicEnabled || !isSyncing) ){
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
