@@ -2094,10 +2094,6 @@ self.addEventListener('fetch', (event) => {
 			if ( netRes !== null ) {
 				 if (isLogicEnabled && !isSyncing) {
 					return netRes;
-				 } else {
-					 onsole.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					return injectSecurityHeaders(await fetch(event.request));
 				 }
 			}
 		} else if( finalStrategy === 'SWR' ){
@@ -2107,7 +2103,7 @@ self.addEventListener('fetch', (event) => {
 			}
 			//await waitTillIdle(300, 600);
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} ]`);
+			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
@@ -2190,6 +2186,11 @@ self.addEventListener('fetch', (event) => {
                 return cached;
             }
         } else if( !cached ) {
+			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+			if (!isLogicEnabled || isSyncing) {
+				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+				return injectSecurityHeaders(await fetch(event.request));
+			}
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
