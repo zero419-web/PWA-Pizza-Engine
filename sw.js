@@ -2081,7 +2081,7 @@ self.addEventListener('fetch', (event) => {
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
-		if ( cached ) {
+		if ( cached && currentMethod !== 'HEAD' ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
