@@ -2047,8 +2047,8 @@ self.addEventListener('fetch', (event) => {
 
 					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-						if ( isLogicEnabled && !isSyncing ) {
-							console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
+						if ( isLogicEnabled && !isSyncing && !isNewInstallation ) {
+							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
 						}
 					} else if (networkResponse && networkResponse.status === 404) {
@@ -2088,13 +2088,11 @@ self.addEventListener('fetch', (event) => {
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
-		if( finalStrategy === 'NetworkFirst' || isNewInstallation ){
+		if( finalStrategy === 'NetworkFirst' ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
-				 if ( isLogicEnabled && !isSyncing ) {
-					return netRes;
-				 }
+				return netRes;
 			}
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
@@ -2184,7 +2182,7 @@ self.addEventListener('fetch', (event) => {
                 return cached;
             }
 			// 🛡️ SBARRAMENTO : completamento del Sync...
-        } else if( !cached && ( isLogicEnabled || !isSyncing) ){
+        } else if( !cached && ( isLogicEnabled && !isSyncing ) ){
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
