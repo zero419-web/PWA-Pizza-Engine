@@ -2092,7 +2092,13 @@ self.addEventListener('fetch', (event) => {
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event);
 			if ( netRes !== null ) {
-				return netRes;
+				 if (isLogicEnabled && !isSyncing) {
+					return netRes;
+				 } else {
+					 onsole.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(await fetch(event.request));
+				 }
 			}
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
