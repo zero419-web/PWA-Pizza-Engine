@@ -2049,7 +2049,7 @@ self.addEventListener('fetch', (event) => {
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
 						if ( isLogicEnabled && !isSyncing && !isNewInstallation ) {
 							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
-							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
+							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
 					} else if (networkResponse && networkResponse.status === 404) {
 						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
@@ -2058,27 +2058,10 @@ self.addEventListener('fetch', (event) => {
 						return null;
 					}
 					
-				} catch (e) {
-					// 🛡️ Fallback in caso di crash rete o timeout: se abbiamo cached o varianti, proseguiamo verso la cache locale anziché dare errore 504
-					if ( cached ) {
+				} catch (_) {
 						return null;
-					} else {
-						return new Response(`❌🌐 NetworkFirst, ERROR: ${e}`, { 
-							status: 504,
-							statusText: 'Service Unavailable',
-							headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-						});
-					}
 				}
 			}else{
-				// 🛡️ Fallback offline controllato: se siamo offline ma c'è cached, lasciamo cadere nel blocco cache anziché bloccare
-				if ( !cached ) {
-					return new Response(`❌🌐 NetworkFirst, ERROR: off-line ❌📡🤥`, { 
-						status: 503,
-						statusText: 'Service Unavailable',
-					    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-				    });
-				}
 				return null;
 			}
 		};
@@ -2181,7 +2164,7 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-			// 🛡️ SBARRAMENTO : completamento del Sync...
+			// 🛡️ SBARRAMENTO : Sblocco al completamento del Sync...
         } else if( !cached && ( isLogicEnabled && !isSyncing ) ){
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
@@ -2297,15 +2280,15 @@ self.addEventListener('fetch', (event) => {
 			        }
 			    }
 			}	
-		    // 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
+		// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
 		    if (!isImageRequest && isExcluded) {
 		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
 		    }
-		    if (isCoreAsset && !isNewInstallation) {
-		        console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
-		        CoreAssets_Destroy_Caches();
-		    }			
 		}
+		if ( !cached  && isCoreAsset && !isNewInstallation) {
+		    console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
+		    CoreAssets_Destroy_Caches();
+		}			
 		 if (isHTML) {
 		    return await generateErrorPage(globalPlaceholderBlob, url.pathname);
 		}
