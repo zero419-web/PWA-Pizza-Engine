@@ -2024,15 +2024,16 @@ self.addEventListener('fetch', (event) => {
 			await waitTillIdle(50);
         };
 		
-		const SWR_SAVE = async (event, C_Method) => {
-			//await waitTillIdle(50);
+		const SWR_SAVE = async (event) => {
 			const isOnline = await checkRealOnline('fetch');
 			if ( isOnline ) {
 				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
 				// CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
+				const currentMethod = event.request.method.toUpperCase();
+				IsHeadMethod  = ( currentMethod === 'HEAD' ? true : false );
 				try {
 					const currentProfile = getNetworkProfile(self.navigator);
-					const TIMEOUT_MS = (C_Method !== 'HEAD') ? (currentProfile.timeout * 1000) : 3000;
+					const TIMEOUT_MS = IsHeadMethod ? (currentProfile.timeout * 100) : (currentProfile.timeout * 1000);
 					const controller = new AbortController();
 					const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 					const fetchSignal = globalAbortController
@@ -2045,43 +2046,54 @@ self.addEventListener('fetch', (event) => {
 					});
 					clearTimeout(tId);
 
-					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
 					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-						if ( isLogicEnabled && !isSyncing && !isNewInstallation ) {
-							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
-							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
-						}
+						console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB_Background :\n 🌐💾 ${finalPath} `);
+						event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
 					}
 					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 					return injectSecurityHeaders(networkResponse);
-				} catch (_) {
-						return null;
+				} catch (e) {
+					// 🛡️ Fallback in caso di crash rete
+					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, {
+						status: 504,
+						statusText: 'Service Unavailable',
+						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+					});
 				}
 			}else{
-				return null;
+				return new Response('📡🚫 Off-line', {
+					status: 503,
+					statusText: 'Service Unavailable',
+					headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+				});
 			}
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
-		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
-			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
-			const netRes = await SWR_SAVE(event, currentMethod);
-			if ( netRes !== null ) {
-				return netRes;
+			// 🌐 NetworkFirst ...
+			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+			if ( !isLogicEnabled || isSyncing ) {
+				//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
+				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+				return injectSecurityHeaders(await fetch(event.request));
 			}
-		} else if( finalStrategy === 'SWR' ){
-			// 🚀 SWR Immediato: Save Background ...
-		   if ( !isSyncing ) {
-				event.waitUntil( SWR_SAVE(event, currentMethod) );
+			// 🌐💾 NetworkFirst & Save Backgroud ...
+			return await SWR_SAVE(event);
+		}else if( finalStrategy === 'SWR' ){
+			// SWR 💾🔍
+		  	// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+			if ( isLogicEnabled && !isSyncing ) {
+				// 🚀 SWR Immediato: Mette in coda di background l'aggiornamento via rete senza bloccare la risposta.
+				event.waitUntil(SWR_SAVE(event));
+				// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
+				console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached :\n ${finalPath} \n [ ${targetCache} ]`);
 			}
-			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
-		if ( cached && currentMethod !== 'HEAD' ) {
+		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
