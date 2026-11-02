@@ -2023,8 +2023,9 @@ self.addEventListener('fetch', (event) => {
             }
 			await waitTillIdle(50);
         };
+		
 		const SWR_SAVE = async (event) => {
-			await waitTillIdle(50);
+			//await waitTillIdle(50);
 			const isOnline = await checkRealOnline('fetch');
 			//console.info(`⚡👮‍♂️ SW: [ ${finalStrategy} ] \n 🌐 Rete: status [ ${isOnline} ]`);
 			if ( isOnline ) {
@@ -2045,42 +2046,50 @@ self.addEventListener('fetch', (event) => {
 					});
 					clearTimeout(tId);
 
-					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-						console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
-						event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
+					// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+					if ( !isLogicEnabled || isSyncing ) {
+					} else {
+						if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
+							console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
+							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
+						}
 					}
 					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 					return injectSecurityHeaders(networkResponse);
+					
 				} catch (e) {
-					// 🛡️ Fallback in caso di crash rete
-					return new Response(`❌🌐 NetworkFirst, ERROR: ${e}`, { 
-						status: 504,
-						statusText: 'Service Unavailable',
-						headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-					});
+					// 🛡️ Fallback in caso di crash rete o timeout: se abbiamo cached o varianti, proseguiamo verso la cache locale anziché dare errore 504
+					if ( cached ) {
+						return null;
+					} else {
+						return new Response(`❌🌐 NetworkFirst, ERROR: ${e}`, { 
+							status: 504,
+							statusText: 'Service Unavailable',
+							headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+						});
+					}
 				}
 			}else{
-				return new Response(`❌🌐 NetworkFirst, ERROR: off-line ❌📡🤥`, { 
-					status: 503,
-					statusText: 'Service Unavailable',
-				    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-			    });
+				// 🛡️ Fallback offline controllato: se siamo offline ma c'è cached, lasciamo cadere nel blocco cache anziché bloccare
+				if ( !cached ) {
+					return new Response(`❌🌐 NetworkFirst, ERROR: off-line ❌📡🤥`, { 
+						status: 503,
+						statusText: 'Service Unavailable',
+					    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+				    });
+				}
+				return null;
 			}
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
-		// 🛡️🚧 SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-		if ( !isLogicEnabled || isSyncing ) {
-			//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
-			// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-			return injectSecurityHeaders( await fetch(event.request) );
-		}
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
-			// 🌐💾 NetworkFirst & Save Backgroud ...
-			return await SWR_SAVE(event);
+			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
+			const netRes = await SWR_SAVE(event);
+			if (netRes) return netRes;
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
 		   if( !isSyncing ){
