@@ -2072,7 +2072,7 @@ self.addEventListener('fetch', (event) => {
 		if ( !isLogicEnabled || isSyncing ) {
 			//console.info(`👮‍♂❓ SW: Tento Erogazione Risorsa da WEB :\n 🌐 ${finalPath} `);
 			// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-			return injectSecurityHeaders(await fetch(event.request));
+			return injectSecurityHeaders( await fetch(event.request) );
 		}
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
@@ -2087,6 +2087,8 @@ self.addEventListener('fetch', (event) => {
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
 		}
+		// 🔍🎯 Valutazione preliminare HTML, preservata per sicurezza logica ...
+		const isHTML = contentsType.includes('text/html') || finalPath.endsWith('.html') || finalPath === normalize(BASE_PATH);
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
@@ -2097,6 +2099,8 @@ self.addEventListener('fetch', (event) => {
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
                     let decrypted = await decryptBuffer(buffer);
+
+                    if (!decrypted) throw new Error("Decryption returned null");
 
                     const detectedContentType = cached.headers.get('Content-Type') || '';
                     const dotIdx = finalPath.lastIndexOf('.');
@@ -2116,13 +2120,12 @@ self.addEventListener('fetch', (event) => {
                         'Pragma': 'no-cache',
                         'Expires': '0'
                     });
-
                     if (ext && CONFIG.extExlPHr.includes(ext)) {
                         secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
                     }
 
                     const outResponse = new Response(decrypted, { headers: secureHeaders });
-					console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
+					console.log(`🛡️🧹 SW: Bonifica RAM eseguita per :\n ${finalPath}`);
 					new Uint8Array(buffer).fill(0);
                     if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                     decrypted = null;
@@ -2131,7 +2134,7 @@ self.addEventListener('fetch', (event) => {
                 } catch (err) {
                     	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
 					if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 40);
-					 // 🛡🧼 BONIFICA DI EMERGENZA RAM:
+					 // 🧼 BONIFICA DI EMERGENZA RAM:
                     if (typeof buffer !== 'undefined' && buffer instanceof ArrayBuffer) {
                         new Uint8Array(buffer).fill(0);
                     }
@@ -2149,14 +2152,14 @@ self.addEventListener('fetch', (event) => {
 						stack: { value: undefined, configurable: false, writable: false, enumerable: false }
 					});
 					Object.freeze(cleanDecryptErr);
-                    console.error("❌🔑 SW: Decrittazione fallita per:", finalPath);
+                    console.error(`❌🔑 SW: Decrittazione fallita per :\n ${finalPath}`);
                     if (isVaultError) {
 						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
                         return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
                     } else {
                         const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
                         if (deletedMain) {
-                            console.log(`⚠️🧹 SW: Risorsa Corrotta nel (🛡️ Bunker), ✅ eliminata correttamente: ${finalPath}`);
+                            console.log(`⚠️🧹 SW: Risorsa Corrotta nel ( 🛡️ Bunker )\n✅ eliminata correttamente: ${finalPath}`);
                             return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
                         }
                     }
@@ -2172,58 +2175,58 @@ self.addEventListener('fetch', (event) => {
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
 		    const dotIdx = finalPath.lastIndexOf('.');
 		    let altPath = null;
-		    if (dotIdx !== -1) {
+		    if (dotIdx !== -1 && !isHTML) {
 		        const basePath = finalPath.substring(0, dotIdx);
 		        for (let variantExt of CONFIG.extensions) {
 		            altPath = basePath + '.' + variantExt;
 		
 		            if (altPath === finalPath) continue;
-		            const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
-		                              await userCache.match(altPath, { ignoreSearch: true });
-		            if (altCached) {
-		                const contentTypeIMG = altCached.headers.get('Content-Type') || '';
-		
-		                if (contentTypeIMG.includes('image/')) {
-		                    console.info(`🛸🎯 SW Recovery: Trovata variante -> ${altPath}`);
-		                    try {
-		                        if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
-		                            const buffer = await altCached.clone().arrayBuffer();
-		                            let decrypted = await decryptBuffer(buffer);
-		
-		                            const variantExtLower = variantExt.toLowerCase();
-		                            const exactBuffer = decrypted.buffer.slice(
-		                                decrypted.byteOffset, 
-		                                decrypted.byteOffset + decrypted.byteLength
-		                            );
-		                            const contentLength = exactBuffer.byteLength;
-		                            
-		                            const secureHeaders = new Headers({
-		                                'Content-Type': contentTypeIMG,
-		                                'X-PWA-Source': 'Bunker-Decrypted', 
-		                                'Content-Length': contentLength.toString(),
-		                                'Cache-Control': 'private, no-cache, max-age=0',
-		                                'Pragma': 'no-cache',
-		                                'Expires': '0'
-		                            });
-		
-		                            if (CONFIG.extExlPHr.includes(variantExtLower)) {
-		                                secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
-		                            }
-		
-		                            const outResponse = new Response(exactBuffer, { headers: secureHeaders });
-		                            new Uint8Array(buffer).fill(0);
-		                            if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
-		                            decrypted = null;
-		                            return outResponse;
-		                        }
-		
-		                        return altCached.clone();
-		                    } catch (decryptErr) {
-		                        console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
-		                        continue;
-		                    }
-		                }
-		            }
+                    try {
+                        const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
+                                          await userCache.match(altPath, { ignoreSearch: true });
+                        if (altCached) {
+                            const contentTypeIMG = altCached.headers.get('Content-Type') || '';
+            
+                            if (contentTypeIMG.includes('image/')) {
+                                console.info(`🛸🎯 SW Recovery: Trovata variante :\n ${altPath}`);
+                                if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
+                                    const buffer = await altCached.clone().arrayBuffer();
+                                    let decrypted = await decryptBuffer(buffer);
+                                    
+                                    if (decrypted) {
+                                        const variantExtLower = variantExt.toLowerCase();
+                                        const exactBuffer = decrypted.buffer.slice(
+                                            decrypted.byteOffset, 
+                                            decrypted.byteOffset + decrypted.byteLength
+                                        );
+                                        const contentLength = exactBuffer.byteLength;
+                                        const secureHeaders = new Headers({
+                                            'Content-Type': contentTypeIMG,
+                                            'X-PWA-Source': 'Bunker-Decrypted', 
+                                            'Content-Length': contentLength.toString(),
+                                            'Cache-Control': 'private, no-cache, max-age=0',
+                                            'Pragma': 'no-cache',
+                                            'Expires': '0'
+                                        });
+                        
+                                        if (CONFIG.extExlPHr.includes(variantExtLower)) {
+                                            secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
+                                        }
+                        
+                                        const outResponse = new Response(exactBuffer, { headers: secureHeaders });
+                                        new Uint8Array(buffer).fill(0);
+                                        if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+                                        decrypted = null;
+                                        return outResponse;
+                                    }
+                                }
+                                return altCached.clone();
+                            }
+                        }
+                    } catch (decryptErr) {
+                        // 🔇 Silenziato per evitare spam nei log durante il ciclo di ricerca varianti offline
+                        continue;
+                    }
 		        }
 		    }
 		    // 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
@@ -2244,16 +2247,17 @@ self.addEventListener('fetch', (event) => {
 		                        const buffer = await placeholder.arrayBuffer();
 		                        let decrypted = await decryptBuffer(buffer);
 		                        
-		                        // Pulizia sicura anche per il placeholder
-		                        const exactPlaceholderBuf = decrypted.buffer.slice(decrypted.byteOffset, decrypted.byteOffset + decrypted.byteLength);
-		                        globalPlaceholderBlob = new Blob([exactPlaceholderBuf], { type: placeholder.headers.get('Content-Type') });
-		                        new Uint8Array(buffer).fill(0);
-		                        decrypted = null;
+                            if (decrypted && decrypted.byteLength > 0) {
+                                const exactPlaceholderBuf = decrypted.buffer.slice(decrypted.byteOffset, decrypted.byteOffset + decrypted.byteLength);
+                                globalPlaceholderBlob = new Blob([exactPlaceholderBuf], { type: placeholder.headers.get('Content-Type') || 'image/png' });
+                                new Uint8Array(buffer).fill(0);
+                                decrypted = null;
+                            }
 		                    } else {
 		                        globalPlaceholderBlob = await placeholder.blob();
 		                    }
 		                }
-		                if (isImageRequest && !isHTML && !isExcluded) {
+		                if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob) {
 		                    console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
 		                    return new Response(globalPlaceholderBlob, {
 		                        headers: {
@@ -2263,13 +2267,14 @@ self.addEventListener('fetch', (event) => {
 		                    });
 		                }
 		            } catch (err) {
-		                console.error("❌ SW: Errore decriptazione placeholder:", err);
+		                //console.error("❌ SW: Errore decriptazione placeholder: ", err);
 		            }
 		        }
 				// 🎯 FALLBACK DI EMERGENZA.
 		        if (isImageRequest && !isHTML && !isExcluded) {
-		            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
+		            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
 		            return new Response(GLOBAL_BROKEN_BLOB, {
+                        status: 200,
 		                headers: {
 		                    'Content-Type': 'image/svg+xml',
 		                    'X-PWA-Source': 'SW-Emergency-SVG'
@@ -2282,22 +2287,20 @@ self.addEventListener('fetch', (event) => {
 		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
 		    }
 		    if (isCoreAsset && !isNewInstallation) {
-		        console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
+		        console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
 		        CoreAssets_Destroy_Caches();
 		    }
 		    if (isHTML) {
 		        return await generateErrorPage(globalPlaceholderBlob, url.pathname);
 		    }
-		    //const fall_onlineCheck = await checkRealOnline('fetch');
-		    //if (!fall_onlineCheck) {
-		        return new Response('📡🚫 Off-line.', {
-		           status: 503,
-		           statusText: 'Service Unavailable',
-		           headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-		        });
-			//}
+		    return new Response('📡🚫 Off-line. ( Cache not Found ... ) ', {
+		        status: 503,
+		        statusText: 'Service Unavailable',
+		        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+		    });
+			
 		}
-
+		
     })());
 });
 
