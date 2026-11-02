@@ -2186,8 +2186,8 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-        } else if( !cached && isLogicEnabled && !isSyncing ) {
-			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
+        } else if( !cached && isLogicEnabled && !isSyncing && currentMethod !== 'HEAD' ){
+			// 🛡️ SBARRAMENTI : completamento del Sync... o Richiesta HEAD non in corso...
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
