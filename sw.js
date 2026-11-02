@@ -2027,8 +2027,17 @@ self.addEventListener('fetch', (event) => {
 		const SWR_SAVE = async (event, C_Method) => {
 			//await waitTillIdle(50);
 			if ( C_Method === 'HEAD' ) {
-				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-				return injectSecurityHeaders(await fetch(event.request));
+				try {
+			        const response = await fetch(event.request);
+			        if (response && response.ok) {
+						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+						return injectSecurityHeaders(response);
+			        }
+			    } catch (_) {
+			    	// 🛑 Se la rete risponde con un errore (es. 404, 500) o non è ok, restituiamo null 
+					// costringendolo a passare pulito sulla cache o sulle varianti locali!
+					return null;
+			    }
 			}
 			const isOnline = await checkRealOnline('fetch');
 			if ( isOnline && C_Method !== 'HEAD') {
