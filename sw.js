@@ -2162,6 +2162,7 @@ self.addEventListener('fetch', (event) => {
 					// 🏴‍☠️ ACCECAMENTO: Rimozione totale delle tracce crittografiche dall'oggetto errore
 					const cleanDecryptErr = {};
 					const isVaultError = err && err.message && err.message.includes('VAULT');
+					const isDecryptionNull = err && err.message && err.message.includes('Decryption returned null');
 					Object.defineProperties(cleanDecryptErr, {
 						name: { value: "CryptoShieldError", enumerable: true },
 						message: { value: isVaultError ? "VAULT_LOCKED_NO_KEY" : "Decryption integrity violation", enumerable: true },
@@ -2172,11 +2173,11 @@ self.addEventListener('fetch', (event) => {
                     if (isVaultError) {
 						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
                         return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
-                    } else {
+                    } else if(isDecryptionNull) {
                         const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
                         if (deletedMain) {
                             console.log(`⚠️🧹 SW: Risorsa Corrotta nel ( 🛡️ Bunker )\n✅ eliminata correttamente: ${finalPath}`);
-                            return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
+                            //return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
                         }
                     }
                     throw cleanDecryptErr; // Rilancia l'errore sterilizzato
@@ -2185,12 +2186,8 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-        } else if( !cached ) {
+        } else if( !cached && isLogicEnabled && !isSyncing ) {
 			// 🛡️ SBARRAMENTO : Intercettazione congelata fino al completamento del Sync...
-			if (!isLogicEnabled || isSyncing) {
-				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-				return injectSecurityHeaders(await fetch(event.request));
-			}
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
@@ -2312,17 +2309,16 @@ self.addEventListener('fetch', (event) => {
 		    if (isCoreAsset && !isNewInstallation) {
 		        console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
 		        CoreAssets_Destroy_Caches();
-		    }
-		    if (isHTML) {
-		        return await generateErrorPage(globalPlaceholderBlob, url.pathname);
-		    }
-		    return new Response('📡🚫 Off-line. ( Cache not Found ... ) ', {
-		        status: 503,
-		        statusText: 'Service Unavailable',
-		        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-		    });
-			
+		    }			
 		}
+		 if (isHTML) {
+		    return await generateErrorPage(globalPlaceholderBlob, url.pathname);
+		}
+		return new Response('📡🚫 Off-line. ( Cache not Found ... ) ', {
+		    status: 503,
+		    statusText: 'Service Unavailable',
+		    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+		});
 		
     })());
 });
