@@ -1927,6 +1927,9 @@ self.addEventListener('fetch', (event) => {
 		if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
+		// 🛡️ DEFINIZIONE ANTICIPATA
+		const contentsType = event.request.headers.get('Accept') || "";
+        const isHTML = contentsType.includes('text/html') || finalPath.endsWith('.html') || finalPath === normalize(BASE_PATH);
 
         // 🛡️ BLOCCO CONDIVISO: Elaborazione, validazione forense, cifratura e salvataggio nel bunker/magazzino
         const processAndStore = async (responseToProcess, controllerSignal) => {
@@ -2087,8 +2090,6 @@ self.addEventListener('fetch', (event) => {
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
 		}
-		// 🔍🎯 Valutazione preliminare HTML, preservata per sicurezza logica ...
-		const isHTML = contentsType.includes('text/html') || finalPath.endsWith('.html') || finalPath === normalize(BASE_PATH);
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
@@ -2231,7 +2232,6 @@ self.addEventListener('fetch', (event) => {
 		    }
 		    // 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 		    // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
-		    const contentsType = event.request.headers.get('Accept') || "";
 	        const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
 		    const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
 		    const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
