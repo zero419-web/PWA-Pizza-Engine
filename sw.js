@@ -2026,26 +2026,13 @@ self.addEventListener('fetch', (event) => {
 		
 		const SWR_SAVE = async (event, C_Method) => {
 			//await waitTillIdle(50);
-			if ( C_Method === 'HEAD' ) {
-				try {
-			        const response = await fetch(event.request);
-			        if ( response ) {
-						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-						return injectSecurityHeaders(response);
-			        }
-			    } catch (_) {
-			    	// 🛑 Se la rete risponde con un errore (es. 404, 500) o non è ok, restituiamo null 
-					// costringendolo a passare pulito sulla cache o sulle varianti locali!
-					return null;
-			    }
-			}
 			const isOnline = await checkRealOnline('fetch');
-			if ( isOnline && C_Method !== 'HEAD') {
+			if ( isOnline ) {
 				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
 				// CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
 				try {
 					const currentProfile = getNetworkProfile(self.navigator);
-					const TIMEOUT_MS = currentProfile.timeout * 1000;
+					const TIMEOUT_MS = (C_Method !== 'HEAD') ? (currentProfile.timeout * 1000) : 3000;
 					const controller = new AbortController();
 					const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 					const fetchSignal = globalAbortController
@@ -2064,11 +2051,10 @@ self.addEventListener('fetch', (event) => {
 							console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore(networkResponse.clone(), fetchSignal));
 						}
+					} else if (networkResponse && networkResponse.status === 404) {
 						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 						return injectSecurityHeaders(networkResponse);
 					} else {
-						// 🛑 Se la rete risponde con un errore (es. 404, 500) o non è ok, restituiamo null 
-						// costringendolo a passare pulito sulla cache o sulle varianti locali!
 						return null;
 					}
 					
