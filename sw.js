@@ -2024,10 +2024,14 @@ self.addEventListener('fetch', (event) => {
 			await waitTillIdle(50);
         };
 		
-		const SWR_SAVE = async (event) => {
+		const SWR_SAVE = async (event, C_Method) => {
 			//await waitTillIdle(50);
+			if ( C_Method === 'HEAD' ) {
+				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+				return injectSecurityHeaders(await fetch(event.request));
+			}
 			const isOnline = await checkRealOnline('fetch');
-			if ( isOnline ) {
+			if ( isOnline && C_Method !== 'HEAD') {
 				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
 				// CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
 				try {
@@ -2090,7 +2094,7 @@ self.addEventListener('fetch', (event) => {
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
 		if( finalStrategy === 'NetworkFirst' ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
-			const netRes = await SWR_SAVE(event);
+			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
 				 if (isLogicEnabled && !isSyncing) {
 					return netRes;
@@ -2099,7 +2103,7 @@ self.addEventListener('fetch', (event) => {
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
 		   if (isLogicEnabled && !isSyncing) {
-				event.waitUntil( SWR_SAVE(event) );
+				event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
 			//await waitTillIdle(300, 600);
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
