@@ -2097,7 +2097,7 @@ self.addEventListener('fetch', (event) => {
 			}
 			//await waitTillIdle(300, 600);
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} \n [ ${targetCache} ]`);
+			console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ):\n ${finalPath} ]`);
 		}
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
@@ -2185,6 +2185,7 @@ self.addEventListener('fetch', (event) => {
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
 		    const dotIdx = finalPath.lastIndexOf('.');
 		    let altPath = null;
+			let variantResponse = null;
 		    if (dotIdx !== -1 && !isHTML) {
 		        const basePath = finalPath.substring(0, dotIdx);
 		        for (let variantExt of CONFIG.extensions) {
@@ -2223,14 +2224,15 @@ self.addEventListener('fetch', (event) => {
                                             secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
                                         }
                         
-                                        const outResponse = new Response(exactBuffer, { headers: secureHeaders });
+                                        const variantResponse = new Response(exactBuffer, { headers: secureHeaders });
                                         new Uint8Array(buffer).fill(0);
                                         if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                                         decrypted = null;
-                                        return outResponse;
+                                       break;
                                     }
                                 }
-                                return altCached.clone();
+                                variantResponse = altCached.clone();
+		                        break;
                             }
                         }
                     } catch (decryptErr) {
@@ -2238,6 +2240,10 @@ self.addEventListener('fetch', (event) => {
                         continue;
                     }
 		        }
+		    }
+			// 🛑 BLOCCO DI GUARDIA: Se abbiamo trovato una variante, restituiamo quella SUBITO e blocchiamo tutto!
+		    if (variantResponse) {
+		        return variantResponse;
 		    }
 		    // 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 		    // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
