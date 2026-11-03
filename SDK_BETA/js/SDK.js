@@ -10,8 +10,6 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
-		this.cacheName = options.cacheName || 'PA-BUNKER-VAULT-v1.0';
-        this.userCacheName = options.userCacheName || `user_${this.cacheName}`;
         this.swPath = options.swPath || './ServiceWorker.js';
         this.scope = options.scope || './';
         this.coreAssets = options.coreAssets || [
@@ -60,6 +58,30 @@ export class PanzerSDK {
         // 🕵️‍♂️ Avvio automatico del watchdog ambientale e anti-incognito all'istanza dell'SDK usando il timeout configurabile
         this.initPwaEnvironmentCheck(this.checkTimeout);
     }
+
+	
+    // 🔍 Cicla le cache del browser per trovare
+	// una versione attiva di PWA_PIZZA_ENGINE
+    async _detectActiveCacheVersion(namecache, fallbackVersion) {
+        if (!('caches' in window)) return ( namecache + fallbackVersion );
+        try {
+            const keys = await caches.keys();
+            // Cicla e cerca la stiva che corrisponde al motore PWA
+            const targetKey = keys.find(k => k.startsWith('PWA_PIZZA_ENGINE_v'));
+            
+            if (targetKey) {
+                // Estrae la versione dal nome ...
+                const match = targetKey.match(/v(.+)$/);
+                if (match && match[1]) {
+                    this.onLogMessage('info', `🔍 SDK: Trovata stiva attiva nel browser -> [ ${targetKey} ]`);
+                    return ( namecache + match[1] );
+                }
+            }
+        } catch (e) {
+            this.onLogMessage('warn', `⚠️ SDK: Errore durante la scansione delle cache: ${e.message}`);
+        }
+        return ( namecache + fallbackVersion );
+	}
 
     // 📡 Registrazione standard SW senza alterarne il codice
     async _registerSW() {
@@ -316,6 +338,7 @@ const checkPwaInstallabilityCriteria = async () => {
      * @param {Array} [overrideCoreAssets] Lista parametrica opzionale dei Core Assets
      */
     async initDB(version, manifestData, overrideCoreAssets = null) {
+		const dynamicCacheName = await this._detectActiveCacheVersion('PWA_PIZZA_ENGINE_v', '7.9');
         const customCore = overrideCoreAssets || this.coreAssets || [];
         const manifestAssets = (manifestData && manifestData.assets) ? manifestData.assets : [];
 
@@ -336,7 +359,7 @@ const checkPwaInstallabilityCriteria = async () => {
         }
 
         try {
-            const cache = await caches.open(this.cacheName);
+            const cache = await caches.open(dynamicCacheName);
 
             let completed = 0;
             let failed = 0;
