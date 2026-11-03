@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const getDefinedCoreAssets = () => [
         './',
         './index.html',
+        './js/pdf_min.js',
         './js/pdf_worker_min.js',
         './js/app.js',
         './js/SDK.js',
@@ -184,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // Rendering PDF Universale tramite PDF.js (Default Scale 1.0 -> 100%) con Scroll Bidirezionale
+                // Rendering PDF Universale tramite pdf_worker_min.js (Default Scale 1.0 -> 100%) con Scroll Bidirezionale
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -226,14 +227,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
                         </style>
-                        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
+                        <script src="./pdf_min.js"><\/script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading">⏳ Caricamento visore PDF di sicurezza...</div>
                         <div id="pdf-container"></div>
                         <script>
                             const pdfUrl = "${activeObjectUrl}";
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf_worker_min.js';
 
                             async function renderPDF() {
                                try {
