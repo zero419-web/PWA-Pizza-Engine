@@ -2050,10 +2050,8 @@ self.addEventListener('fetch', (event) => {
 							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
-					}
-					if ( networkResponse ){
-					    // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					    return injectSecurityHeaders(networkResponse);
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(networkResponse);
 					}
 				} catch (_) { // 🔇
 						return null;
