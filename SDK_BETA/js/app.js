@@ -43,14 +43,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        './/',
-        'index.html',
-        'js/app.js',
-        'js/SDK.js',
-        'ServiceWorker.js',
-        'PA_PWA.webmanifest',
-        'icon.png',
-        'Res-PA-manifest.json'
+        './',
+        './index.html',
+        './js/app.js',
+        './js/SDK.js',
+        './ServiceWorker.js',
+        './PA_PWA.webmanifest',
+        './icon.png',
+        './Res-PA-manifest.json'
     ];
 
     const logToTerminal = (level, text) => {
@@ -326,8 +326,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
-        swPath: 'ServiceWorker.js',
-        scope: 'SDK_BETA/',
+        swPath: './ServiceWorker.js',
+        scope: './SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
