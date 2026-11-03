@@ -10,15 +10,15 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
-        this.swPath = options.swPath || 'ServiceWorker.js';
+        this.swPath = options.swPath || '/ServiceWorker.js';
         this.scope = options.scope || '/';
         this.coreAssets = options.coreAssets || [
-            'index.html',
-            'Res-PA-manifest.json',
-            'PWA.webmanifest',
-            'ServiceWorker.js',
-            'js/SDK.js',
-            'js/app.js'
+            '/index.html',
+            '/Res-PA-manifest.json',
+            '/PWA.webmanifest',
+            '/ServiceWorker.js',
+            '/js/SDK.js',
+            '/js/app.js'
         ];
 
         // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
@@ -59,7 +59,6 @@ export class PanzerSDK {
         this.initPwaEnvironmentCheck(this.checkTimeout);
     }
 
-	
     // 🔍 Cicla le cache del browser per trovare
 	// una versione attiva di PWA_PIZZA_ENGINE
     async _detectActiveCacheVersion(namecache, fallbackVersion) {
@@ -87,7 +86,7 @@ export class PanzerSDK {
         if ('serviceWorker' in navigator) {
             try {
                 await navigator.serviceWorker.register(this.swPath, { scope: this.scope });
-                this.onLogMessage('info', '📡 Service Worker Panzer registrato con successo.');
+                this.onLogMessage('success', '📡 Service Worker Panzer registrato con successo.');
             } catch (err) {
                 this.onLogMessage('warn', `⚠️ Registrazione SW non completata: ${err.message}`);
             }
