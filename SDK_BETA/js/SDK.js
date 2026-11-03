@@ -11,8 +11,9 @@
 export class PanzerSDK {
     constructor(options = {}) {
         this.swPath = options.swPath || './ServiceWorker.js';
-        this.scope = options.scope || './';
+        this.scope = options.scope || '/';
         this.coreAssets = options.coreAssets || [
+			'./',
             './index.html',
             './Res-PA-manifest.json',
             './PWA.webmanifest',
