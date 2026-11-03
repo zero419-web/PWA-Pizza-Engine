@@ -1905,7 +1905,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 🚧 SEZIONE I B : GESTIONE CACHE & FALLBACK...
-    //event.respondWith((async () => {
+    event.respondWith((async () => {
         // ⏱️ Marcatore iniziale:
         const startFetchTime = performance.now();
         let finalPath = cleanPath;
@@ -2076,12 +2076,11 @@ self.addEventListener('fetch', (event) => {
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
 		   if ( !isSyncing ) {
-				event.waitUntil( SWR_SAVE(event, currentMethod) );
+				//event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
-	event.respondWith((async () => {
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
@@ -2152,7 +2151,7 @@ self.addEventListener('fetch', (event) => {
                         return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
                     } else {
                         // 🗑️ Errore strutturale/corruzione accertata: la risorsa viene eliminata dalla cache.
-                        //const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
+                        const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
                         if (deletedMain) {
                             console.log(`⚠️🧹 SW: Risorsa Corrotta nel ( 🛡️ Bunker )\n✅ eliminata correttamente: ${finalPath}`);
                             return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
