@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8.3
+ * v1.8.5
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const getDefinedCoreAssets = () => [
         './',
         './index.html',
+        './js/pdf.worker.min.js',
         './js/app.js',
         './js/SDK.js',
         './ServiceWorker.js',
