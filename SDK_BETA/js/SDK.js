@@ -1,7 +1,7 @@
 /**
- * 🛡️ PanzerSDK - Beta v1.0.0200
+ * 🛡️ PanzerSDK - Beta v1.2
  *
- * Client Bridge v1.4.3 ( Bunker Mode 🛡️📦 )
+ * Client Bridge v1.4.5 ( Bunker Mode 🛡️📦 )
  *
  * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -358,7 +358,7 @@ const checkPwaInstallabilityCriteria = async () => {
                 // Tolleranza ai guasti con tentativi di Retry (max 3)
                 for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
-                        const response = await fetch(normalizedUrl, { cache: 'reload' });
+                        const response = await fetch(normalizedUrl, { cache: 'no-cache' });
                         if (response.ok) {
                             await cache.put(normalizedUrl, response);
                             success = true;
