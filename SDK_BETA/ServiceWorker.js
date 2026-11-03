@@ -1,7 +1,7 @@
 /*
  * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
- * ⚙️ CORE: 🪖 PANZER v7.9.5+
+ * ⚙️ CORE: 🪖 PANZER v7.9.7+
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
@@ -70,8 +70,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.9.5',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.5',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.9.7',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.7',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
 	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: [
@@ -1258,7 +1258,7 @@ const checkRealOnline = async (mode = 'fetch') => {
         if (navigator.connection && navigator.connection.saveData) return false;
         timeoutMs = Math.min(netProfile.timeout * 1000, 15000);
     } else {
-        timeoutMs = (profileName === 'Fast' || profileName === 'ultrafast') ? 2500 : 5500;
+        timeoutMs = (profileName === 'Fast' || profileName === 'Ultrafast') ? 2500 : 5500;
     }
     try {
         const controller = new AbortController();
@@ -1644,6 +1644,7 @@ Object.freeze(universalScanner);
                     const group = uniqueList.slice(i, i + limit);
 
 					console.info(`🗃️🚀 SW: Sync 🗂️ [ ${Math.floor(i/limit) + 1} / ${Math.ceil(List_File_Download/limit)} ] (${group.length} 📄)`);
+					await waitTillIdle(50);
 
 					let abortListener;
 					const abortPromise = new Promise((_, reject) => {
@@ -1661,7 +1662,7 @@ Object.freeze(universalScanner);
 							abortPromise
 						]);
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
-						await waitTillIdle();
+						//await waitTillIdle();
 					} catch (raceError) {
 						if (abortListener) syncAbortController?.signal.removeEventListener('abort', abortListener);
 						throw raceError;
@@ -1783,31 +1784,30 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
         profiles[key].timeout === netProfile.timeout
     ) || 'Medium';
 
-	const isDegradedNetwork = ( netProfile === 'Verylow' || netProfile === 'Low' );
+	const isDegradedNetwork = ( profileName !== 'Ultrafast' || profileName !== 'Fast' );
 
     switch (profileName) {
         case 'Ultrafast':
         case 'Fast':
             return 'NetworkFirst';
         case 'Medium':
-            return hasCache ? 'SWR' : 'NetworkFirst';
         case 'Low':
         case 'Verylow':
         default:
             if ( hasCache || isDegradedNetwork ) {
-                console.info(`🌐👮‍♂️ SW: Rete Degradata, [ ${profileName} ].\n SWR(Sate-While-Revalidate), ON per continuità operativa...`);
                 return 'SWR';
             }
             return 'NetworkFirst';
     }
 }
+Object.freeze(assegnaFlussoPolimorfo);
 
+// normaliza file core...
 const CORE_ASSETS_SET = new Set(
     (CONFIG.coreAssets || []).map(asset => {
         return normalize(asset);
     })
 );
-Object.freeze(assegnaFlussoPolimorfo);
 
 /**
  * 🛡️ Security Headers Injector- v2.0
@@ -1894,10 +1894,12 @@ self.addEventListener('fetch', (event) => {
 		   ) {
 			return; // ⏩ Delegato direttamente al browser
 		}
+		/*
 		if(currentMethod === 'HEAD'){
-			//console.info(`✅ SW: HEAD Request !\n⏩ Delegato direttamente al browser`);
-			//return; // ⏩ Delegato direttamente al browser
+			console.info(`✅ SW: HEAD Request !\n⏩ Delegato direttamente al browser`);
+			return; // ⏩ Delegato direttamente al browser
 		}
+		*/
     } catch (e) {
         return; // 🛑 Blocco difensivo in caso di URL telematico corrotto o non parsabile
     }
@@ -1920,18 +1922,19 @@ self.addEventListener('fetch', (event) => {
 		const isCoreAsset = CORE_ASSETS_SET.has(finalPath);
         const shouldBeEncrypted = isCoreAsset || existsInMain;
 		const targetCache = shouldBeEncrypted ? "📦🛡️ (Bunker)" : "📦🔓 (Magazzino)";
-		let isImageRequest = false;
-		let isExcluded = false;
-		let isHTML = false;
 
 		// Scarto Tecnico mio !
 		if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
+		// 🛡️ DEFINIZIONI ANTICIPATE ...
+		const contentsType = event.request.headers.get('Accept') || "";
+        const isHTML = contentsType.includes('text/html') || finalPath.endsWith('.html') || finalPath === normalize(BASE_PATH);
 
         // 🛡️ BLOCCO CONDIVISO: Elaborazione, validazione forense, cifratura e salvataggio nel bunker/magazzino
         const processAndStore = async (responseToProcess, controllerSignal) => {
-            try {
+            //await waitTillIdle(50);
+			try {
                 const isOk = await verifyVaultIntegrity();
                 if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                 if (!responseToProcess || !isLogicEnabled || isSyncing) return;
@@ -2001,7 +2004,7 @@ self.addEventListener('fetch', (event) => {
                             }
                         } else {
                             console.warn("📦⚠️ SW: Update cache fallito:", cleanCacheErr);
-                            throw cleanRetryErr; // Rilanciamo l'errore già accecato verso il catch superiore
+                            throw cleanCacheErr; // Rilanciamo l'errore già accecato verso il catch superiore
                         }
                     } finally {
                         if (bufferToClear) {
@@ -2019,17 +2022,16 @@ self.addEventListener('fetch', (event) => {
                 // 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
-			await waitTillIdle();
         };
-		const SWR_SAVE = async (event) => {
+		
+		const SWR_SAVE = async (event, C_Method) => {
 			const isOnline = await checkRealOnline('fetch');
-			//console.info(`⚡👮‍♂️ SW: [ ${finalStrategy} ] \n 🌐 Rete: status [ ${isOnline} ]`);
 			if ( isOnline ) {
 				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
 				// CACHE MISS: Nessuna cache locale, fetch di rete immediato per la Ux
 				try {
 					const currentProfile = getNetworkProfile(self.navigator);
-					const TIMEOUT_MS = currentProfile.timeout * 1000;
+					const TIMEOUT_MS = (currentProfile.timeout * 1000);
 					const controller = new AbortController();
 					const tId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 					const fetchSignal = globalAbortController
@@ -2042,44 +2044,42 @@ self.addEventListener('fetch', (event) => {
 					});
 					clearTimeout(tId);
 
-					if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
-						const responseClone = networkResponse.clone();
-						event.waitUntil(processAndStore(responseClone, fetchSignal));
-						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-						return injectSecurityHeaders(networkResponse);
-					} else if (networkResponse && networkResponse.status === 404) {
-						// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-						return injectSecurityHeaders(networkResponse);
+					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
+					if ( networkResponse && networkResponse.ok ) {
+						if ( isLogicEnabled && !isSyncing ) {
+							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
+							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
+						}
 					}
-				} catch (e) {
-					// 🛡️ Fallback in caso di crash rete
-					return new Response(`❌🌐 ERROR: NetworkFirst ${e}`, { status: 504, headers: { 'Content-Type': 'text/plain' } });
+					if ( networkResponse ){
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(networkResponse);
+					}
+				} catch (_) { // 🔇
+						return null;
 				}
 			}
+			return null;
 		};
 		// 🌐 SEZIONE II: FLUSSO DI INSTRADAMENTO RETE ( SWR / NetworkFirst )
 		// Se la telemetria rileva connettività reale, attiva il canale polimorfo dando priorità alla rete
 		// o avviando la routine di sincronizzazione asincrona e aggiornamento dei magazzini in background.
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
-		// 🎯 STRATEGIA: SWR se c'è cache ( zero attese su reti lente ), altrimenti Network-First
-		if( finalStrategy === 'SWR' ){
-			event.waitUntil( SWR_SAVE(event) );
-			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
-			console.info(`👮‍♂⚡️ SW: Erogazione Risorsa da Cached 🗄 :\n ${finalPath} \n [ ${targetCache} ]`);
-		}else{
-			// 🌐 NetworkFirst
-			// 🛡️ SBARRAMENTO: Intercettazione congelata fino al completamento del Sync...
-			if (!isLogicEnabled || isSyncing) {
-				console.info(`👮‍♂⚡️ SW: Erogazione Risorsa da WEB:\n 🌐 ${finalPath} `);
-				// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-				return injectSecurityHeaders(await fetch(event.request));
+		const currentMethod = event.request.method.toUpperCase();
+		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
+		if( finalStrategy === 'NetworkFirst' ){
+			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
+			const netRes = await SWR_SAVE(event, currentMethod);
+			if ( netRes !== null ) {
+				return netRes;
 			}
-
-			// 🌐 NetworkFirst & Save Backgroud...
-			console.info(`👮‍♂⚡️ SW: EROGA e SALVA RISORSA da WEB:\n 🌐💾 ${finalPath} `);
-
-			await waitTillIdle();
-			return await SWR_SAVE(event);
+		} else if( finalStrategy === 'SWR' ){
+			// 🚀 SWR Immediato: Save Background ...
+		   if ( !isSyncing ) {
+				event.waitUntil( SWR_SAVE(event, currentMethod) );
+			}
+			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
+			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
@@ -2087,42 +2087,41 @@ self.addEventListener('fetch', (event) => {
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
+					//await waitTillIdle(50);
                     const isOk = await verifyVaultIntegrity();
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
-                    const buffer = await cached.arrayBuffer();
+                    const buffer = await cached.clone().arrayBuffer();
                     let decrypted = await decryptBuffer(buffer);
-
-                    const detectedContentType = cached.headers.get('Content-Type') || '';
-                    const dotIdx = finalPath.lastIndexOf('.');
-                    const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
-
-                    const decryptedBytes = new Uint8Array(decrypted);
-                    const contentLength = decryptedBytes.byteLength;
-
-                    const secureHeaders = new
-                    Headers({
-                        'Content-Type': detectedContentType,
-                        'X-PWA-Source': 'Bunker-Decrypted',
-                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    });
-
-                    if (ext && CONFIG.extExlPHr.includes(ext)) {
-                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
-                    }
-
-                    const outResponse = new Response(decrypted, { headers: secureHeaders });
-					console.log(`🛡️🧹 SW: Bonifica RAM eseguita per: ${finalPath}`);
-					new Uint8Array(buffer).fill(0);
-                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
-                    decrypted = null;
-					console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
-					return outResponse;
+					if (decrypted) {
+	                    const detectedContentType = cached.headers.get('Content-Type') || '';
+	                    const dotIdx = finalPath.lastIndexOf('.');
+	                    const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
+	                    
+	                    decrypted = new Uint8Array(decrypted);
+	                    const secureHeaders = new Headers({
+	                        'Content-Type': detectedContentType,
+	                        'X-PWA-Source': 'Bunker-Decrypted', 
+	                        'Content-Length': cached.headers.get('Content-Length'),
+	                        'Cache-Control': 'private, no-cache, max-age=0',
+	                        'Pragma': 'no-cache',
+	                        'Expires': '0'
+	                    });
+	                    if (ext && CONFIG.extExlPHr.includes(ext)) {
+	                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
+	                    }
+	
+	                    const outResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
+						console.log(`🛡️🧹 SW: Bonifica RAM eseguita per :\n ${finalPath}`);
+						new Uint8Array(buffer).fill(0);
+	                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+	                    decrypted = null;
+						console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
+						return outResponse;
+					}
                 } catch (err) {
                     	// 🪝🛡️⏱️ INNESTO TEMPORALE SU FALLIMENTO DECRITTAZIONE (PREVIENE TIMING ATTACKS SULLE CHIAVI)
 					if (typeof injectTimingNoise === 'function') await injectTimingNoise(startFetchTime, 40);
-					 // 🛡🧼 BONIFICA DI EMERGENZA RAM:
+					 // 🧼 BONIFICA DI EMERGENZA RAM:
                     if (typeof buffer !== 'undefined' && buffer instanceof ArrayBuffer) {
                         new Uint8Array(buffer).fill(0);
                     }
@@ -2133,21 +2132,23 @@ self.addEventListener('fetch', (event) => {
 
 					// 🏴‍☠️ ACCECAMENTO: Rimozione totale delle tracce crittografiche dall'oggetto errore
 					const cleanDecryptErr = {};
-					const isVaultError = err && err.message && err.message.includes('VAULT');
+					const isVaultError = err && err.message && (err.message.includes('VAULT') || err.message.includes('VAULT_LOCKED_NO_KEY'));
 					Object.defineProperties(cleanDecryptErr, {
 						name: { value: "CryptoShieldError", enumerable: true },
 						message: { value: isVaultError ? "VAULT_LOCKED_NO_KEY" : "Decryption integrity violation", enumerable: true },
 						stack: { value: undefined, configurable: false, writable: false, enumerable: false }
 					});
 					Object.freeze(cleanDecryptErr);
-                    console.error("❌🔑 SW: Decrittazione fallita per:", finalPath);
+                    console.error(`❌🔑 SW: Decrittazione fallita per :\n ${finalPath}`);
+                    
                     if (isVaultError) {
-						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
+						// 🚧 Errore temporaneo: caveau bloccato o chiave assente. Nessuna cancellazione della risorsa.
                         return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
                     } else {
+                        // 🗑️ Errore strutturale/corruzione accertata: la risorsa viene eliminata dalla cache.
                         const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
                         if (deletedMain) {
-                            console.log(`⚠️🧹 SW: Risorsa Corrotta nel (🛡️ Bunker), ✅ eliminata correttamente: ${finalPath}`);
+                            console.log(`⚠️🧹 SW: Risorsa Corrotta nel ( 🛡️ Bunker )\n✅ eliminata correttamente: ${finalPath}`);
                             return new Response(null, { status: 404, statusText: "Resource Corrupted & Deleted" });
                         }
                     }
@@ -2155,133 +2156,136 @@ self.addEventListener('fetch', (event) => {
                 }
             } else {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
-                return cached;
+                return cached.clone();
             }
-        } else if( !cached ) {
-			// 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
-			// Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
-			// Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
-            const dotIdx = finalPath.lastIndexOf('.');
-			let altPath = null;
-            if (dotIdx !== -1) {
-                const basePath = finalPath.substring(0, dotIdx);
-                for (let variantExt of CONFIG.extensions) {
-                    altPath = basePath + '.' + variantExt;
-
-                    if (altPath === finalPath) continue;
-                    const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
-                                      await userCache.match(altPath, { ignoreSearch: true });
-                    if (altCached) {
-                        const contentTypeIMG = altCached.headers.get('Content-Type') || '';
-
-                        if (contentTypeIMG.includes('image/')) {
-                            console.info(`🛸🎯 SW Recovery: Trovata variante -> ${altPath}`);
-                            try {
+		} else {
+		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
+		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
+		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
+		    const dotIdx = finalPath.lastIndexOf('.');
+		    let altPath = null;
+			let altCached_Find = false;
+			const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
+			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
+			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
+			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
+			
+		    if ( dotIdx !== -1 && !isHTML && !isImageRequest ) {
+		        const basePath = finalPath.substring(0, dotIdx);
+		        for (let variantExt of CONFIG.extensions) {
+		            altPath = basePath + '.' + variantExt;
+		            if (altPath === finalPath) continue;
+                    try {
+                        const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
+                                          await userCache.match(altPath, { ignoreSearch: true });
+                        if (altCached) {
+                            const contentTypeIMG = altCached.headers.get('Content-Type') || '';
+                            if (contentTypeIMG.includes('image/')) {
+                                console.info(`🛸🎯 SW Recovery: Trovata variante :\n ${altPath}`);
+								altCached_Find = true;
                                 if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
                                     const buffer = await altCached.clone().arrayBuffer();
                                     let decrypted = await decryptBuffer(buffer);
-
-                                    const variantExtLower = variantExt.toLowerCase();
-                                    const
-                                    secureHeaders = new Headers({
-                                        'Content-Type': contentTypeIMG,
-                                        'X-PWA-Source': 'Bunker-Decrypted',
-                                        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-                                        'Pragma': 'no-cache',
-                                        'Expires': '0'
-                                    });
-
-                                    if (CONFIG.extExlPHr.includes(variantExtLower)) {
-                                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
+                                    if (decrypted) {
+                                        const variantExtLower = variantExt.toLowerCase();
+                                        
+                                        const secureHeaders = new Headers({
+                                            'Content-Type': contentTypeIMG,
+                                            'X-PWA-Source': 'Bunker-Decrypted', 
+                                            'Content-Length': altCached.headers.get('Content-Length'),
+                                            'Cache-Control': 'private, no-cache, max-age=0',
+                                            'Pragma': 'no-cache',
+                                            'Expires': '0'
+                                        });
+                                        if (CONFIG.extExlPHr.includes(variantExtLower)) {
+                                            secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
+                                        }
+                        
+                                        const variantResponse = new Response(exactBuffer, { status: 200, headers: secureHeaders });
+                                        new Uint8Array(buffer).fill(0);
+                                        if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
+                                        decrypted = null;
+                                       return variantResponse;
                                     }
-
-                                    const outResponse = new Response(decrypted, { headers: secureHeaders });
-									new Uint8Array(buffer).fill(0);
-                                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
-                                    decrypted = null;
-									return outResponse;
                                 }
-
-                                return altCached.clone();
-                            } catch (decryptErr) {
-								//console.log(`SW Recovery: ${decryptErr} `);
-								console.error(`❌🔑 SW Recovery: Variante ${altPath} corrotta o non decifrabile.`);
-								continue;
+		                        return altCached.clone();
                             }
                         }
+                    } catch (decryptErr) { // 🔇
+                        altCached_Find = false;
+						continue;
                     }
-                }
-            }
+		        }
+		    }
 			// 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
-			// Fallback finale con iniezione del vettore statico base64 (CONFIG.fallbackImage) in caso di assenza totale.
-			const contentsType = event.request.headers.get('Accept') || "";
-				  isHTML = contentsType.includes('text/html');
-				  isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
-			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
-			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
-				  isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
-			if (isImageRequest || isHTML) {
-				const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
-				const placeholder = await caches.match(placeholderPath);
-				if (placeholder) {
-					try {
-						if (globalPlaceholderBlob === null) {
-							if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
-								const buffer = await placeholder.arrayBuffer();
-								let decrypted = await decryptBuffer(buffer);
-								globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') });
-								decrypted = null;
-							} else {
-								globalPlaceholderBlob = await placeholder.blob();
-							}
-						}
-						if (isImageRequest && !isHTML && !isExcluded) {
-							console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
-							return new Response(globalPlaceholderBlob, {
-								headers: {
-									'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
-									'X-PWA-Source': 'Bunker-Placeholder'
-								}
-							});
-						}
-					} catch (err) {
-						console.error("❌ SW: Errore decriptazione placeholder:", err);
-					}
-				} else if (finalStrategy !== 'NetworkFirst') {
-					if (isImageRequest && !isHTML && !isExcluded) {
-						console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza -> ${finalPath}`);
-						return new Response(GLOBAL_BROKEN_BLOB, {
-							headers: {
-								'Content-Type': 'image/svg+xml',
-								'X-PWA-Source': 'SW-Emergency-SVG'
-							}
-						});
-					}
-				}
-			}
-		}
-	// 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
-    // Isola l'ambiente di runtime in caso di avaria totale (assenza di rete e di cache). Evita il crash
-    // erogando l'interfaccia di cortesia sterile a tolleranza di guasto (503) con marcatura forense.
-		if (!isImageRequest && isExcluded) {
-			console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
-		}
-		if (isCoreAsset && !isNewInstallation) {
-			console.log(`📡❌ SW CORE: Rete off-line per risorsa critica -> ${finalPath}`);
-			CoreAssets_Destroy_Caches();
-		}
-        if (isHTML) {
-            return await generateErrorPage(globalPlaceholderBlob, url.pathname);
+			 // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
+		    if( altCached_Find !== true ) {
+			    if (isImageRequest || isHTML) {
+			        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
+			        const placeholder = await caches.match(placeholderPath);
+			        if (placeholder) {
+			            try {
+			                if (globalPlaceholderBlob === null) {
+			                    let contentLengthP = null;
+			                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
+			                        const buffer = await placeholder.clone().arrayBuffer();
+			                        let decrypted = await decryptBuffer(buffer);
+			                        
+	                            if (decrypted && decrypted.byteLength > 0) {
+	                                globalPlaceholderBlob = new Blob([exactPlaceholderBuf], { type: placeholder.headers.get('Content-Type') || 'image/png' });
+	                                new Uint8Array(buffer).fill(0);
+	                                decrypted = null;
+	                            }
+			                    } else {
+			                        globalPlaceholderBlob = await placeholder.clone().blob();
+			                    }
+			                }
+			                if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob) {
+			                    console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
+			                    return new Response(globalPlaceholderBlob, {
+									status: 200,
+			                        headers: {
+			                            'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
+			                            'Content-Length': placeholder.headers.get('Content-Length'),
+			                            'X-PWA-Source': 'Bunker-Placeholder'
+			                        }
+			                    });
+			                }
+			            } catch (err) { // 🔇
+			                //console.error("❌ SW: Errore decriptazione placeholder: ", err);
+			            }
+			        }
+					// 🎯 FALLBACK DI EMERGENZA.
+			        if (isImageRequest && !isHTML && !isExcluded) {
+			            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
+			            return new Response(GLOBAL_BROKEN_BLOB, {
+	                        status: 200,
+			                headers: {
+			                    'Content-Type': 'image/svg+xml',
+			                    'X-PWA-Source': 'Bunker-Placeholder'
+			                }
+			            });
+			        }
+			    }
+			}	
+		    // 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
+		    if ( !isImageRequest && isExcluded ) {
+		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
+		    }
+		    if ( isCoreAsset && !isNewInstallation ) {
+		        console.log(`📡❌ SW CORE: Rete off-line per risorsa critica :\n ${finalPath}`);
+		        CoreAssets_Destroy_Caches();
+	     	}			
+	     	if (isHTML) {
+		        return await generateErrorPage(globalPlaceholderBlob, url.pathname);
+		    }
+		    return new Response(`📡🚫 Resource Off-line :\n ${finalPath}`, {
+		    status: 503,
+		    statusText: 'Service Unavailable',
+		    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+		    });
         }
-		const fall_onlineCheck = await checkRealOnline('fetch');
-		if (fall_onlineCheck) {
-			return new Response('📡🚫 Offline', {
-				status: 503,
-				statusText: 'Service Unavailable',
-				headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-			});
-		}
-
+		
     })());
 });
 
@@ -2406,7 +2410,7 @@ const CoreAssets_Destroy_Caches = async (serverV = null) => {
 		});
 	} catch (err) {
 	    // 🏴‍☠️ ANTI-PROFILING:
-		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", clcreateCleanError("CacheEvacuationError", "Fallimento procedura di emergenza evacuazione"))
+		console.error("🚫 SW: Fallimento Distruzione dei file [ ⚙️ CORE ] dalla cache.", createCleanError("CacheEvacuationError", "Fallimento procedura di emergenza evacuazione"))
 	}
 };
 Object.freeze(CoreAssets_Destroy_Caches);
@@ -2433,117 +2437,139 @@ Object.freeze(Destroy_ALL_Caches);
 
 /**
  * 🗄🐺️🐤 WATCHDOG DI SICUREZZA: Ispezione Forense dell'Integrità Crittografica.
- * Esegue un test di cifratura/decrittazione simmetrica (Canary Loopback) per rilevare violazioni hardware.
- * Integra una gara asincrona adattiva (Thermal Shield Race via waitTillIdle) per isolare falsi positivi di I/O.
- * @throws {Error} VAULT_COMPROMISED_AND_CLEANED - Se viene rilevata una violazione strutturale dei dati.
+ * Esegue un test di cifratura/decrittazione simmetrica ( Canary Loopback ) per rilevare violazioni hardware.
+ * Integra una gara asincrona adattiva ( Thermal Shield Race via waitTillIdle ) per isolare falsi positivi di I/O Con X tentativi prima di dichiarare l'Attacattacco reale !
+ * @throws {Error} VAULT_COMPROMISED_AND_CLEANED - Se viene rilevata una violazione strutturale dei DATI.
  */
 const deepVaultValidation = async () => {
-    let db = null;
-    try {
-        let realKey = null;
-        let isIOStable = false;
-         // 🎲 JITTERING: Calcola un tempo casuale tra 250ms e 600ms
-        const randomTimeoutMs = Math.random() * (600 - 250) + 250;
+    const MAX_RETRIES = 3;
+    let attempt = 0;
 
-        // ⏳💤  Il Timeout si adatta dinamicamente allo stress attuale dell'Event Loop
-        const thermalShieldRace = (async () => {
-            await waitTillIdle(200, Math.ceil(randomTimeoutMs));
-            throw new Error("THERMAL_SHIELD_TIMEOUT");
-        })();
-
-        // 🏁 GARA ADATTIVA: L'operazione sul disco contro il respiro della CPU
+    while (attempt < MAX_RETRIES) {
+        attempt++;
+        let db = null;
         try {
-            realKey = await Promise.race([
-                (async () => {
-                    db = await new Promise((resolve, reject) => {
-                        const req = indexedDB.open("PWA_Vault", 1);
-                        req.onsuccess = () => resolve(req.result);
-                        req.onerror = () => reject(new Error("VAULT_DB_ACCESS_ERROR"));
-                    });
-                    const resKey = await new Promise((resolve, reject) => {
-                        const tx = db.transaction("keys", "readonly");
-                        const req = tx.objectStore("keys").get("master_key");
-                        req.onsuccess = () => resolve(req.result);
-                        req.onerror = () => reject(new Error("VAULT_KEY_READ_ERROR"));
-                    });
+            let realKey = null;
+            let isIOStable = false;
+             // 🎲 JITTERING: Calcola un tempo casuale tra 250ms e 600ms
+            const randomTimeoutMs = (Math.random() * (600 - 250) + 250) * attempt;
+
+            // ⏳💤  Il Timeout si adatta dinamicamente allo stress attuale dell'Event Loop
+            const thermalShieldRace = (async () => {
+                await waitTillIdle(250, Math.ceil(randomTimeoutMs));
+                throw new Error("THERMAL_SHIELD_TIMEOUT");
+            })();
+
+            // 🏁 GARA ADATTIVA: L'operazione sul disco contro il respiro della CPU
+            try {
+                realKey = await Promise.race([
+                    (async () => {
+                        db = await new Promise((resolve, reject) => {
+                            const req = indexedDB.open("PWA_Vault", 1);
+                            req.onsuccess = () => resolve(req.result);
+                            req.onerror = () => reject(new Error("VAULT_DB_ACCESS_ERROR"));
+                        });
+                        const resKey = await new Promise((resolve, reject) => {
+                            const tx = db.transaction("keys", "readonly");
+                            const req = tx.objectStore("keys").get("master_key");
+                            req.onsuccess = () => resolve(req.result);
+                            req.onerror = () => reject(new Error("VAULT_KEY_READ_ERROR"));
+                        });
+                        db.close();
+                        db = null;
+                        return resKey;
+                    })(),
+                    thermalShieldRace
+                ]);
+
+                // Se IndexedDB vince la gara contro il respiro della CPU, il canale I/O è reattivo e stabile
+                isIOStable = true;
+
+            } catch (raceErr) {
+                if (raceErr.message === "THERMAL_SHIELD_TIMEOUT") {
+                    console.warn(`🌡️🛡️ SW: ( Tentativo ${attempt}/${MAX_RETRIES} ) : THERMAL SHIELD \n L'Event Loop 🔁 o 1️⃣/0️⃣ sono saturi.\n 🚧 Sbarramento adattivo ✅.`);
+                    isIOStable = false;
+                } else {
+                    if (db) { try { db.close(); } catch(e){} db = null; }
+                    throw raceErr;
+                }
+            }
+
+            // --- 👨‍⚖️ VERDETTO SULL'ASSENZA DELLA CHIAVE ---
+            if (!realKey) {
+                if (isIOStable) {
+                    // la chiave non c'è ?, potrebbe essere un ritardo di transazione: riproviamo prima di gridare all'attacco !!!
+                    if (attempt < MAX_RETRIES) {
+                        console.warn(`🗄️⚠️ SW: Chiave non ancora visibile al tentativo ${attempt}, Ritento.`);
+                        //await sleep(300 * attempt);
+                        await waitTillIdle(250, Math.ceil(randomTimeoutMs));
+                        continue;
+                    }
+                    // 🚨 SCENARIO ATTACCO (Test DevTools): Canale sano e reattivo, ma record rimosso dolosamente.
+                    console.error("🗄️🚨 SW: CANALE REATTIVO MA CHIAVE ASSENTE!\n Rilevata rimozione dolosa dal disco. 💾");
+                    throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+                } else {
+                    // FALSO POSITIVO: La CPU o il disco erano bloccati. Attivazione Bunker Shield protettivo.
+                    throw new Error("VAULT_EMPTY_TEMPORARY");
+                }
+            }
+
+            // --- DECRITTAZIONE REGOLARE DEL CANARINO ---
+            const canaryText = CONFIG.vaultCanaryText;
+            const testKey = realKey;
+            try {
+                encryptionKey = testKey;
+                const testBlob = new Blob([canaryText], { type: "text/plain" });
+                const encryptedBlob = await encryptBlob(testBlob);
+                const decryptedBuffer = await decryptBuffer(await encryptedBlob.arrayBuffer());
+                const decryptedText = new TextDecoder().decode(decryptedBuffer);
+                if (decryptedText !== canaryText) {
+                    throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+                }
+                encryptionKey = testKey;
+                return; // 🟢
+            } catch (cryptoErr) {
+                encryptionKey = null;
+                throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+            }
+
+        } catch (err) {
+            if (db) {
+                try {
                     db.close();
-                    db = null;
-                    return resKey;
-                })(),
-                thermalShieldRace
-            ]);
-
-            // Se IndexedDB vince la gara contro il respiro della CPU, il canale I/O è reattivo e stabile
-            isIOStable = true;
-
-        } catch (raceErr) {
-            if (raceErr.message === "THERMAL_SHIELD_TIMEOUT") {
-                console.warn("🌡️🛡️  SW: ️ THERMAL SHIELD\n L'Event Loop 🔁 o 1️⃣/0️⃣ sono saturi.\n 🚧 Sbarramento adattivo ✅.");
-                isIOStable = false;
-            } else {
-                if (db) { try { db.close(); } catch(e){} db = null; }
-                throw raceErr;
+                } catch(e){
+                    if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 35);
+                }
             }
-        }
 
-        // --- VERDETTO GEOMETRICO SULL'ASSENZA DELLA CHIAVE ---
-        if (!realKey) {
-            if (isIOStable) {
-                // 🚨 SCENARIO ATTACCO (Test DevTools): Canale sano e reattivo, ma record rimosso dolosamente.
-                console.error("🗄️🚨 SW: CANALE REATTIVO MA CHIAVE ASSENTE!\n Rilevata rimozione dolosa dal disco. 💾");
-                throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
-            } else {
-                // FALSO POSITIVO: La CPU o il disco erano bloccati. Attivazione Bunker Shield protettivo.
-                throw new Error("VAULT_EMPTY_TEMPORARY");
+            // Se l'errore è temporaneo o siamo sotto il limite dei tentativi...
+            if (err.message !== "VAULT_SECURITY_BREACH_INTEGRITY" && attempt < MAX_RETRIES) {
+                console.warn(`🗄️🔄 SW: Tentativo ${attempt} - fallito, Riprovo !`);
+                //await sleep(400 * attempt);
+                await waitTillIdle(250, Math.ceil(randomTimeoutMs));
+                continue;
             }
-        }
 
-        // --- DECRITTAZIONE REGOLARE DEL CANARINO ---
-        const canaryText = CONFIG.vaultCanaryText;
-        const testKey = realKey;
-        try {
-            encryptionKey = testKey;
-            const testBlob = new Blob([canaryText], { type: "text/plain" });
-            const encryptedBlob = await encryptBlob(testBlob);
-            const decryptedBuffer = await decryptBuffer(await encryptedBlob.arrayBuffer());
-            const decryptedText = new TextDecoder().decode(decryptedBuffer);
-            if (decryptedText !== canaryText) {
-                throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+            if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
+                // 💣 EMERGENCY WIPE
+                console.error("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
+                try {
+                    await Destroy_ALL_Caches("VAULT_COMPROMISED");
+                    await new Promise((resolve) => {
+                        const req = indexedDB.deleteDatabase("PWA_Vault");
+                        req.onsuccess = () => resolve();
+                        req.onerror = () => resolve();
+                    });
+                    console.log("🗄️🔥 SW: Tabula rasa completata con successo.");
+                } catch (purgErr) {
+                    console.error("🗄️⚠️ SW: Errore durante la purga del sistema:", purgErr);
+                }
+                encryptionKey = null;
+                throw new Error("VAULT_COMPROMISED_AND_CLEANED");
             }
-            encryptionKey = testKey;
-        } catch (cryptoErr) {
-            encryptionKey = null;
-            throw new Error("VAULT_SECURITY_BREACH_INTEGRITY");
+            console.error("🗄️⚠️ SW: Accesso Vault -> (Security Violation)");
+            throw new Error("VAULT_TEMPORARILY_LOCKED");
         }
-
-    } catch (err) {
-        if (db) {
-            try {
-				db.close();
-			} catch(e){
-				// 🏴‍☠️ ANTI-PROFILING:
-				if (typeof injectTimingNoise === 'function') await injectTimingNoise(performance.now(), 35);
-			}
-        }
-        if (err.message === "VAULT_SECURITY_BREACH_INTEGRITY") {
-            // 💣 EMERGENCY WIPE
-            console.error("🗄️🚨 SW: INTEGRITÀ CRITTOGRAFICA FALLITA! - Avvio distruzione Dati...");
-            try {
-                await Destroy_ALL_Caches("VAULT_COMPROMISED");
-                await new Promise((resolve) => {
-                    const req = indexedDB.deleteDatabase("PWA_Vault");
-                    req.onsuccess = () => resolve();
-                    req.onerror = () => resolve();
-                });
-                console.log("🗄️🔥 SW: Tabula rasa completata con successo.");
-            } catch (purgErr) {
-                console.error("🗄️⚠️ SW: Errore durante la purga del sistema:", purgErr);
-            }
-            encryptionKey = null;
-            throw new Error("VAULT_COMPROMISED_AND_CLEANED");
-        }
-        console.error("🗄️⚠️ SW: Accesso Vault -> (Security Violation)");
-        throw new Error("VAULT_TEMPORARILY_LOCKED");
     }
 };
 Object.freeze(deepVaultValidation);
