@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const getDefinedCoreAssets = () => [
         './',
         './index.html',
-        './js/pdf.worker.min.js',
+        './js/pdf_worker_min.js',
         './js/app.js',
         './js/SDK.js',
         './ServiceWorker.js',
