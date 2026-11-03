@@ -1905,7 +1905,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 🚧 SEZIONE I B : GESTIONE CACHE & FALLBACK...
-    event.respondWith((async () => {
+    //event.respondWith((async () => {
         // ⏱️ Marcatore iniziale:
         const startFetchTime = performance.now();
         let finalPath = cleanPath;
@@ -2050,6 +2050,8 @@ self.addEventListener('fetch', (event) => {
 							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
+					}
+					if ( networkResponse ){
 					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
 					return injectSecurityHeaders(networkResponse);
 					}
@@ -2079,6 +2081,7 @@ self.addEventListener('fetch', (event) => {
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
+	event.respondWith((async () => {
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
