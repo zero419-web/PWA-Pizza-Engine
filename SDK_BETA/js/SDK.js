@@ -68,7 +68,6 @@ export class PanzerSDK {
             const keys = await caches.keys();
             // Cicla e cerca la stiva che corrisponde al motore PWA
             const targetKey = keys.find(k => k.startsWith('PWA_PIZZA_ENGINE_v'));
-            
             if (targetKey) {
                 // Estrae la versione dal nome ...
                 const match = targetKey.match(/v(.+)$/);
