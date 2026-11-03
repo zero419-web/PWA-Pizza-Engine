@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div id="pdf-container"></div>
                         <script>
                             const pdfUrl = "${activeObjectUrl}";
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
 
                             async function renderPDF() {
                                try {
