@@ -381,7 +381,7 @@ const checkPwaInstallabilityCriteria = async () => {
                 // Tolleranza ai guasti con tentativi di Retry (max 3)
                 for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
-                        const response = await fetch(normalizedUrl, { cache: 'default' });
+                        const response = await fetch(normalizedUrl, { cache: 'reload' });
                         if (response.ok) {
                             await cache.put(normalizedUrl, response);
                             success = true;
