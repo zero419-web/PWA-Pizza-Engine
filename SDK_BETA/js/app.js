@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8.2
+ * v1.8.3
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -9,6 +9,20 @@
 import { PanzerSDK } from './SDK.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // ⚙️ Funzione Parametrica per definire i Core Assets
+    const getDefinedCoreAssets = () => [
+        './',
+        './index.html',
+        './js/app.js',
+        './js/SDK.js',
+        './ServiceWorker.js',
+        './PA_PWA.webmanifest',
+        './icon.png',
+        './Res-PA-manifest.json'
+    ];
+    const getDefined_scope = './SDK_BETA';
+    const getDefined_swPath = './ServiceWorker.js';
+    
     // 🎯 DOM UI Elements
     const statusBadge = document.getElementById('PA-status-badge');
     const btnSync = document.getElementById('PA-btn-sync');
@@ -40,18 +54,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let manifestCache = null;
     let activeObjectUrl = null;
     let currentZoom = 1.0; // 🔍 Zoom iniziale fissato al 100%
-
-    // ⚙️ Funzione Parametrica per definire i Core Assets
-    const getDefinedCoreAssets = () => [
-        './',
-        './index.html',
-        './js/app.js',
-        './js/SDK.js',
-        './ServiceWorker.js',
-        './PA_PWA.webmanifest',
-        './icon.png',
-        './Res-PA-manifest.json'
-    ];
 
     const logToTerminal = (level, text) => {
         const timeString = new Date().toLocaleTimeString('it-IT', { hour12: false });
@@ -326,8 +328,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
-        swPath: './ServiceWorker.js',
-        scope: './SDK_BETA/',
+        swPath: getDefined_swPath,
+        scope: getDefined_scope,
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
