@@ -2048,12 +2048,12 @@ self.addEventListener('fetch', (event) => {
 					if ( networkResponse && networkResponse.ok ) {
 						if ( isLogicEnabled && !isSyncing ) {
 							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
-							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
+							//event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
 					}
 					if ( networkResponse ){
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					return injectSecurityHeaders(networkResponse);
+					    // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					    return injectSecurityHeaders(networkResponse);
 					}
 				} catch (_) { // 🔇
 						return null;
@@ -2076,7 +2076,7 @@ self.addEventListener('fetch', (event) => {
 		} else if( finalStrategy === 'SWR' ){
 			// 🚀 SWR Immediato: Save Background ...
 		   if ( !isSyncing ) {
-				//event.waitUntil( SWR_SAVE(event, currentMethod) );
+				event.waitUntil( SWR_SAVE(event, currentMethod) );
 			}
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
@@ -2087,7 +2087,6 @@ self.addEventListener('fetch', (event) => {
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
-					await waitTillIdle(50);
                     const isOk = await verifyVaultIntegrity();
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
