@@ -336,8 +336,7 @@ const checkPwaInstallabilityCriteria = async () => {
         }
 
         try {
-            const cacheName = `PA-BUNKER-VAULT-v${version || '1.0'}`;
-            const cache = await caches.open(cacheName);
+            const cache = await caches.open(this.cacheName);
 
             let completed = 0;
             let failed = 0;
