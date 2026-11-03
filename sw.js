@@ -2087,7 +2087,7 @@ self.addEventListener('fetch', (event) => {
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
-					await waitTillIdle(50);
+					//await waitTillIdle(50);
                     const isOk = await verifyVaultIntegrity();
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.clone().arrayBuffer();
@@ -2096,13 +2096,13 @@ self.addEventListener('fetch', (event) => {
 	                    const detectedContentType = cached.headers.get('Content-Type') || '';
 	                    const dotIdx = finalPath.lastIndexOf('.');
 	                    const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
-	
-	                    const decryptedBytes = new Uint8Array(decrypted);
+	                    
 	                    const exactBuffer = decrypted.buffer.slice(
 	                        decrypted.byteOffset, 
 	                        decrypted.byteOffset + decrypted.byteLength
 	                    );
 	                    const contentLength = exactBuffer.byteLength;
+	                    //const decryptedBytes = new Uint8Array(decrypted);
 	                    const secureHeaders = new Headers({
 	                        'Content-Type': detectedContentType,
 	                        'X-PWA-Source': 'Bunker-Decrypted', 
@@ -2235,12 +2235,14 @@ self.addEventListener('fetch', (event) => {
 			        if (placeholder) {
 			            try {
 			                if (globalPlaceholderBlob === null) {
+			                    let contentLengthP = null;
 			                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
 			                        const buffer = await placeholder.clone().arrayBuffer();
 			                        let decrypted = await decryptBuffer(buffer);
 			                        
 	                            if (decrypted && decrypted.byteLength > 0) {
 	                                const exactPlaceholderBuf = decrypted.buffer.slice(decrypted.byteOffset, decrypted.byteOffset + decrypted.byteLength);
+                                    contentLengthP = exactPlaceholderBuf.byteLength;	                                
 	                                globalPlaceholderBlob = new Blob([exactPlaceholderBuf], { type: placeholder.headers.get('Content-Type') || 'image/png' });
 	                                new Uint8Array(buffer).fill(0);
 	                                decrypted = null;
@@ -2255,6 +2257,8 @@ self.addEventListener('fetch', (event) => {
 									status: 200,
 			                        headers: {
 			                            'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
+			                            
+                                            'Content-Length': ( contentLengthP.toString() || placeholder.headers.get('Content-Length') ),
 			                            'X-PWA-Source': 'Bunker-Placeholder'
 			                        }
 			                    });
