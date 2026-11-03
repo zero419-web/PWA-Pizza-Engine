@@ -1905,7 +1905,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 🚧 SEZIONE I B : GESTIONE CACHE & FALLBACK...
-    //event.respondWith((async () => {
+    event.respondWith((async () => {
         // ⏱️ Marcatore iniziale:
         const startFetchTime = performance.now();
         let finalPath = cleanPath;
@@ -1933,7 +1933,7 @@ self.addEventListener('fetch', (event) => {
 
         // 🛡️ BLOCCO CONDIVISO: Elaborazione, validazione forense, cifratura e salvataggio nel bunker/magazzino
         const processAndStore = async (responseToProcess, controllerSignal) => {
-            await waitTillIdle();
+            //await waitTillIdle();
 			try {
                 const isOk = await verifyVaultIntegrity();
                 if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
@@ -2081,7 +2081,6 @@ self.addEventListener('fetch', (event) => {
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
-	event.respondWith((async () => {
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
