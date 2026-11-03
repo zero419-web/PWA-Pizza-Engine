@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
         swPath: 'ServiceWorker.js',
-        scope: '/',
+        scope: 'SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
