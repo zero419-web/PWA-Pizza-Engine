@@ -10,15 +10,15 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
-        this.swPath = options.swPath || './ServiceWorker.js';
-        this.scope = options.scope || './';
+        this.swPath = options.swPath || 'ServiceWorker.js';
+        this.scope = options.scope || '/';
         this.coreAssets = options.coreAssets || [
-            './index.html',
-            './Res-PA-manifest.json',
-            './PWA.webmanifest',
-            './ServiceWorker.js',
-            './js/SDK.js',
-            './js/app.js'
+            'index.html',
+            'Res-PA-manifest.json',
+            'PWA.webmanifest',
+            'ServiceWorker.js',
+            'js/SDK.js',
+            'js/app.js'
         ];
 
         // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
