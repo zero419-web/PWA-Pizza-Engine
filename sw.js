@@ -1,7 +1,7 @@
 /*
  * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
- * ⚙️ CORE: 🪖 PANZER v7.9.6+
+ * ⚙️ CORE: 🪖 PANZER v7.9.7+
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
@@ -70,8 +70,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PWA_PIZZA_ENGINE_v7.9.6',
-    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.6',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.9.7',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.7',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
 	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: [
@@ -1927,13 +1927,13 @@ self.addEventListener('fetch', (event) => {
 		if (event.request.url.includes('favicon.ico')) {
             return new Response(null, { status: 204 });
         }
-		// 🛡️ DEFINIZIONE ANTICIPATA
+		// 🛡️ DEFINIZIONI ANTICIPATE ...
 		const contentsType = event.request.headers.get('Accept') || "";
         const isHTML = contentsType.includes('text/html') || finalPath.endsWith('.html') || finalPath === normalize(BASE_PATH);
 
         // 🛡️ BLOCCO CONDIVISO: Elaborazione, validazione forense, cifratura e salvataggio nel bunker/magazzino
         const processAndStore = async (responseToProcess, controllerSignal) => {
-            //await waitTillIdle();
+            //await waitTillIdle(50);
 			try {
                 const isOk = await verifyVaultIntegrity();
                 if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
@@ -2279,7 +2279,7 @@ self.addEventListener('fetch', (event) => {
 	     	if (isHTML) {
 		        return await generateErrorPage(globalPlaceholderBlob, url.pathname);
 		    }
-		    return new Response('📡🚫 Off-line. ( Cache not Found ... ) ', {
+		    return new Response(`📡🚫 Resource Off-line :\n ${finalPath}`, {
 		    status: 503,
 		    statusText: 'Service Unavailable',
 		    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
