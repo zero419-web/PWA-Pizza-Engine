@@ -1905,7 +1905,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 🚧 SEZIONE I B : GESTIONE CACHE & FALLBACK...
-    event.respondWith((async () => {
+    //event.respondWith((async () => {
         // ⏱️ Marcatore iniziale:
         const startFetchTime = performance.now();
         let finalPath = cleanPath;
@@ -2048,12 +2048,12 @@ self.addEventListener('fetch', (event) => {
 					if ( networkResponse && networkResponse.ok ) {
 						if ( isLogicEnabled && !isSyncing ) {
 							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
-							//event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
+							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
 					}
 					if ( networkResponse ){
-					    // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					    return injectSecurityHeaders(networkResponse);
+					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					return injectSecurityHeaders(networkResponse);
 					}
 				} catch (_) { // 🔇
 						return null;
@@ -2081,15 +2081,17 @@ self.addEventListener('fetch', (event) => {
 			// 🗄️ CADE NELLA SEZIONE III: ( CACHE HIT LAYER )
 			//console.info(`👮‍♂🗄️ SW: Erogazione Risorsa da Cached ( 🚀 SWR ) :\n ${finalPath} ]`);
 		}
+	event.respondWith((async () => {
 		if ( cached ) {
 			// 🗄️ SEZIONE III: FALLBACK LOCALE E COERENZA INTERNA ( CACHE HIT LAYER )
 			// Intercetta la risorsa memorizzata localmente nelle stive. Se l'asset appartiene al Bunker Core,
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
+					await waitTillIdle(50);
                     const isOk = await verifyVaultIntegrity();
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
-                    const buffer = await cached.arrayBuffer();
+                    const buffer = await cached.clone().arrayBuffer();
                     let decrypted = await decryptBuffer(buffer);
 					if (decrypted) {
 	                    const detectedContentType = cached.headers.get('Content-Type') || '';
@@ -2160,7 +2162,7 @@ self.addEventListener('fetch', (event) => {
                 }
             } else {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
-                return cached;
+                return cached.clone();
             }
 		} else {
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
@@ -2235,7 +2237,7 @@ self.addEventListener('fetch', (event) => {
 			            try {
 			                if (globalPlaceholderBlob === null) {
 			                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
-			                        const buffer = await placeholder.arrayBuffer();
+			                        const buffer = await placeholder.clone().arrayBuffer();
 			                        let decrypted = await decryptBuffer(buffer);
 			                        
 	                            if (decrypted && decrypted.byteLength > 0) {
@@ -2245,7 +2247,7 @@ self.addEventListener('fetch', (event) => {
 	                                decrypted = null;
 	                            }
 			                    } else {
-			                        globalPlaceholderBlob = await placeholder.blob();
+			                        globalPlaceholderBlob = await placeholder.clone().blob();
 			                    }
 			                }
 			                if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob) {
