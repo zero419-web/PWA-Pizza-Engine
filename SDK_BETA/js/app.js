@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        '/',
+        './/',
         'index.html',
         'js/app.js',
         'js/SDK.js',
