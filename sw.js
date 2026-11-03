@@ -2051,10 +2051,12 @@ self.addEventListener('fetch', (event) => {
 							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
-					// 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
-					return injectSecurityHeaders(networkResponse);
 					}
-				} catch (_) {
+					if ( networkResponse ){
+					    // 💉🔰️ Iniezione chirurgica delle intestazioni di sicurezza prima di servire la risposta al browser.
+					    return injectSecurityHeaders(networkResponse);
+					}
+				} catch (_) { // 🔇
 						return null;
 				}
 			}
@@ -2113,7 +2115,7 @@ self.addEventListener('fetch', (event) => {
 	                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
 	                    }
 	
-	                    const outResponse = new Response(decrypted, { headers: secureHeaders });
+	                    const outResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
 						console.log(`🛡️🧹 SW: Bonifica RAM eseguita per :\n ${finalPath}`);
 						new Uint8Array(buffer).fill(0);
 	                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
@@ -2160,32 +2162,34 @@ self.addEventListener('fetch', (event) => {
                 return cached;
             }
 			// 🛡️ SBARRAMENTO : Sblocco al completamento del Sync...
-        } else if( !cached && ( isLogicEnabled && !isSyncing ) ){
+        } else {
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
 		    const dotIdx = finalPath.lastIndexOf('.');
 		    let altPath = null;
 			let altCached_Find = false;
-		    if (dotIdx !== -1 && !isHTML) {
+			const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
+			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
+			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
+			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
+			
+		    if ( dotIdx !== -1 && !isHTML && !isImageRequest ) {
 		        const basePath = finalPath.substring(0, dotIdx);
 		        for (let variantExt of CONFIG.extensions) {
 		            altPath = basePath + '.' + variantExt;
-		
 		            if (altPath === finalPath) continue;
                     try {
                         const altCached = await mainCache.match(altPath, { ignoreSearch: true }) ||
                                           await userCache.match(altPath, { ignoreSearch: true });
                         if (altCached) {
                             const contentTypeIMG = altCached.headers.get('Content-Type') || '';
-            
                             if (contentTypeIMG.includes('image/')) {
                                 console.info(`🛸🎯 SW Recovery: Trovata variante :\n ${altPath}`);
 								altCached_Find = true;
                                 if (altCached.headers.get('X-PWA-Encrypted') === 'true') {
                                     const buffer = await altCached.clone().arrayBuffer();
                                     let decrypted = await decryptBuffer(buffer);
-                                    
                                     if (decrypted) {
                                         const variantExtLower = variantExt.toLowerCase();
                                         const exactBuffer = decrypted.buffer.slice(
@@ -2201,12 +2205,11 @@ self.addEventListener('fetch', (event) => {
                                             'Pragma': 'no-cache',
                                             'Expires': '0'
                                         });
-                        
                                         if (CONFIG.extExlPHr.includes(variantExtLower)) {
                                             secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
                                         }
                         
-                                        const variantResponse = new Response(exactBuffer, { headers: secureHeaders });
+                                        const variantResponse = new Response(exactBuffer, { status: 200, headers: secureHeaders });
                                         new Uint8Array(buffer).fill(0);
                                         if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                                         decrypted = null;
@@ -2216,19 +2219,15 @@ self.addEventListener('fetch', (event) => {
 		                        return altCached.clone();
                             }
                         }
-                    } catch (decryptErr) {
-                        // 🔇 Silenziato per evitare spam nei log durante il ciclo di ricerca varianti offline
-                        continue;
+                    } catch (decryptErr) { // 🔇
+                        altCached_Find = false;
+						continue;
                     }
 		        }
 		    }
 			// 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 			 // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
-		    const isExcluded = CONFIG.extExlPHr.some(ext => finalPath.toLowerCase().endsWith('.' + ext));
-			const imageExtensions = CONFIG.extensions.filter(ext => !CONFIG.extExlPHr.includes(ext));
-			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
-			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
-			if( altCached_Find !== true ) {
+		    if( altCached_Find !== true ) {
 			    if (isImageRequest || isHTML) {
 			        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
 			        const placeholder = await caches.match(placeholderPath);
@@ -2252,13 +2251,14 @@ self.addEventListener('fetch', (event) => {
 			                if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob) {
 			                    console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
 			                    return new Response(globalPlaceholderBlob, {
+									status: 200,
 			                        headers: {
 			                            'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
 			                            'X-PWA-Source': 'Bunker-Placeholder'
 			                        }
 			                    });
 			                }
-			            } catch (err) {
+			            } catch (err) { // 🔇
 			                //console.error("❌ SW: Errore decriptazione placeholder: ", err);
 			            }
 			        }
