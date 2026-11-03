@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         './icon.png',
         './Res-PA-manifest.json'
     ];
-    const getDefined_scope = './SDK_BETA';
+    const getDefined_scope = '/';
     const getDefined_swPath = './ServiceWorker.js';
     
     // 🎯 DOM UI Elements
