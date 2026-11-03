@@ -1933,7 +1933,8 @@ self.addEventListener('fetch', (event) => {
 
         // 🛡️ BLOCCO CONDIVISO: Elaborazione, validazione forense, cifratura e salvataggio nel bunker/magazzino
         const processAndStore = async (responseToProcess, controllerSignal) => {
-            try {
+            await waitTillIdle(333);
+			try {
                 const isOk = await verifyVaultIntegrity();
                 if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                 if (!responseToProcess || !isLogicEnabled || isSyncing) return;
@@ -2021,11 +2022,9 @@ self.addEventListener('fetch', (event) => {
                 // 🏴‍☠️ ANTI-PROFILING: Sterilizzazione radicale dello Stack Trace del fallimento DNA/Scrittura
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
-			await waitTillIdle(50);
         };
 		
 		const SWR_SAVE = async (event, C_Method) => {
-			//await waitTillIdle(50);
 			const isOnline = await checkRealOnline('fetch');
 			if ( isOnline ) {
 				// 🌐 SEZIONE II.I: FLUSSO DI INSTRADAMENTO, LA RETE E ATTIVA ( ONLINE GATEWAY )
@@ -2088,6 +2087,7 @@ self.addEventListener('fetch', (event) => {
 			// devia il flusso verso il modulo di decrittazione asincrona nativa per ripristinare il plaintext.
             if (cached.headers.get('X-PWA-Encrypted') === 'true') {
                 try {
+					await waitTillIdle(50);
                     const isOk = await verifyVaultIntegrity();
                     if (!isOk || !encryptionKey) throw new Error("VAULT_LOCKED_NO_KEY");
                     const buffer = await cached.arrayBuffer();
@@ -2137,7 +2137,7 @@ self.addEventListener('fetch', (event) => {
 
 					// 🏴‍☠️ ACCECAMENTO: Rimozione totale delle tracce crittografiche dall'oggetto errore
 					const cleanDecryptErr = {};
-					const isVaultError = err && err.message && err.message.includes('VAULT');
+					const isVaultError = err && err.message && (err.message.includes('VAULT') || err.message.includes('VAULT_LOCKED_NO_KEY'));
 					Object.defineProperties(cleanDecryptErr, {
 						name: { value: "CryptoShieldError", enumerable: true },
 						message: { value: isVaultError ? "VAULT_LOCKED_NO_KEY" : "Decryption integrity violation", enumerable: true },
@@ -2145,10 +2145,12 @@ self.addEventListener('fetch', (event) => {
 					});
 					Object.freeze(cleanDecryptErr);
                     console.error(`❌🔑 SW: Decrittazione fallita per :\n ${finalPath}`);
+                    
                     if (isVaultError) {
-						// 🚧 Violazione o blocco del caveau. Negazione formale dell'accesso alla risorsa telematica.
+						// 🚧 Errore temporaneo: caveau bloccato o chiave assente. Nessuna cancellazione della risorsa.
                         return new Response("⚠️🛡️Security Violation: 🗄️🚫 Vault Error...", { status: 403 });
                     } else {
+                        // 🗑️ Errore strutturale/corruzione accertata: la risorsa viene eliminata dalla cache.
                         const deletedMain = await mainCache.delete(finalPath, { ignoreSearch: true });
                         if (deletedMain) {
                             console.log(`⚠️🧹 SW: Risorsa Corrotta nel ( 🛡️ Bunker )\n✅ eliminata correttamente: ${finalPath}`);
@@ -2161,8 +2163,7 @@ self.addEventListener('fetch', (event) => {
 				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
                 return cached;
             }
-			// 🛡️ SBARRAMENTO : Sblocco al completamento del Sync...
-        } else {
+		} else {
 		    // 🖼️ SEZIONE IV.I: FILTRO MULTIMEDIALE
 		    // Gestisce gli asset grafici analizzando l'estensione del percorso. Il blocco opera su due livelli:
 		    // Rilevamento e deviazione su estensioni varianti (altPath) con tracciamento forense via console.info.
