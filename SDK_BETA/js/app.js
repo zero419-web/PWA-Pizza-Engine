@@ -43,14 +43,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ⚙️ Funzione Parametrica per definire i Core Assets
     const getDefinedCoreAssets = () => [
-        './SDK_BETA/',
-        './SDK_BETA/index.html',
-        './SDK_BETA/js/app.js',
-        './SDK_BETA/js/SDK.js',
-        './SDK_BETA/ServiceWorker.js',
-        './SDK_BETA/PA_PWA.webmanifest',
-        './SDK_BETA/icon.png',
-        './SDK_BETA/Res-PA-manifest.json'
+        '../SDK_BETA/',
+        '../SDK_BETA/index.html',
+        '../SDK_BETA/js/app.js',
+        '../SDK_BETA/js/SDK.js',
+        '../SDK_BETA/ServiceWorker.js',
+        '../SDK_BETA/PA_PWA.webmanifest',
+        '../SDK_BETA/icon.png',
+        '../SDK_BETA/Res-PA-manifest.json'
     ];
 
     const logToTerminal = (level, text) => {
@@ -326,8 +326,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
     const sdk = new PanzerSDK({
-        swPath: './SDK_BETA/ServiceWorker.js',
-        scope: './SDK_BETA/',
+        swPath: '../SDK_BETA/ServiceWorker.js',
+        scope: '../SDK_BETA/',
         coreAssets: getDefinedCoreAssets(),
 
         // ⏱️ Timeout personalizzato per il 🐺 Watchdog
@@ -382,8 +382,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         onComplete: (data) => {
             progressBar.value = 100;
-            progressText.textContent = '100% (Completato)';
-            setStatusBadge('🛡️ Stiva Pronta', 'badge-ready');
+            progressText.textContent = '100% ( Completato )';
+            setStatusBadge('🛡️🗄️ Stiva Pronta', 'badge-ready');
             if (data) {
                 if (data.current !== undefined) metricCompleted.textContent = data.current;
                 if (data.total !== undefined) metricTotal.textContent = data.total;
