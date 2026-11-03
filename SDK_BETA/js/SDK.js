@@ -10,6 +10,8 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
+		this.cacheName = options.cacheName || 'PA-BUNKER-VAULT-v1.0';
+        this.userCacheName = options.userCacheName || `user_${this.cacheName}`;
         this.swPath = options.swPath || './ServiceWorker.js';
         this.scope = options.scope || './';
         this.coreAssets = options.coreAssets || [
