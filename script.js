@@ -1,4 +1,4 @@
-// v5.0.1
+// v5.0.2
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -346,7 +346,7 @@ async function waitForServiceWorker() {
         // Mettiamo un timeout di sicurezza (es. 2s ) per evitare blocchi eterni su reti lentissime
         await Promise.race([
             navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 1500))
         ]);
         return !!navigator.serviceWorker.controller;
     } catch (e) {
@@ -359,16 +359,16 @@ async function loadImageAsync(imgElement, folder, ID) {
     imgElement.src = window.APP_CONFIG.svg_loading;
     const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
     const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
-    try {
-		if (!hasActiveSW) {
-			hasActiveSW = await waitForServiceWorker();
-            if (hasActiveSW && typeof hasActiveSW.then === 'function') {
-                await hasActiveSW.catch(() => {});
-            }
-		}
-    } catch (e) {
-        hasActiveSW = false;
-    }
+    if ( hasActiveSW === false ) {
+	    try {
+		      hasActiveSW = await waitForServiceWorker();
+              if (hasActiveSW && typeof hasActiveSW.then === 'function') {
+                  await hasActiveSW.catch(() => {});
+              }
+        } catch (e) {
+             hasActiveSW = false;
+        }
+	}
 
     let validUrl = null;
 
