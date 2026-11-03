@@ -70,8 +70,8 @@ const BASE_PATH = self.location.pathname.replace(/[^\/]+$/, "").replace(/\/+/g, 
 let globalAbortController = new AbortController();
 const CONFIG = {
     ROOT: BASE_PATH,
-        cacheName:      'PA-BUNKER-VAULT-v1.0',
-    userCacheName: 'user_PPA-BUNKER-VAULT-v1.0',
+        cacheName:      'PWA_PIZZA_ENGINE_v7.9.7',
+    userCacheName: 'user_PWA_PIZZA_ENGINE_v7.9.7',
 	vaultCanaryText: 'KANARY_OK_PANZER_KEY',
 	MAX_PATH_LENGTH: 400,
     ALLOWED_SCHEMES: [
