@@ -1,4 +1,4 @@
-// v5.0.0
+// v5.0.1
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -21,7 +21,7 @@ window.addEventListener('load', () => {
 		Sw_PwA_calls(1);
 		return;
 	}
-		initPwaCheck(7000);
+		initPwaCheck(9000); // 9s
 });
 
 async function Sw_PwA_calls(X = 0){
@@ -338,14 +338,15 @@ function fillPlaceholder(template, placeholder, value) {
 }
 
 // Utility globale per attendere che il SW prenda il controllo se è in fase di attivazione (max 1.5 secondi per non rallentare le reti lente)
+let hasActiveSW = false;
 async function waitForServiceWorker() {
     if (!('serviceWorker' in navigator)) return false;
     if (navigator.serviceWorker.controller) return true;
     try {
-        // Mettiamo un timeout di sicurezza (es. 1500ms) per evitare blocchi eterni su reti lentissime
+        // Mettiamo un timeout di sicurezza (es. 2s ) per evitare blocchi eterni su reti lentissime
         await Promise.race([
             navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 1500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 2000))
         ]);
         return !!navigator.serviceWorker.controller;
     } catch (e) {
@@ -358,15 +359,15 @@ async function loadImageAsync(imgElement, folder, ID) {
     imgElement.src = window.APP_CONFIG.svg_loading;
     const activeFormats = (typeof FORMATS !== 'undefined' && Array.isArray(FORMATS)) ? FORMATS : ['webp', 'jpg', 'jpeg', 'png'];
     const prioritizedExts = [...new Set(activeFormats.map(e => e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`))];
-
-    let hasActiveSW = null;
     try {
-        hasActiveSW = await waitForServiceWorker();
-        if (hasActiveSW && typeof hasActiveSW.then === 'function') {
-            await hasActiveSW.catch(() => {});
-        }
+		if (!hasActiveSW) {
+			hasActiveSW = await waitForServiceWorker();
+            if (hasActiveSW && typeof hasActiveSW.then === 'function') {
+                await hasActiveSW.catch(() => {});
+            }
+		}
     } catch (e) {
-        hasActiveSW = null;
+        hasActiveSW = false;
     }
 
     let validUrl = null;
