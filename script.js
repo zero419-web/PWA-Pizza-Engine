@@ -401,7 +401,7 @@ async function loadImageAsync(imgElement, folder, ID) {
             const url = `${folder}${ID}.${cleanExt}`;
             try {
                 const response = await fetch(url, {
-                    method: 'HEAD',
+                    method: 'GET',
                     cache: 'no-store',
                     headers: { 'Cache-Control': 'max-age=600' }
                 });
