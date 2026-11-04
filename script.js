@@ -21,7 +21,7 @@ window.addEventListener('load', () => {
 		Sw_PwA_calls(1);
 		return;
 	}
-		initPwaCheck(9000); // 9s
+		initPwaCheck(7000); // 7s
 });
 
 async function Sw_PwA_calls(X = 0){
@@ -402,7 +402,7 @@ async function loadImageAsync(imgElement, folder, ID) {
             try {
                 const response = await fetch(url, {
                     method: 'HEAD',
-                    cache: 'default',
+                    cache: 'no-store',
                     headers: { 'Cache-Control': 'max-age=600' }
                 });
 				if ( response && !response.ok ) { continue; }
