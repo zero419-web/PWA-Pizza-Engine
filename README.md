@@ -11,7 +11,7 @@
 >    - **Update: 🪳🐛 BUG Fix ServiceWorker. ( ⚙️🪖 Panzer )**
 >    - **Update: 🪳🐛 BUG Fix, ( 🔒 Sandbox CSP )**
 > 
-> - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* ) <br> Nel 📁 [`file.zip`](https://github.com/zero419-web/PWA-Pizza-Engine/blob/main/SDK_BETA/PANZER%20SDK%20BETA%20v1.0.zip) è inclusa la nuova versione dell'**SDK aggiornata con:**
+> - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* )
 >    - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo `Xsec`, minimo o Massimo personalizzato, Time-out per dichiarare lo stato **Incognito del Browser!**
 >       - **Update v1.0.0200, per l'ultima versione di Chromium.**
 > 
