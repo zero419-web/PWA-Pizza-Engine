@@ -223,74 +223,54 @@ const mimeType = response.headers.get('Content-Type') || blob.type || 'applicati
                     </html>
                 `;
                 } else if (mimeType.includes('pdf')) {
-                // Rendering PDF con cattura errori diagnostica offline
+                // 🛡️ Visore PDF
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
                     <head>
                         <meta charset="UTF-8">
-                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' https://cdnjs.cloudflare.com blob: data:; style-src 'unsafe-inline'; connect-src blob: data:;">
+                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; object-src blob: data:; style-src 'unsafe-inline';">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
-                            body, html { width: 100%; height: 100%; background: #111; overflow: auto; font-family: sans-serif; }
-                            #pdf-container { display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100%; gap: 20px; }
-                            canvas { max-width: 100%; height: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); background: #fff; border-radius: 4px; }
-                            .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
-                            .error-box { color:#ff6b6b; background: #220000; border: 1px solid #ff6b6b; padding: 20px; border-radius: 8px; margin: 20px; word-break: break-all; }
+                            * { margin:0; padding:0; box-sizing:border-box; }
+                            body, html { width: 100%; height: 100%; background: #111; overflow: hidden; }
+                            .fallback-container {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: center;
+                                height: 100%;
+                                color: #fff;
+                                font-family: sans-serif;
+                                text-align: center;
+                                padding: 20px;
+                                gap: 20px;
+                            }
+                            .btn-download {
+                                background: #2563eb;
+                                color: #fff;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 6px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                text-decoration: none;
+                                display: inline-block;
+                            }
+                            object, embed {
+                                width: 100%;
+                                height: 100%;
+                                border: none;
+                            }
                         </style>
-                        <script src="./js/pdf_min.js"><\/script>
                     </head>
-                    <body oncontextmenu="return false;">
-                        <div id="loading" class="loading">⏳ Caricamento visore PDF di sicurezza...</div>
-                        <div id="pdf-container"></div>
-                        <script>
-                            // Intercettazione globale errori all'interno dell'iframe
-                            window.onerror = function(msg, url, line) {
-                                document.getElementById('loading').style.display = 'none';
-                                document.getElementById('pdf-container').innerHTML = '<div class="error-box">❌ Errore JS Sandbox: ' + msg + '<br><small>Linea: ' + line + '</small></div>';
-                            };
-
-                            const pdfUrl = "${activeObjectUrl}";
-                            
-                            // Configurazione worker con fallback di sicurezza
-                            if (typeof pdfjsLib !== 'undefined') {
-                                pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
-                            } else {
-                                throw new Error("Libreria pdfjsLib non definita o bloccata dalla CSP/Offline.");
-                            }
-
-                            async function renderPDF() {
-                               try {
-                                   const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                                   const pdfDoc = await loadingTask.promise;
-                                   document.getElementById('loading').style.display = 'none';
-                                   const container = document.getElementById('pdf-container');
-
-                                   for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-                                       const page = await pdfDoc.getPage(pageNum);
-                                       const viewport = page.getViewport({ scale: 1.0 });
-
-                                       const canvas = document.createElement('canvas');
-                                       const context = canvas.getContext('2d');
-                                       canvas.height = viewport.height;
-                                       canvas.width = viewport.width;
-                                       canvas.style.width = viewport.width + 'px';
-                                       canvas.style.height = viewport.height + 'px';
-
-                                       container.appendChild(canvas);
-
-                                       await page.render({
-                                           canvasContext: context,
-                                           viewport: viewport
-                                       }).promise;
-                                   }
-                               } catch (err) {
-                                   document.getElementById('loading').style.display = 'none';
-                                   document.getElementById('pdf-container'].innerHTML = '<div class="error-box">❌ Errore rendering PDF: ' + err.message + '</div>';
-                               }
-                            }
-                            renderPDF();
-                        <\/script>
+                    <body>
+                        <object data="${activeObjectUrl}#toolbar=0&view=FitH" type="application/pdf">
+                            <div class="fallback-container">
+                                <h3>🛡️ Visore PDF di Sicurezza (Modalità Offline)</h3>
+                                <p>Il tuo browser non supporta l'anteprima diretta del PDF in questo contesto isolato offline.</p>
+                                <a href="${activeObjectUrl}" download="documento_protetto.pdf" class="btn-download">📥 Scarica e Visualizza Documento</a>
+                            </div>
+                        </object>
                     </body>
                     </html>
                 `;
