@@ -232,7 +232,7 @@ const CONFIG = {
         }
     },
     coreAssets: [ BASE_PATH ],
-    manifestPath: `./`,
+    manifestPath: ``,
     mappingLogic: {
 		idKeys: [
 			'id'
@@ -1796,7 +1796,10 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
 Object.freeze(assegnaFlussoPolimorfo);
 
 // 📄⚙️ normaliza file core...
-let CORE_ASSETS_SET = new Set((CONFIG.coreAssets || []).map(asset => normalize(asset)));
+let CORE_ASSETS_SET = new Set([
+    normalize(BASE_PATH),
+    normalize(BASE_PATH + 'index.html')
+]);
 
 /**
  * 🛡️ Security Headers Injector- v2.0
