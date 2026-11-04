@@ -1945,10 +1945,9 @@ self.addEventListener('fetch', (event) => {
                 const UserlocalLastMod = cached ? cached.headers.get('X-PWA-LastMod') : null;
 
                 if (lastMod && ((localLastMod && lastMod === localLastMod) || (UserlocalLastMod && lastMod === UserlocalLastMod))) {
-					console.info(`👮‍♂🚫♻️ SW: Risorsa Fresca Esistente !\n🌐💾🚫 SALVATAGGIO Anullato : ${finalPath}`);
+					console.info(`👮‍♂🚫♻️ SW: Risorsa Fresca Esistente !\n🌐💾🚫 SALVATAGGIO Anullato :\n ${finalPath}`);
 					return;
                 }
-				console.info(`👮‍♂⚡️ SW: TENTO SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 				
                 const check = await isValidBlob(responseToProcess, contentType, 0, false, controllerSignal);
                 if (check.valid) {
@@ -1957,7 +1956,7 @@ self.addEventListener('fetch', (event) => {
                     updatedHeaders.set('X-PWA-Date', Date.now().toString());
                     if (lastMod) updatedHeaders.set('X-PWA-LastMod', lastMod);
 
-                    console.info(`🔄💾 SW: [ ${targetCache} ], ♻️ File: ${finalPath}`);
+					console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n🔄💾 [ ${targetCache} ]\n♻️ File: ${finalPath}`);
 
                     if (shouldBeEncrypted) {
                         finalBlob = await encryptBlob(finalBlob);
