@@ -226,14 +226,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
                         </style>
-                        <script src="./pdf_min.js"><\/script>
+                        <script src="./js/pdf_min.js"></script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading">⏳ Caricamento visore PDF di sicurezza...</div>
                         <div id="pdf-container"></div>
                         <script>
                             const pdfUrl = "${activeObjectUrl}";
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf_worker_min.js';
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
 
                             async function renderPDF() {
                                try {
