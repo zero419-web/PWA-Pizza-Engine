@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 max-width: 90%;
                             }
                         </style>
-                        <script src="window.location.origin.replace('null', 'js/pdf_min.js');"></script>
+                        <script src="${ window.location.origin + 'js/pdf_min.js'}"></script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading-box">
