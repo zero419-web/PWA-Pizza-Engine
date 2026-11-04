@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8.7
+ * v1.8.8
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -610,6 +610,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 🎮 Event Handlers
     btnSync.addEventListener('click', () => {
+      setTimeout(() => {
         if (!manifestCache) {
             logToTerminal('error', '❌ Manifesto asset non disponibile.');
             return;
@@ -617,6 +618,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         logToTerminal('sync', '🚀 Avvio sincronizzazione completa (Core + Manifesto Assets)...');
         sdk.initDB(manifestCache.version, manifestCache, getDefinedCoreAssets());
+      }, 666);
     });
 
     btnPurge.addEventListener('click', () => {
@@ -643,5 +645,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderStorageTable();
         });
     }
-    btnSync.click();
+    setTimeout(() => {
+        btnSync.click();
+    }, 2500);
 });
+
