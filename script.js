@@ -384,12 +384,6 @@ async function loadImageAsync(imgElement, folder, ID) {
                 });
 				if ( response && !response.ok ) { continue; }
                 if (response && response.ok) {
-					/*
-                    const pwaSource = response.headers.get('X-PWA-Source');
-                    if (pwaSource === 'Bunker-Placeholder') {
-                        continue;
-                    }
-					*/
                     validUrl = testUrl;
                     break;
                 }
@@ -413,19 +407,6 @@ async function loadImageAsync(imgElement, folder, ID) {
                 });
 				if ( response && !response.ok ) { continue; }
                 if (response && response.ok) {
-                    const pwaSource = response.headers.get('X-PWA-Source');
-                    if (pwaSource === 'Bunker-Placeholder') {
-                        continue;
-                    }
-
-                    // Verifica finale con l'oggetto Image per sicurezza binaria
-                    const isValidImg = await new Promise((resolve) => {
-                        const checkImg = new Image();
-                        checkImg.onload = () => resolve(true);
-                        checkImg.onerror = () => resolve(false);
-                        checkImg.src = url;
-                    });
-
                     if (isValidImg) {
                         validUrl = url;
                         break;
