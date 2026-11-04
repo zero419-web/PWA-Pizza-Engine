@@ -1,7 +1,7 @@
 /*
  * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
- * ⚙️ CORE: 🪖 PANZER v7.9.7+
+ * ⚙️ CORE: 🪖 PANZER v7.9.7+ ( SDK ⛓️)
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
@@ -928,7 +928,7 @@ const normalize = (url) => {
         const rootNormalized = CONFIG.ROOT.replace(/\/+/g, '/');
         if (cleanPath === rootNormalized || cleanPath === rootNormalized + '/') {
 
-			const mainEntry = CONFIG.coreAssets.find(asset => asset.toLowerCase().includes('.html'));
+			const mainEntry = activeCoreAssets.find(asset => asset.toLowerCase().includes('.html'));
 			cleanPath = normalize(mainEntry);
         }
 
@@ -1323,6 +1323,14 @@ self.addEventListener('message', (event) => {
         isSyncing = true;
         const currentVersion = eventDataSnapshot?.version;
         isLogicEnabled = true;
+        const customCoreAssets = eventDataSnapshot?.overrideCoreAssets; // SDK wrapper
+        // Se l'SDK passa dei coreAssets personalizzati, li normalizziamo, altrimenti usiamo quelli di default del SW
+        const activeCoreAssets = (customCoreAssets && Array.isArray(customCoreAssets) && customCoreAssets.length > 0) ? customCoreAssets.map(asset => normalize(asset)) : CONFIG.coreAssets;
+        CORE_ASSETS_SET = new Set(
+    (activeCoreAssets || []).map(asset => {
+        return normalize(asset);
+    })
+);
 
         const performSync = async (event) => {
 			// ⏱️ Marcatore di rete.
@@ -1357,7 +1365,7 @@ self.addEventListener('message', (event) => {
 				const isCacheEmpty = cacheKeys.length === 0;
 
 				let IsCFUD = false;
-				const mainEntry = CONFIG.coreAssets.find(a => a.toLowerCase().includes('.html'));
+				const mainEntry = activeCoreAssets.find(a => a.toLowerCase().includes('.html'));
 				if (mainEntry && !isNewInstallation && !isCacheEmpty) {
 					try {
 
@@ -1395,12 +1403,12 @@ self.addEventListener('message', (event) => {
 				broadcast({ type: 'SYNC_PROGRESS' });
 				const coreResults = [];
 				let coreLimit = getNetworkProfile(self.navigator).limit;
-				for (let i = 0; i < CONFIG.coreAssets.length; i += coreLimit) {
+				for (let i = 0; i < activeCoreAssets.length; i += coreLimit) {
 					if (syncAbortController?.signal.aborted) {
 						throw new Error("SYNC_ABORTED_DURING_CORE");
 					}
 					coreLimit = getNetworkProfile(self.navigator).limit;
-					const coreChunk = CONFIG.coreAssets.slice(i, i + coreLimit);
+					const coreChunk = activeCoreAssets.slice(i, i + coreLimit);
 					const chunkPromises = coreChunk.map(url => smartDownload(url, cache, true, realServerVersion));
 					let coreAbortListener;
 					const coreAbortPromise = new Promise((_, reject) => {
@@ -1609,7 +1617,7 @@ Object.freeze(universalScanner);
                 console.info(`🎯🏁 SW: Analisi terminata. Asset extra trovati: ${scanSet.size}`);
 
                 const fullWorkSet = new Set([...manifestList, ...Array.from(scanSet)]);
-                const coreNormalized = CONFIG.coreAssets.map(a => normalize(a));
+                const coreNormalized = activeCoreAssets;
                 console.info(`⛓️ SW: Unificazione completata. Risorse totali da elaborare: ${fullWorkSet.size}`);
                 uniqueList = Array.from(fullWorkSet).filter(url => {
                     const norm = normalize(url);
@@ -1803,11 +1811,7 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
 Object.freeze(assegnaFlussoPolimorfo);
 
 // normaliza file core...
-const CORE_ASSETS_SET = new Set(
-    (CONFIG.coreAssets || []).map(asset => {
-        return normalize(asset);
-    })
-);
+let CORE_ASSETS_SET = null;
 
 /**
  * 🛡️ Security Headers Injector- v2.0
@@ -1911,7 +1915,7 @@ self.addEventListener('fetch', (event) => {
         let finalPath = cleanPath;
 
 		if (finalPath === normalize(BASE_PATH) || finalPath.endsWith('/')) {
-			const mainEntry = CONFIG.coreAssets.find(asset => asset.toLowerCase().includes('.html'));
+			const mainEntry = activeCoreAssets.find(asset => asset.toLowerCase().includes('.html'));
 			finalPath = normalize(mainEntry);
 		}
         const mainCache = await caches.open(CONFIG.cacheName);
