@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     }
                                     
                                     // Disabilitiamo il worker esterno ...
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = ''; // window.location.origin + '/js/pdf_worker_min.js';
 
                                     // 2. Caricamento Documento
                                     const loadingTask = pdfjsLib.getDocument({
