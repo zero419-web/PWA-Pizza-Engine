@@ -1,7 +1,7 @@
 /*
  * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
- * ⚙️ CORE: 🪖 PANZER v7.9.7+ ( SDK ⛓️)
+ * ⚙️ CORE: 🪖 PANZER v7.9.7+ ( v1.0 SDK ⛓️)
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
@@ -231,19 +231,8 @@ const CONFIG = {
             'timingNoiseMs': 50
         }
     },
-    coreAssets: [
-		BASE_PATH,
-		`${BASE_PATH}index.html`,
-		`${BASE_PATH}style.css`,
-		`${BASE_PATH}script.js`,
-		`${BASE_PATH}db.json`,
-		`${BASE_PATH}PWA.webmanifest`,
-		`${BASE_PATH}sw/assets-manifest.json`,
-		`${BASE_PATH}sw/icon/hicon.png`,
-		`${BASE_PATH}sw/icon/menu96.png`,
-		`${BASE_PATH}sw/icon/menu512.png`
-	],
-    manifestPath: `${BASE_PATH}sw/assets-manifest.json`,
+    coreAssets: [ BASE_PATH ],
+    manifestPath: ``,
     mappingLogic: {
 		idKeys: [
 			'id'
@@ -259,7 +248,7 @@ const CONFIG = {
             'gallery': { prefix: '',    ext: '.jpg', isSequential: true }
         }
     },
-	defPlaceHolderLogo: `${BASE_PATH}sw/icon/hicon.png`,
+	defPlaceHolderLogo: `${BASE_PATH}icon.png`,
     defaultExt: '.webp',
     extensions: [
         'jpg', 'jpeg', 'png', 'webp',
