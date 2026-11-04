@@ -207,158 +207,158 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             } else if (mimeType.includes('pdf')) {
                 // 🛡️ Recupero del file worker dalla Cache Storage del PanzerSDK per trasformarlo in Blob URL
-let workerBlobUrl = '';
-if ('caches' in window) {
-    try {
-        const cacheNames = await caches.keys();
-        for (const name of cacheNames) {
-            const cache = await caches.open(name);
-            const wRes = await cache.match('./js/pdf_worker_min.js') || await cache.match('js/pdf_worker_min.js');
-            if (wRes) {
-                const wBlob = await wRes.blob();
-                workerBlobUrl = URL.createObjectURL(wBlob);
-                break;
-            }
-        }
-    } catch (e) {
-        console.warn("Impossibile caricare il worker dalla cache:", e);
-    }
-}
-
-// Fallback se online o non in cache
-if (!workerBlobUrl) {
-    const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    workerBlobUrl = PDFlibP + 'js/pdf_worker_min.js';
-}
-
-const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-const PDFlib = PDFlibP + 'js/pdf_min.js';
-
-renderedContentHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
-        <!-- CSP Aggiornata per consentire l'esecuzione da http/https e blob -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' blob: data: http: https:; style-src 'unsafe-inline'; connect-src blob: data: http: https:;">
-        <style>
-            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-            body, html {
-                width: 100%;
-                height: 100%;
-                background: #0f172a;
-                overflow: auto;
-                font-family: sans-serif;
-                -webkit-overflow-scrolling: touch;
-                touch-action: pan-x pan-y;
-            }
-            #pdf-wrapper {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                padding: 20px 10px;
-                min-width: 100%;
-                min-height: 100%;
-                width: max-content;
-                margin: 0 auto;
-                gap: 15px;
-            }
-            canvas {
-                max-width: 100%;
-                height: auto;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-                background: #fff;
-                border-radius: 6px;
-                pointer-events: auto;
-            }
-            .loading-box {
-                color: #f8fafc;
-                font-size: 1rem;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                text-align: center;
-                gap: 10px;
-            }
-            .error-msg {
-                color: #f87171;
-                background: #1e1b4b;
-                padding: 15px;
-                border-radius: 8px;
-                border: 1px solid #ef4444;
-                max-width: 90%;
-                word-break: break-all;
-            }
-        </style>
-        <script src="${PDFlib}"></script>
-    </head>
-    <body oncontextmenu="return false;" ondragstart="return false;">
-        <div id="loading" class="loading-box">
-            <div>⏳ Rendering PDF in corso...</div>
-        </div>
-        <div id="pdf-wrapper"></div>
-        <script>
-            const pdfUrl = "${activeObjectUrl}";
-            const workerUrl = "${workerBlobUrl}";
-
-            async function startRender() {
-                try {
-                    if (typeof pdfjsLib === 'undefined') {
-                        throw new Error("Libreria PDF non caricata.");
+                let workerBlobUrl = '';
+                if ('caches' in window) {
+                    try {
+                        const cacheNames = await caches.keys();
+                        for (const name of cacheNames) {
+                            const cache = await caches.open(name);
+                            const wRes = await cache.match('./js/pdf_worker_min.js') || await cache.match('js/pdf_worker_min.js');
+                            if (wRes) {
+                                const wBlob = await wRes.blob();
+                                workerBlobUrl = URL.createObjectURL(wBlob);
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Impossibile caricare il worker dalla cache:", e);
                     }
-                    
-                    // Assegnazione del Worker via Blob URL o path
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-
-                    // Caricamento Documento
-                    const loadingTask = pdfjsLib.getDocument({
-                        url: pdfUrl,
-                        isEvalSupported: false,
-                        disableFontFace: true
-                    });
-
-                    const pdfDoc = await loadingTask.promise;
-                    document.getElementById('loading').style.display = 'none';
-                    const container = document.getElementById('pdf-wrapper');
-
-                    // Rendering Canvas Pagina per Pagina
-                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-                        const page = await pdfDoc.getPage(pageNum);
-                        
-                        const unscaledViewport = page.getViewport({ scale: 1.0 });
-                        const screenWidth = Math.min(window.innerWidth - 30, 800);
-                        const scale = screenWidth / unscaledViewport.width;
-                        const viewport = page.getViewport({ scale: Math.max(scale, 1.0) });
-
-                        const canvas = document.createElement('canvas');
-                        const context = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-
-                        canvas.dataset.baseWidth = viewport.width;
-                        canvas.dataset.baseHeight = viewport.height;
-
-                        container.appendChild(canvas);
-
-                        await page.render({
-                            canvasContext: context,
-                            viewport: viewport
-                        }).promise;
-                    }
-                } catch (err) {
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('pdf-wrapper').innerHTML = '<div class="error-msg">❌ Errore Visore Cifrato: ' + err.message + '</div>';
                 }
-            }
-
-            window.addEventListener('DOMContentLoaded', startRender);
-        </script>
-    </body>
-    </html>
-`;
+                
+                // Fallback se online o non in cache
+                if (!workerBlobUrl) {
+                    const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                    workerBlobUrl = PDFlibP + 'js/pdf_worker_min.js';
+                }
+                
+                const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                const PDFlib = PDFlibP + 'js/pdf_min.js';
+                
+                renderedContentHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
+                        <!-- CSP Aggiornata per consentire l'esecuzione da http/https e blob -->
+                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' blob: data: http: https:; style-src 'unsafe-inline'; connect-src blob: data: http: https:;">
+                        <style>
+                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
+                            body, html {
+                                width: 100%;
+                                height: 100%;
+                                background: #0f172a;
+                                overflow: auto;
+                                font-family: sans-serif;
+                                -webkit-overflow-scrolling: touch;
+                                touch-action: pan-x pan-y;
+                            }
+                            #pdf-wrapper {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                padding: 20px 10px;
+                                min-width: 100%;
+                                min-height: 100%;
+                                width: max-content;
+                                margin: 0 auto;
+                                gap: 15px;
+                            }
+                            canvas {
+                                max-width: 100%;
+                                height: auto;
+                                box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+                                background: #fff;
+                                border-radius: 6px;
+                                pointer-events: auto;
+                            }
+                            .loading-box {
+                                color: #f8fafc;
+                                font-size: 1rem;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                text-align: center;
+                                gap: 10px;
+                            }
+                            .error-msg {
+                                color: #f87171;
+                                background: #1e1b4b;
+                                padding: 15px;
+                                border-radius: 8px;
+                                border: 1px solid #ef4444;
+                                max-width: 90%;
+                                word-break: break-all;
+                            }
+                        </style>
+                        <script src="${PDFlib}"></script>
+                    </head>
+                    <body oncontextmenu="return false;" ondragstart="return false;">
+                        <div id="loading" class="loading-box">
+                            <div>⏳ Rendering PDF in corso...</div>
+                        </div>
+                        <div id="pdf-wrapper"></div>
+                        <script>
+                            const pdfUrl = "${activeObjectUrl}";
+                            const workerUrl = "${workerBlobUrl}";
+                
+                            async function startRender() {
+                                try {
+                                    if (typeof pdfjsLib === 'undefined') {
+                                        throw new Error("Libreria PDF non caricata.");
+                                    }
+                                    
+                                    // Assegnazione del Worker via Blob URL o path
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+                
+                                    // Caricamento Documento
+                                    const loadingTask = pdfjsLib.getDocument({
+                                        url: pdfUrl,
+                                        isEvalSupported: false,
+                                        disableFontFace: true
+                                    });
+                
+                                    const pdfDoc = await loadingTask.promise;
+                                    document.getElementById('loading').style.display = 'none';
+                                    const container = document.getElementById('pdf-wrapper');
+                
+                                    // Rendering Canvas Pagina per Pagina
+                                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                                        const page = await pdfDoc.getPage(pageNum);
+                                        
+                                        const unscaledViewport = page.getViewport({ scale: 1.0 });
+                                        const screenWidth = Math.min(window.innerWidth - 30, 800);
+                                        const scale = screenWidth / unscaledViewport.width;
+                                        const viewport = page.getViewport({ scale: Math.max(scale, 1.0) });
+                
+                                        const canvas = document.createElement('canvas');
+                                        const context = canvas.getContext('2d');
+                                        canvas.height = viewport.height;
+                                        canvas.width = viewport.width;
+                
+                                        canvas.dataset.baseWidth = viewport.width;
+                                        canvas.dataset.baseHeight = viewport.height;
+                
+                                        container.appendChild(canvas);
+                
+                                        await page.render({
+                                            canvasContext: context,
+                                            viewport: viewport
+                                        }).promise;
+                                    }
+                                } catch (err) {
+                                    document.getElementById('loading').style.display = 'none';
+                                    document.getElementById('pdf-wrapper').innerHTML = '<div class="error-msg">❌ Errore Visore Cifrato: ' + err.message + '</div>';
+                                }
+                            }
+                
+                            window.addEventListener('DOMContentLoaded', startRender);
+                        </script>
+                    </body>
+                    </html>
+                `;
 
             } else {
                 // 📄 Rendering Generale / Testo / Altri Formati
@@ -453,7 +453,7 @@ renderedContentHtml = `
             if (details) {
                 const pct = details.percent ? Math.round(details.percent) : 0;
                 progressBar.value = pct;
-                progressText.textContent = `${pct}% (${details.current || 0}/${details.total || 0})`;
+                progressText.textContent = `${pct}% ( ${details.current || 0} / ${details.total || 0} )`;
 
                 metricCompleted.textContent = details.current || 0;
                 metricTotal.textContent = details.total || 0;
@@ -485,12 +485,12 @@ renderedContentHtml = `
 
         onPurgeComplete: () => {
             progressBar.value = 0;
-            progressText.textContent = '0% (0/0)';
+            progressText.textContent = '0% ( 0 / 0 )';
             metricCompleted.textContent = '0';
             metricTotal.textContent = '0';
             metricFailed.textContent = '0';
             metricRetries.textContent = '0';
-            setStatusBadge('⚡ Purgato', 'badge-init');
+            setStatusBadge('🗑️⚡ Purgato', 'badge-init');
             renderStorageTable();
         },
 
@@ -561,8 +561,8 @@ renderedContentHtml = `
             const tr = document.createElement('tr');
             const sizeFormatted = asset.size ? (asset.size / 1024).toFixed(1) + ' KB' : 'N/A (Core)';
             const cacheBadge = isCached
-                ? `<span style="color: var(--accent-green); font-weight: bold;">🟢 Cifrato & Locale</span>`
-                : `<span style="color: var(--text-muted);">⚪ Non Presente</span>`;
+                ? `<span style="color: var(--accent-green); font-weight: bold;">🟢🗄️ Cifrato</span>`
+                : `<span style="color: var(--text-muted);">🔴🗄️ Non Presente</span>`;
 
             tr.innerHTML = `
                 <td><strong>${asset.url}</strong> <br><small style="color: var(--text-muted);">Cat: ${asset.category || 'N/A'}</small></td>
@@ -571,8 +571,8 @@ renderedContentHtml = `
                 <td>${cacheBadge}</td>
                 <td>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <a href="${asset.url}" target="_blank" class="btn btn-sm">👁️ Apri Direct</a>
-                        <button class="btn btn-sm btn-sandbox-trigger" data-url="${asset.url}" style="border-color: var(--accent-purple); color: var(--accent-purple);">🔒 Sandbox CSP</button>
+                        <a href="${asset.url}" target="_blank" class="btn btn-sm">🔓👁️💾 Apri</a>
+                        <button class="btn btn-sm btn-sandbox-trigger" data-url="${asset.url}" style="border-color: var(--accent-purple); color: var(--accent-purple);">🔒👁️ S.CSP ❌💾</button>
                     </div>
                 </td>
             `;
@@ -644,4 +644,5 @@ renderedContentHtml = `
             renderStorageTable();
         });
     }
+    btnSync.click();
 });
