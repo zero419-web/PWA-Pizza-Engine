@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8.6
+ * v1.8.7
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     }
                                     
                                     // Disabilitiamo il worker esterno ...
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf_worker_min.js';
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
 
                                     // 2. Caricamento Documento
                                     const loadingTask = pdfjsLib.getDocument({
