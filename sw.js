@@ -2025,7 +2025,6 @@ self.addEventListener('fetch', (event) => {
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
         };
-		
 		const SWR_SAVE = async (event, C_Method) => {
 			const isOnline = await checkRealOnline('fetch');
 			if ( isOnline ) {
@@ -2112,11 +2111,10 @@ self.addEventListener('fetch', (event) => {
 	                    }
 	
 	                    const outResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
-						console.log(`🛡️🧹 SW: Bonifica RAM eseguita per :\n ${finalPath}`);
 						new Uint8Array(buffer).fill(0);
 	                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
 	                    decrypted = null;
-						console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
+						console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}\nURL : ${finalPath}\n🛡️🧹 SW: Bonifica RAM eseguita.`);
 						return outResponse;
 					}
                 } catch (err) {
@@ -2156,7 +2154,7 @@ self.addEventListener('fetch', (event) => {
                     throw cleanDecryptErr; // Rilancia l'errore sterilizzato
                 }
             } else {
-				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
+				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}\nURL : ${finalPath}`);
                 return cached.clone();
             }
 		} else {
@@ -2220,14 +2218,16 @@ self.addEventListener('fetch', (event) => {
 		    }
 			// 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 			 // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
-		    if( !altCached_Find ) {
-			    if ( isImageRequest || isHTML ) {
-			        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
-			        const placeholder = await caches.match(placeholderPath);
-			        if ( placeholder ) {
-			            try {
-			                if (globalPlaceholderBlob === null) {
-			                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
+			if ( isImageRequest || isHTML ) {
+				if( !altCached_Find && currentMethod === 'HEAD' ) {
+					return new Response(null, { status: 404, statusText: "HEAD RES IMG NOT FOUND" });
+				}
+			    const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
+			    const placeholder = await caches.match(placeholderPath);
+			    if ( placeholder ) {
+			         try {
+			            if (globalPlaceholderBlob === null) {
+			                if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
 			                        const buffer = await placeholder.clone().arrayBuffer();
 			                        let decrypted = await decryptBuffer(buffer);
 			                        
@@ -2236,42 +2236,37 @@ self.addEventListener('fetch', (event) => {
 	                                new Uint8Array(buffer).fill(0);
 	                                decrypted = null;
 	                            }
-			                    } else {
-			                        globalPlaceholderBlob = await placeholder.clone().blob();
+							} else {
+		                        globalPlaceholderBlob = await placeholder.clone().blob();
+		                    }
+		                }
+			            if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob ) {
+			                console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
+			                return new Response(globalPlaceholderBlob, {
+								status: 200,
+			                    headers: {
+			                        'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
+			                        'Content-Length': placeholder.headers.get('Content-Length'),
+			                        'X-PWA-Source': 'Bunker-Placeholder'
 			                    }
-			                }
-			                if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob) {
-			                    console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
-			                    return new Response(globalPlaceholderBlob, {
-									status: 200,
-			                        headers: {
-			                            'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
-			                            'Content-Length': placeholder.headers.get('Content-Length'),
-			                            'X-PWA-Source': 'Bunker-Placeholder'
-			                        }
-			                    });
-			                }
-			            } catch (err) { // 🔇
-			                //console.error("❌ SW: Errore decriptazione placeholder: ", err);
+			                });
 			            }
+			        } catch (err) { // 🔇
+			            //console.error("❌ SW: Errore decriptazione placeholder: ", err);
 			        }
-					// 🎯 FALLBACK DI EMERGENZA.
-			        if( currentMethod !== 'HEAD' ){
-						if (isImageRequest && !isHTML && !isExcluded) {
-				            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
-				            return new Response(GLOBAL_BROKEN_BLOB, {
-		                        status: 200,
-				                headers: {
-				                    'Content-Type': 'image/svg+xml',
-				                    'X-PWA-Source': 'Bunker-Placeholder'
-				                }
-				            });
-			        	}
-					} else {
-						return new Response(null, { status: 404, statusText: "HEAD RES IMG NOT FOUND" });
-					}
 			    }
-			}	
+				// 🎯 FALLBACK DI EMERGENZA.
+				if (isImageRequest && !isHTML && !isExcluded) {
+				    console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
+				    return new Response(GLOBAL_BROKEN_BLOB, {
+		                status: 200,
+				        headers: {
+				           'Content-Type': 'image/svg+xml',
+				            'X-PWA-Source': 'Bunker-Placeholder'
+				        }
+				    });
+			    }
+			}
 		    // 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
 		    if ( !isImageRequest && isExcluded ) {
 		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
