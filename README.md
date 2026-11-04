@@ -76,6 +76,10 @@
 ## 📣⚙️🪖 NOVITÀ & BUG Fix & Altro...
 - **🪖 NOVITÀ v7.9.7+ :** <br> `🐛 BUG Fix`
     - 🪳 **Bug Fixed : `Evento Fetch` Del SW ( ⚙️🪖 ),**
+       - 🌐 **NetWorkFirst, Bug Fixed. 🪳**
+       - 🚀 **SWR -  `Stale-While-Revalidate`, Bug Fixed. 🪳**
+       - 🔀🎭 **Fix: Regolatore di Flusso Polimorfo, Bug Fixed. 🪳**
+       - 🖼️🩹 **Placeholder, non Ritorna per una risorsa Immagine su una richiesta HEAD, ma restituisce 404 erorr**
     - ➕ **`Safari`, Supporto in sperimentazione ...**
 
 - **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 BUG Fix`
