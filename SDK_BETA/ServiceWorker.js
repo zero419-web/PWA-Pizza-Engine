@@ -231,8 +231,8 @@ const CONFIG = {
             'timingNoiseMs': 50
         }
     },
-    coreAssets: [ ],
-    manifestPath: ``,
+    coreAssets: [ BASE_PATH ],
+    manifestPath: `./`,
     mappingLogic: {
 		idKeys: [
 			'id'
@@ -1315,11 +1315,7 @@ self.addEventListener('message', (event) => {
         const customCoreAssets = eventDataSnapshot?.overrideCoreAssets; // SDK wrapper
         // Se l'SDK passa dei coreAssets personalizzati, li normalizziamo, altrimenti usiamo quelli di default del SW
         const activeCoreAssets = (customCoreAssets && Array.isArray(customCoreAssets) && customCoreAssets.length > 0) ? customCoreAssets.map(asset => normalize(asset)) : CONFIG.coreAssets;
-        CORE_ASSETS_SET = new Set(
-    (activeCoreAssets || []).map(asset => {
-        return normalize(asset);
-    })
-);
+    CORE_ASSETS_SET = new Set(activeCoreAssets);
 
         const performSync = async (event) => {
 			// ⏱️ Marcatore di rete.
@@ -1799,8 +1795,8 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
 }
 Object.freeze(assegnaFlussoPolimorfo);
 
-// normaliza file core...
-let CORE_ASSETS_SET = null;
+// 📄⚙️ normaliza file core...
+let CORE_ASSETS_SET = new Set((CONFIG.coreAssets || []).map(asset => normalize(asset)));
 
 /**
  * 🛡️ Security Headers Injector- v2.0
