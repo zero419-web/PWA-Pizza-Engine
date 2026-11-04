@@ -231,7 +231,7 @@ const CONFIG = {
             'timingNoiseMs': 50
         }
     },
-    coreAssets: [ BASE_PATH ],
+    coreAssets: [ ],
     manifestPath: ``,
     mappingLogic: {
 		idKeys: [
@@ -248,7 +248,7 @@ const CONFIG = {
             'gallery': { prefix: '',    ext: '.jpg', isSequential: true }
         }
     },
-	defPlaceHolderLogo: `${BASE_PATH}icon.png`,
+	defPlaceHolderLogo: ``,
     defaultExt: '.webp',
     extensions: [
         'jpg', 'jpeg', 'png', 'webp',
@@ -1887,12 +1887,6 @@ self.addEventListener('fetch', (event) => {
 		   ) {
 			return; // ⏩ Delegato direttamente al browser
 		}
-		/*
-		if(currentMethod === 'HEAD'){
-			console.info(`✅ SW: HEAD Request !\n⏩ Delegato direttamente al browser`);
-			return; // ⏩ Delegato direttamente al browser
-		}
-		*/
     } catch (e) {
         return; // 🛑 Blocco difensivo in caso di URL telematico corrotto o non parsabile
     }
