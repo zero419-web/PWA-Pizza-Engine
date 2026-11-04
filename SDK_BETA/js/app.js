@@ -264,7 +264,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 max-width: 90%;
                             }
                         </style>
-                        <script src="./js/pdf_min.js"></script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading-box">
@@ -272,6 +271,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div id="pdf-wrapper"></div>
                         <script>
+                            var script = document.createElement('script');
+                            script.src = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'js/pdf_min.js';
+                            document.head.appendChild(script);
+
                             const pdfUrl = "${activeObjectUrl}";
 
                             async function startRender() {
