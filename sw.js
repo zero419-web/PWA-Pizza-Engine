@@ -2171,7 +2171,7 @@ self.addEventListener('fetch', (event) => {
 			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
 			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
 			
-		    if ( dotIdx !== -1 && !isHTML && isImageRequest ) {
+		    if ( dotIdx !== -1 && isImageRequest ) {
 		        const basePath = finalPath.substring(0, dotIdx);
 		        for (let variantExt of CONFIG.extensions) {
 		            altPath = basePath + '.' + variantExt;
