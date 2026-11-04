@@ -207,6 +207,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             } else if (mimeType.includes('pdf')) {
                 // 🛡️ Visore PDF In-Sandbox
+                let pdfLibCode = '';
+                if ('caches' in window) {
+                    try {
+                        const cacheNames = await caches.keys();
+                        for (const name of cacheNames) {
+                            const cache = await caches.open(name);
+                            let libRes = await cache.match('./js/pdf_min.js') || await cache.match('js/pdf_min.js');
+                            if (libRes) {
+                                pdfLibCode = await libRes.text();
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Impossibile leggere pdf_min.js dalla cache", e);
+                    }
+                }
+                // Se per caso non è in cache, proviamo un fetch di emergenza
+                if (!pdfLibCode) {
+                    try {
+                        const netLibRes = await fetch('./js/pdf_min.js');
+                        if (netLibRes.ok) pdfLibCode = await netLibRes.text();
+                    } catch (err) {}
+                }
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -264,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 max-width: 90%;
                             }
                         </style>
-                        <script src="pdf_min.js"></script>
+                        <script>${pdfLibCode}</script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading-box">
