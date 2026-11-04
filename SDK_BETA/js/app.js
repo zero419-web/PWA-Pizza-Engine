@@ -264,14 +264,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 max-width: 90%;
                             }
                         </style>
-                        <script src="js/pdf_min.js"></script>
+                        <script src="pdf_min.js"></script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading-box">
                             <div>⏳ Rendering PDF ...</div>
                         </div>
                         <div id="pdf-wrapper"></div>
-
                         <script>
                             const pdfUrl = "${activeObjectUrl}";
 
@@ -283,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     }
                                     
                                     // Disabilitiamo il worker esterno ...
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf_worker_min.js';
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf_worker_min.js';
 
                                     // 2. Caricamento Documento
                                     const loadingTask = pdfjsLib.getDocument({
@@ -329,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             // Avvio rendering a caricamento completato
                             window.addEventListener('DOMContentLoaded', startRender);
-                        <\/script>
+                        </script>
                     </body>
                     </html>
                 `;
