@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Beta SDK v1.1 - Ente Comunale Dashboard 🌀🪖</title>
+    <title>Beta SDK v1.2 - Ente Comunale Dashboard 🌀🪖</title>
 
     <link rel="manifest" href="PA_PWA.webmanifest">
     <link rel="icon" type="image/png" href="icon.png">
@@ -421,7 +422,7 @@
     <header class="header">
         <div class="header-title">
             <h1>🌀🪖 Beta SDK v1.x PA <span style="font-size: 0.85rem; color: var(--accent-purple);">[ Bunker Mode 🛡️📦 ]</span></h1>
-            <p>Comune Generico - Console Sincronizzazione Atti, Modulistica e Stiva Cifrata Locale</p>
+            <p>Comune Generico - Console di Sincronizzazione Atti, Modulistica e Stiva Cifrata Locale</p>
         </div>
         <div id="PA-status-badge" class="badge-status badge-init">⚡ Inizializzazione...</div>
     </header>
@@ -448,7 +449,7 @@
                 <div class="progress-container">
                     <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
                         <span>Stato Operazione</span>
-                        <span id="PA-progress-text">0% (0/0)</span>
+                        <span id="PA-progress-text">0% ( 0 / 0 )</span>
                     </div>
                     <progress id="PA-progress-bar" value="0" max="100"></progress>
                 </div>
@@ -481,13 +482,13 @@
                     <button id="PA-btn-clear-log" class="btn btn-sm">🧹 Pulisci Console</button>
                 </div>
                 <div id="PA-terminal-output" class="terminal-container">
-                    <div class="terminal-line log-info">[00:00:00] ℹ️ In attesa dell'avvio del modulo applicativo PA...</div>
+                    <div class="terminal-line log-info">ℹ️ In attesa dell'avvio del modulo applicativo PA...</div>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-title">
-                    <span>📂 Ispezione Stiva Locale (Bunker Storage Vault PA)</span>
+                    <span>🔍🗄️ Ispezione Stiva Locale </span>
                     <button id="PA-btn-refresh-storage" class="btn btn-sm">🔄 Aggiorna Registro</button>
                 </div>
 
@@ -526,12 +527,12 @@
     <div id="PA-sandbox-modal" class="modal-overlay">
         <div class="modal-header">
             <span id="PA-sandbox-title" style="font-weight: 600; color: var(--accent-purple); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45vw;">
-                🔒 Visore Documento Sensibile <br> ( Read-Only Restrittivo ❌👁️ )
+                👁️🔒 Visore CSP <br> ( Read-Only 💾❌ )
             </span>
             <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
-                <button id="PA-btn-zoom-out" class="btn btn-sm" title="Rimpicciolisci" style="padding: 6px 10px; font-size: 0.8rem;">🔍-</button>
-                <button id="PA-btn-zoom-in" class="btn btn-sm" title="Ingrandisci" style="padding: 6px 10px; font-size: 0.8rem;">🔍+</button>
-                <button id="PA-btn-close-sandbox" class="btn btn-sm btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">❌ Chiudi</button>
+                <button id="PA-btn-zoom-out" class="btn btn-sm" title="Rimpicciolisci" style="padding: 6px 10px; font-size: 0.8rem;">🔍➖</button>
+                <button id="PA-btn-zoom-in" class="btn btn-sm" title="Ingrandisci" style="padding: 6px 10px; font-size: 0.8rem;">🔍➕</button>
+                <button id="PA-btn-close-sandbox" class="btn btn-sm btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">[ ❌ ]</button>
             </div>
         </div>
         <div class="modal-body-wrapper" id="PA-modal-body-wrapper">
