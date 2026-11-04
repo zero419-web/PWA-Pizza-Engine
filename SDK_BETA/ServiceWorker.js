@@ -1257,12 +1257,10 @@ const checkRealOnline = async (mode = 'fetch') => {
         const controller = new AbortController();
         const tId = setTimeout(() => controller.abort(), timeoutMs);
         
-        // 2. Usiamo la root o l'origin con un piccolo file di controllo o l'index, 
-        // ma con GET e cache disabilitata per evitare blocchi HEAD dei server statici
-        const testUrl = BASE_PATH + 'index.html?_chk=' + Date.now();
+        const testUrl = new URL('./index.html?_t=' + Date.now(), self.location.href).href;
         
         const networkResponse = await fetch(testUrl, {
-            method: 'GET',
+            method: 'HEAD',
             cache: 'no-store',
             signal: syncAbortController ?
                     AbortSignal.any([syncAbortController?.signal, controller?.signal]) :
