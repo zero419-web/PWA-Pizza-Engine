@@ -132,24 +132,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 🔒 Visore Sandbox CSP con PDF.js a 100% di default, Scroll Bidirezionale & Ottimizzazione Touch
     const openInSandbox = async (url, fileName) => {
         try {
-            let workerResponse = null;
-if ('caches' in window) {
-    const cacheNames = await caches.keys();
-    for (const name of cacheNames) {
-        const cache = await caches.open(name);
-        workerResponse = await cache.match('./js/pdf_worker_min.js') || await cache.match('js/pdf_worker_min.js');
-        if (workerResponse) break;
-    }
-}
-
-let workerBlobUrl = '';
-if (workerResponse) {
-    const workerBlob = await workerResponse.blob();
-    workerBlobUrl = URL.createObjectURL(workerBlob);
-}
-            
             currentZoom = 1.0; // Reset rigoroso al 100% all'apertura
-            logToTerminal('vault', `🔒 Isolamento Sandbox CSP Ultra-Restrittivo avviato per: ${fileName || url}`);
+            logToTerminal('vault', `🫙🔒 Isolamento Sandbox CSP, avviato per: ${fileName || url}`);
             
             let response = null;
             if ('caches' in window) {
@@ -171,10 +155,9 @@ if (workerResponse) {
                 }
             }
             if (!response) {
-                logToTerminal('warn', `⚠️ Risorsa non in cache offline, tentativo fetch di rete: ${url}`);
+                logToTerminal('warn', `⚠️ Risorsa non in cache, tentativo fetch di rete: ${url}`);
                 response = await fetch(url);
             }
-
            if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
            const blob = await response.blob();
@@ -281,7 +264,7 @@ if (workerResponse) {
                                 max-width: 90%;
                             }
                         </style>
-                        <script src="./js/pdf_min.js"></script>
+                        <script src="js/pdf_min.js"></script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading-box">
@@ -300,7 +283,7 @@ if (workerResponse) {
                                     }
                                     
                                     // Disabilitiamo il worker esterno ...
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/pdf_worker_min.js';
 
                                     // 2. Caricamento Documento
                                     const loadingTask = pdfjsLib.getDocument({
