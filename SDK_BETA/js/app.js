@@ -359,7 +359,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </body>
                     </html>
                 `;
-
             } else {
                 // 📄 Rendering Generale / Testo / Altri Formati
                 renderedContentHtml = `
@@ -387,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             sandboxFrame.removeAttribute('sandbox');
-            sandboxFrame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+            sandboxFrame.setAttribute('sandbox', 'sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             sandboxFrame.srcdoc = renderedContentHtml;
 
             sandboxTitle.textContent = `🔎🔒 Visore Cifrato \n ${fileName || url}`;
