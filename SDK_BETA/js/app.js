@@ -207,7 +207,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             } else if (mimeType.includes('pdf')) {
                 // 🛡️ Visore PDF In-Sandbox
-                const PDFlib = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'js/pdf_min.js';
+                const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                const PDFlib = PDFlibP + 'js/pdf_min.js';
+                const PDFlibW = PDFlibP + 'js/pdf_worker_min.js';
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -282,13 +284,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         throw new Error("Libreria PDF non caricata.\n ${PDFlib}");
                                     }
                                     
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = ( window.location.origin.replace('null', '') + 'js/pdf_worker_min.js' );
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDFlibW}';
 
                                     // 2. Caricamento Documento
                                     const loadingTask = pdfjsLib.getDocument({
                                         url: pdfUrl,
                                         isEvalSupported: false,
-                                        disableFontFace: true // Massima compatibilità.
+                                        disableFontFace: true
                                     });
 
                                     const pdfDoc = await loadingTask.promise;
