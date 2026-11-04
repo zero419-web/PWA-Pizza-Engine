@@ -132,33 +132,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 🔒 Visore Sandbox CSP con PDF.js a 100% di default, Scroll Bidirezionale & Ottimizzazione Touch
     const openInSandbox = async (url, fileName) => {
         try {
+            let workerResponse = null;
+if ('caches' in window) {
+    const cacheNames = await caches.keys();
+    for (const name of cacheNames) {
+        const cache = await caches.open(name);
+        workerResponse = await cache.match('./js/pdf_worker_min.js') || await cache.match('js/pdf_worker_min.js');
+        if (workerResponse) break;
+    }
+}
+
+let workerBlobUrl = '';
+if (workerResponse) {
+    const workerBlob = await workerResponse.blob();
+    workerBlobUrl = URL.createObjectURL(workerBlob);
+}
+            
             currentZoom = 1.0; // Reset rigoroso al 100% all'apertura
             logToTerminal('vault', `🔒 Isolamento Sandbox CSP Ultra-Restrittivo avviato per: ${fileName || url}`);
             
             let response = null;
-if ('caches' in window) {
-    const cacheNames = await caches.keys();
-    logToTerminal('vault', `🔍 Cache disponibili: ${cacheNames.join(', ')}`);
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                logToTerminal('vault', `🔍 Cache disponibili: ${cacheNames.join(', ')}`);
     
-    for (const name of cacheNames) {
-        const cache = await caches.open(name);
+                for (const name of cacheNames) {
+                     const cache = await caches.open(name);
         
-        // Tentativo di match con diverse varianti di percorso per lo scope
-        response = await cache.match(url) 
-                || await cache.match(url.replace('./', '')) 
-                || await cache.match(window.location.origin + url.replace('.', ''));
+                    // Tentativo di match con diverse varianti di percorso per lo scope
+                     response = await cache.match(url) 
+                     || await cache.match(url.replace('./', '')) 
+                     || await cache.match(window.location.origin + url.replace('.', ''));
                 
-        if (response) {
-            logToTerminal('success', `🟢 Trovato in cache (${name}) per: ${url}`);
-            break;
-        }
-    }
-}
-
-if (!response) {
-    logToTerminal('warn', `⚠️ Risorsa non in cache offline, tentativo fetch di rete: ${url}`);
-    response = await fetch(url);
-}
+                     if (response) {
+                         logToTerminal('success', `🟢 Trovato in cache (${name}) per: ${url}`);
+                         break;
+                     }
+                }
+            }
+            if (!response) {
+                logToTerminal('warn', `⚠️ Risorsa non in cache offline, tentativo fetch di rete: ${url}`);
+                response = await fetch(url);
+            }
 
 if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
@@ -257,7 +272,7 @@ const mimeType = response.headers.get('Content-Type') || blob.type || 'applicati
                         <div id="pdf-container"></div>
                         <script>
                             const pdfUrl = "${activeObjectUrl}";
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = "${workerBlobUrl}";
 
                             async function renderPDF() {
                                try {
