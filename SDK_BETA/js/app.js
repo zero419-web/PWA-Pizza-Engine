@@ -207,6 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             } else if (mimeType.includes('pdf')) {
                 // 🛡️ Visore PDF In-Sandbox
+                const PDFlib = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'js/pdf_min.js';
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -264,6 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 max-width: 90%;
                             }
                         </style>
+                        <script src="${PDFlib}"></script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
                         <div id="loading" class="loading-box">
@@ -271,17 +273,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div id="pdf-wrapper"></div>
                         <script>
-                            var script = document.createElement('script');
-                            script.src = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'js/pdf_min.js';
-                            document.head.appendChild(script);
-
                             const pdfUrl = "${activeObjectUrl}";
 
                             async function startRender() {
                                 try {
                                     // 1. Configurazione Worker Inline / Offline
                                     if (typeof pdfjsLib === 'undefined') {
-                                        throw new Error("Libreria PDF non caricata.");
+                                        throw new Error("Libreria PDF non caricata.\n ${PDFlib}");
                                     }
                                     
                                     pdfjsLib.GlobalWorkerOptions.workerSrc = ( window.location.origin.replace('null', '') + 'js/pdf_worker_min.js' );
