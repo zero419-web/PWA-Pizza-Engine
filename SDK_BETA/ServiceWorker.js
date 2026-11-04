@@ -1945,9 +1945,10 @@ self.addEventListener('fetch', (event) => {
                 const UserlocalLastMod = cached ? cached.headers.get('X-PWA-LastMod') : null;
 
                 if (lastMod && ((localLastMod && lastMod === localLastMod) || (UserlocalLastMod && lastMod === UserlocalLastMod))) {
-                    return;
+					console.info(`👮‍♂🚫♻️ SW: Risorsa Fresca Esistente !\n🌐💾🚫 SALVATAGGIO Anullato :\n ${finalPath}`);
+					return;
                 }
-
+				
                 const check = await isValidBlob(responseToProcess, contentType, 0, false, controllerSignal);
                 if (check.valid) {
                     let finalBlob = check.blob;
@@ -1955,7 +1956,7 @@ self.addEventListener('fetch', (event) => {
                     updatedHeaders.set('X-PWA-Date', Date.now().toString());
                     if (lastMod) updatedHeaders.set('X-PWA-LastMod', lastMod);
 
-                    console.info(`🔄💾 SW: [ ${targetCache} ], ♻️ File: ${finalPath}`);
+					console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n🔄💾 [ ${targetCache} ]\n♻️ File: ${finalPath}`);
 
                     if (shouldBeEncrypted) {
                         finalBlob = await encryptBlob(finalBlob);
@@ -2023,7 +2024,6 @@ self.addEventListener('fetch', (event) => {
                 console.error("💥💾 SW: Errore fatale nel flusso di salvataggio in fetch: ", createCleanError("ForensicValidationError", err && err.message ? String(err.message) : "Eccezione controllata nel modulo Fetch Vault"));
             }
         };
-		
 		const SWR_SAVE = async (event, C_Method) => {
 			const isOnline = await checkRealOnline('fetch');
 			if ( isOnline ) {
@@ -2047,7 +2047,6 @@ self.addEventListener('fetch', (event) => {
 					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
 					if ( networkResponse && networkResponse.ok ) {
 						if ( isLogicEnabled && !isSyncing ) {
-							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
 					}
@@ -2067,7 +2066,7 @@ self.addEventListener('fetch', (event) => {
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
-		if( finalStrategy === 'NetworkFirst' ){
+		if( finalStrategy === 'NetworkFirst' || ( isCoreAsset && !cached ) || isNewInstallation ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
@@ -2111,11 +2110,10 @@ self.addEventListener('fetch', (event) => {
 	                    }
 	
 	                    const outResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
-						console.log(`🛡️🧹 SW: Bonifica RAM eseguita per :\n ${finalPath}`);
 						new Uint8Array(buffer).fill(0);
 	                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
 	                    decrypted = null;
-						console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
+						console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}\nURL : ${finalPath}\n🛡️🧹 SW: Bonifica RAM eseguita.`);
 						return outResponse;
 					}
                 } catch (err) {
@@ -2155,7 +2153,7 @@ self.addEventListener('fetch', (event) => {
                     throw cleanDecryptErr; // Rilancia l'errore sterilizzato
                 }
             } else {
-				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}`);
+				console.info(`💾🛡️ SW: Risorsa estratta dal, ${targetCache}\nURL : ${finalPath}`);
                 return cached.clone();
             }
 		} else {
@@ -2170,7 +2168,7 @@ self.addEventListener('fetch', (event) => {
 			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
 			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
 			
-		    if ( dotIdx !== -1 && !isHTML && !isImageRequest ) {
+		    if ( dotIdx !== -1 ) {
 		        const basePath = finalPath.substring(0, dotIdx);
 		        for (let variantExt of CONFIG.extensions) {
 		            altPath = basePath + '.' + variantExt;
@@ -2219,55 +2217,55 @@ self.addEventListener('fetch', (event) => {
 		    }
 			// 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 			 // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
-		    if( altCached_Find !== true ) {
-			    if (isImageRequest || isHTML) {
-			        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
-			        const placeholder = await caches.match(placeholderPath);
-			        if (placeholder) {
-			            try {
-			                if (globalPlaceholderBlob === null) {
-			                    let contentLengthP = null;
-			                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
+			if ( isImageRequest || isHTML ) {
+				if( !altCached_Find && currentMethod === 'HEAD' ) {
+					return new Response(null, { status: 404, statusText: "HEAD RES IMG NOT FOUND" });
+				}
+			    const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
+			    const placeholder = await caches.match(placeholderPath);
+			    if ( placeholder ) {
+			         try {
+			            if (globalPlaceholderBlob === null) {
+			                if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
 			                        const buffer = await placeholder.clone().arrayBuffer();
 			                        let decrypted = await decryptBuffer(buffer);
 			                        
 	                            if (decrypted && decrypted.byteLength > 0) {
-	                                globalPlaceholderBlob = new Blob([exactPlaceholderBuf], { type: placeholder.headers.get('Content-Type') || 'image/png' });
+	                                globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') || 'image/png' });
 	                                new Uint8Array(buffer).fill(0);
 	                                decrypted = null;
 	                            }
-			                    } else {
-			                        globalPlaceholderBlob = await placeholder.clone().blob();
+							} else {
+		                        globalPlaceholderBlob = await placeholder.clone().blob();
+		                    }
+		                }
+			            if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob ) {
+			                console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
+			                return new Response(globalPlaceholderBlob, {
+								status: 200,
+			                    headers: {
+			                        'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
+			                        'Content-Length': placeholder.headers.get('Content-Length'),
+			                        'X-PWA-Source': 'Bunker-Placeholder'
 			                    }
-			                }
-			                if (isImageRequest && !isHTML && !isExcluded && globalPlaceholderBlob) {
-			                    console.info(`🖼️🩹 SW Placeholder: Emergenza -> ${finalPath}`);
-			                    return new Response(globalPlaceholderBlob, {
-									status: 200,
-			                        headers: {
-			                            'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
-			                            'Content-Length': placeholder.headers.get('Content-Length'),
-			                            'X-PWA-Source': 'Bunker-Placeholder'
-			                        }
-			                    });
-			                }
-			            } catch (err) { // 🔇
-			                //console.error("❌ SW: Errore decriptazione placeholder: ", err);
+			                });
 			            }
-			        }
-					// 🎯 FALLBACK DI EMERGENZA.
-			        if (isImageRequest && !isHTML && !isExcluded) {
-			            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
-			            return new Response(GLOBAL_BROKEN_BLOB, {
-	                        status: 200,
-			                headers: {
-			                    'Content-Type': 'image/svg+xml',
-			                    'X-PWA-Source': 'Bunker-Placeholder'
-			                }
-			            });
+			        } catch (err) { // 🔇
+			            //console.error("❌ SW: Errore decriptazione placeholder: ", err);
 			        }
 			    }
-			}	
+				// 🎯 FALLBACK DI EMERGENZA.
+				if (isImageRequest && !isHTML && !isExcluded) {
+				    console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
+				    return new Response(GLOBAL_BROKEN_BLOB, {
+		                status: 200,
+				        headers: {
+				           'Content-Type': 'image/svg+xml',
+				            'X-PWA-Source': 'Bunker-Placeholder'
+				        }
+				    });
+			    }
+			}
 		    // 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
 		    if ( !isImageRequest && isExcluded ) {
 		        console.info(`📦❌ SW: Recupero fallito per: ${finalPath}`);
