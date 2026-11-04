@@ -175,10 +175,10 @@ if (workerResponse) {
                 response = await fetch(url);
             }
 
-if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
+           if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
-const blob = await response.blob();
-const mimeType = response.headers.get('Content-Type') || blob.type || 'application/pdf';
+           const blob = await response.blob();
+           const mimeType = response.headers.get('Content-Type') || blob.type || 'application/pdf';
 
             if (activeObjectUrl) {
                 URL.revokeObjectURL(activeObjectUrl);
@@ -222,60 +222,82 @@ const mimeType = response.headers.get('Content-Type') || blob.type || 'applicati
                     </body>
                     </html>
                 `;
-                } else if (mimeType.includes('pdf')) {
-                // 🛡️ Visore PDF
+            } else if (mimeType.includes('pdf')) {
+                // 💻📱 Visore PDF - ( Desktop + Mobile )
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
                     <head>
                         <meta charset="UTF-8">
-                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; object-src blob: data:; style-src 'unsafe-inline';">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width: 100%; height: 100%; background: #111; overflow: hidden; }
-                            .fallback-container {
-                                display: flex;
-                                flex-direction: column;
-                                align-items: center;
-                                justify-content: center;
-                                height: 100%;
-                                color: #fff;
-                                font-family: sans-serif;
+                            body, html { width: 100%; height: 100%; background: #0f172a; font-family: sans-serif; overflow: hidden; }
+                            .container { width: 100%; height: 100%; display: flex; flex-direction: column; }
+                            .desktop-only { width: 100%; height: 100%; border: none; display: block; }
+                            .mobile-fallback { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; padding: 20px; }
+                            .card {
+                                background: #1e293b;
+                                border: 1px solid #334155;
+                                border-radius: 12px;
+                                padding: 24px;
+                                width: 90%;
+                                max-width: 400px;
                                 text-align: center;
-                                padding: 20px;
-                                gap: 20px;
+                                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
                             }
-                            .btn-download {
-                                background: #2563eb;
-                                color: #fff;
-                                border: none;
-                                padding: 12px 24px;
-                                border-radius: 6px;
-                                font-weight: bold;
-                                cursor: pointer;
-                                text-decoration: none;
-                                display: inline-block;
-                            }
-                            object, embed {
+                            h3 { color: #f8fafc; font-size: 1.2rem; margin-bottom: 12px; }
+                            p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.4; }
+                            .btn-action {
+                                display: block;
                                 width: 100%;
-                                height: 100%;
+                                background: #2563eb;
+                                color: #ffffff;
                                 border: none;
+                                padding: 14px;
+                                border-radius: 8px;
+                                font-weight: bold;
+                                font-size: 1rem;
+                                text-decoration: none;
+                                margin-bottom: 10px;
+                                cursor: pointer;
+                                text-align: center;
+                            }
+                            /* Rilevamento dispositivi mobili via CSS per mostrare il box pulito se necessario */
+                            @media (max-width: 768px), (pointer: coarse) {
+                                .desktop-only { display: none; }
+                                .mobile-fallback { display: flex; }
                             }
                         </style>
                     </head>
                     <body>
-                        <object data="${activeObjectUrl}#toolbar=0&view=FitH" type="application/pdf">
-                            <div class="fallback-container">
-                                <h3>🛡️ Visore PDF di Sicurezza (Modalità Offline)</h3>
-                                <p>Il tuo browser non supporta l'anteprima diretta del PDF in questo contesto isolato offline.</p>
-                                <a href="${activeObjectUrl}" download="documento_protetto.pdf" class="btn-download">📥 Scarica e Visualizza Documento</a>
+                        <div class="container">
+                            <!-- Anteprima nativa browser desktop -->
+                            <object class="desktop-only" data="${activeObjectUrl}#toolbar=1&view=FitH" type="application/pdf">
+                                <!-- Fallback automatico se il tag object fallisce -->
+                                <div class="mobile-fallback">
+                                    <div class="card">
+                                        <h3>🛡️ PA : Documento Cifrato 📄🔐</h3>
+                                        <p>Visualizzazione protetta 🛡️🔎</p>
+                                        <a href="${activeObjectUrl}" target="_blank" class="btn-action">📂 Apri Documento</a>
+                                    </div>
+                                </div>
+                            </object>
+                            <!-- Interfaccia Mobile -->
+                            <div class="mobile-fallback">
+                                <div class="card">
+                                    <h3>🛡️ PA : Documento Cifrato 📄🔐</h3>
+                                    <p>Stai visualizzando il file 
+                                    in modalità protetta 🛡️🔎</p>
+                                    <a href="${activeObjectUrl}" target="_blank" class="btn-action">📂 Apri nel Visore Nativo</a>
+                                </div>
                             </div>
-                        </object>
+                        </div>
                     </body>
                     </html>
                 `;
             } else {
-                // Rendering Generale / Testo / Altri Formati
+                // 📄 Rendering Generale / Testo / Altri Formati
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
