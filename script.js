@@ -343,10 +343,10 @@ async function waitForServiceWorker() {
     if (!('serviceWorker' in navigator)) return false;
     if (navigator.serviceWorker.controller) return true;
     try {
-        // Mettiamo un timeout di sicurezza (es. 0.5s ) per evitare blocchi eterni su reti lentissime
+        // Mettiamo un timeout di sicurezza (es. 1.5s ) per evitare blocchi eterni su reti lentissime
         await Promise.race([
             navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 1500))
         ]);
         return !!navigator.serviceWorker.controller;
     } catch (e) {
@@ -401,16 +401,14 @@ async function loadImageAsync(imgElement, folder, ID) {
             const url = `${folder}${ID}.${cleanExt}`;
             try {
                 const response = await fetch(url, {
-                    method: 'GET',
+                    method: 'HEAD',
                     cache: 'no-store',
                     headers: { 'Cache-Control': 'max-age=600' }
                 });
 				if ( response && !response.ok ) { continue; }
                 if (response && response.ok) {
-                    if (isValidImg) {
-                        validUrl = url;
-                        break;
-                    }
+                    validUrl = url;
+                    break;
                 }
             } catch (err) {
                 // Continua con l'estensione successiva senza bloccare
