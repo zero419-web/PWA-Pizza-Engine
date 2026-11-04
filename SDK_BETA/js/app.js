@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const cacheNames = await caches.keys();
                         for (const name of cacheNames) {
                             const cache = await caches.open(name);
-                            let libRes = await cache.match('./js/pdf_min.js') || await cache.match('js/pdf_min.js');
+                            let libRes = await cache.match(window.location.origin + '/js/pdf_min.js');
                             if (libRes) {
                                 pdfLibCode = await libRes.text();
                                 break;
