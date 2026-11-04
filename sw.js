@@ -2068,7 +2068,7 @@ self.addEventListener('fetch', (event) => {
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
-		if( finalStrategy === 'NetworkFirst' || currentMethod === 'HEAD' ){
+		if( finalStrategy === 'NetworkFirst' ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
@@ -2171,7 +2171,7 @@ self.addEventListener('fetch', (event) => {
 			const imgRegex = new RegExp(`\\.(${imageExtensions.join('|')})$`, 'i');
 			const isImageRequest = (contentsType.includes('image/') && !isHTML) || imgRegex.test(finalPath);
 			
-		    if ( dotIdx !== -1 && !isHTML && !isImageRequest ) {
+		    if ( dotIdx !== -1 && !isHTML && isImageRequest ) {
 		        const basePath = finalPath.substring(0, dotIdx);
 		        for (let variantExt of CONFIG.extensions) {
 		            altPath = basePath + '.' + variantExt;
