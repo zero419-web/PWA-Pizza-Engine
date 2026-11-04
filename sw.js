@@ -2068,7 +2068,7 @@ self.addEventListener('fetch', (event) => {
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
-		if( finalStrategy === 'NetworkFirst' || isCoreAsset && !cached ){
+		if( finalStrategy === 'NetworkFirst' || ( isCoreAsset && !cached ) ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
@@ -2220,20 +2220,19 @@ self.addEventListener('fetch', (event) => {
 		    }
 			// 🖼️ SEZIONE IV.II: EROGAZIONE PLACEHOLDER ( GRAPHIC RESILIENCE )
 			 // Fallback finale con iniezione del vettore statico base64 o SVG di emergenza.
-		    if( altCached_Find !== true ) {
-			    if (isImageRequest || isHTML) {
+		    if( !altCached_Find ) {
+			    if ( isImageRequest || isHTML ) {
 			        const placeholderPath = normalize(CONFIG.defPlaceHolderLogo);
 			        const placeholder = await caches.match(placeholderPath);
-			        if (placeholder) {
+			        if ( placeholder ) {
 			            try {
 			                if (globalPlaceholderBlob === null) {
-			                    let contentLengthP = null;
 			                    if (placeholder.headers.get('X-PWA-Encrypted') === 'true') {
 			                        const buffer = await placeholder.clone().arrayBuffer();
 			                        let decrypted = await decryptBuffer(buffer);
 			                        
 	                            if (decrypted && decrypted.byteLength > 0) {
-	                                globalPlaceholderBlob = new Blob([exactPlaceholderBuf], { type: placeholder.headers.get('Content-Type') || 'image/png' });
+	                                globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') || 'image/png' });
 	                                new Uint8Array(buffer).fill(0);
 	                                decrypted = null;
 	                            }
