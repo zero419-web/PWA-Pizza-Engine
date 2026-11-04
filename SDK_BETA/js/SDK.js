@@ -79,7 +79,8 @@ export class PanzerSDK {
     async _registerSW() {
         if ('serviceWorker' in navigator) {
             try {
-                await navigator.serviceWorker.register(this.swPath, { scope: this.scope });
+                const swUrl = new URL(this.swPath, window.location.origin + this.scope).href;
+                await navigator.serviceWorker.register(swUrl, { scope: this.scope });
                 this.onLogMessage('success', '📡 Service Worker Panzer registrato con successo.');
             } catch (err) {
                 this.onLogMessage('warn', `⚠️ Registrazione SW non completata: ${err.message}`);
