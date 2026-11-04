@@ -387,7 +387,7 @@ renderedContentHtml = `
             }
 
             sandboxFrame.removeAttribute('sandbox');
-            sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            sandboxFrame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
             sandboxFrame.srcdoc = renderedContentHtml;
 
             sandboxTitle.textContent = `🔎🔒 Visore Cifrato \n ${fileName || url}`;
