@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             sandboxFrame.removeAttribute('sandbox');
-            sandboxFrame.setAttribute('sandbox', 'sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             sandboxFrame.srcdoc = renderedContentHtml;
 
             sandboxTitle.textContent = `🔎🔒 Visore Cifrato \n ${fileName || url}`;
