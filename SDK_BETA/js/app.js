@@ -223,76 +223,130 @@ if (workerResponse) {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // 💻📱 Visore PDF - ( Desktop + Mobile )
+                // 🛡️ Visore PDF In-Sandbox
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
                     <head>
                         <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
+                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' blob: data:; style-src 'unsafe-inline'; connect-src blob: data:;">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width: 100%; height: 100%; background: #0f172a; font-family: sans-serif; overflow: hidden; }
-                            .container { width: 100%; height: 100%; display: flex; flex-direction: column; }
-                            .desktop-only { width: 100%; height: 100%; border: none; display: block; }
-                            .mobile-fallback { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; padding: 20px; }
-                            .card {
-                                background: #1e293b;
-                                border: 1px solid #334155;
-                                border-radius: 12px;
-                                padding: 24px;
-                                width: 90%;
-                                max-width: 400px;
-                                text-align: center;
-                                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-                            }
-                            h3 { color: #f8fafc; font-size: 1.2rem; margin-bottom: 12px; }
-                            p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.4; }
-                            .btn-action {
-                                display: block;
+                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
+                            body, html {
                                 width: 100%;
-                                background: #2563eb;
-                                color: #ffffff;
-                                border: none;
-                                padding: 14px;
-                                border-radius: 8px;
-                                font-weight: bold;
-                                font-size: 1rem;
-                                text-decoration: none;
-                                margin-bottom: 10px;
-                                cursor: pointer;
-                                text-align: center;
+                                height: 100%;
+                                background: #0f172a;
+                                overflow: auto;
+                                font-family: sans-serif;
+                                -webkit-overflow-scrolling: touch;
+                                touch-action: pan-x pan-y;
                             }
-                            /* Rilevamento dispositivi mobili via CSS per mostrare il box pulito se necessario */
-                            @media (max-width: 768px), (pointer: coarse) {
-                                .desktop-only { display: none; }
-                                .mobile-fallback { display: flex; }
+                            #pdf-wrapper {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                padding: 20px 10px;
+                                min-width: 100%;
+                                min-height: 100%;
+                                width: max-content;
+                                margin: 0 auto;
+                                gap: 15px;
+                            }
+                            canvas {
+                                max-width: 100%;
+                                height: auto;
+                                box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+                                background: #fff;
+                                border-radius: 6px;
+                                pointer-events: auto;
+                            }
+                            .loading-box {
+                                color: #f8fafc;
+                                font-size: 1rem;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                text-align: center;
+                                gap: 10px;
+                            }
+                            .error-msg {
+                                color: #f87171;
+                                background: #1e1b4b;
+                                padding: 15px;
+                                border-radius: 8px;
+                                border: 1px solid #ef4444;
+                                max-width: 90%;
                             }
                         </style>
+                        <script src="./js/pdf_min.js"></script>
                     </head>
-                    <body>
-                        <div class="container">
-                            <!-- Anteprima nativa browser desktop -->
-                            <object class="desktop-only" data="${activeObjectUrl}#toolbar=1&view=FitH" type="application/pdf">
-                                <!-- Fallback automatico se il tag object fallisce -->
-                                <div class="mobile-fallback">
-                                    <div class="card">
-                                        <h3>🛡️ PA : Documento Cifrato 📄🔐</h3>
-                                        <p>Visualizzazione protetta 🛡️🔎</p>
-                                        <a href="${activeObjectUrl}" target="_blank" class="btn-action">📂 Apri Documento</a>
-                                    </div>
-                                </div>
-                            </object>
-                            <!-- Interfaccia Mobile -->
-                            <div class="mobile-fallback">
-                                <div class="card">
-                                    <h3>🛡️ PA : Documento Cifrato 📄🔐</h3>
-                                    <p>Stai visualizzando il file 
-                                    in modalità protetta 🛡️🔎</p>
-                                    <a href="${activeObjectUrl}" target="_blank" class="btn-action">📂 Apri nel Visore Nativo</a>
-                                </div>
-                            </div>
+                    <body oncontextmenu="return false;" ondragstart="return false;">
+                        <div id="loading" class="loading-box">
+                            <div>⏳ Rendering PDF ...</div>
                         </div>
+                        <div id="pdf-wrapper"></div>
+
+                        <script>
+                            const pdfUrl = "${activeObjectUrl}";
+
+                            async function startRender() {
+                                try {
+                                    // 1. Configurazione Worker Inline / Offline
+                                    if (typeof pdfjsLib === 'undefined') {
+                                        throw new Error("Libreria PDF non caricata.");
+                                    }
+                                    
+                                    // Disabilitiamo il worker esterno ...
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
+
+                                    // 2. Caricamento Documento
+                                    const loadingTask = pdfjsLib.getDocument({
+                                        url: pdfUrl,
+                                        isEvalSupported: false,
+                                        disableFontFace: true // Massima compatibilità.
+                                    });
+
+                                    const pdfDoc = await loadingTask.promise;
+                                    document.getElementById('loading').style.display = 'none';
+                                    const container = document.getElementById('pdf-wrapper');
+
+                                    // 3. Rendering Canvas Pagina per Pagina
+                                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                                        const page = await pdfDoc.getPage(pageNum);
+                                        
+                                        // Calcolo scala adattiva per schermi mobile e desktop
+                                        const unscaledViewport = page.getViewport({ scale: 1.0 });
+                                        const screenWidth = Math.min(window.innerWidth - 30, 800);
+                                        const scale = screenWidth / unscaledViewport.width;
+                                        const viewport = page.getViewport({ scale: Math.max(scale, 1.0) });
+
+                                        const canvas = document.createElement('canvas');
+                                        const context = canvas.getContext('2d');
+                                        canvas.height = viewport.height;
+                                        canvas.width = viewport.width;
+
+                                        canvas.dataset.baseWidth = viewport.width;
+                                        canvas.dataset.baseHeight = viewport.height;
+
+                                        container.appendChild(canvas);
+
+                                        await page.render({
+                                            canvasContext: context,
+                                            viewport: viewport
+                                        }).promise;
+                                    }
+                                } catch (err) {
+                                    document.getElementById('loading').style.display = 'none';
+                                    document.getElementById('pdf-wrapper').innerHTML = '<div class="error-msg">❌ Errore Visore Cifrato: ' + err.message + '</div>';
+                                }
+                            }
+
+                            // Avvio rendering a caricamento completato
+                            window.addEventListener('DOMContentLoaded', startRender);
+                        <\/script>
                     </body>
                     </html>
                 `;
@@ -326,11 +380,11 @@ if (workerResponse) {
             sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             sandboxFrame.srcdoc = renderedContentHtml;
 
-            sandboxTitle.textContent = `🔒 Visore Cifrato Read-Only — ${fileName || url}`;
+            sandboxTitle.textContent = `🔎🔒 Visore Cifrato \n ${fileName || url}`;
 
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ PDF/Risorsa renderizzato correttamente al 100% di default con supporto touch e scroll bidirezionale.`);
+            logToTerminal('success', `🛡️ PDF / Risorsa renderizzato ...`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
         }
