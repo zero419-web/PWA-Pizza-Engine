@@ -134,23 +134,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             currentZoom = 1.0; // Reset rigoroso al 100% all'apertura
             logToTerminal('vault', `🔒 Isolamento Sandbox CSP Ultra-Restrittivo avviato per: ${fileName || url}`);
+            
             let response = null;
-            const cleanUrl = url.startsWith('./') ? url.substring(1) : url;
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                for (const name of cacheNames) {
-                    const cache = await caches.open(name);
-                    response = await cache.match(url) || await cache.match(cleanUrl) || await cache.match(`./${cleanUrl}`);
-                    if (response) break;
-                }
-            }
-            if (!response) {
-                try {
-                    response = await fetch(url);
-                } catch (netErr) {
-                    throw new Error(`Risorsa non disponibile offline nella stiva cifrata: ${url}`);
-                }
-            }
+if ('caches' in window) {
+    const cacheNames = await caches.keys();
+    logToTerminal('vault', `🔍 Cache disponibili: ${cacheNames.join(', ')}`);
+    
+    for (const name of cacheNames) {
+        const cache = await caches.open(name);
+        
+        // Tentativo di match con diverse varianti di percorso per lo scope
+        response = await cache.match(url) 
+                || await cache.match(url.replace('./', '')) 
+                || await cache.match(window.location.origin + url.replace('.', ''));
+                
+        if (response) {
+            logToTerminal('success', `🟢 Trovato in cache (${name}) per: ${url}`);
+            break;
+        }
+    }
+}
+
+if (!response) {
+    logToTerminal('warn', `⚠️ Risorsa non in cache offline, tentativo fetch di rete: ${url}`);
+    response = await fetch(url);
+}
 
 if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
