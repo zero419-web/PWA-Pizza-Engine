@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8.5
+ * v1.8.6
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -22,8 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         './icon.png',
         './Res-PA-manifest.json'
     ];
-    const getDefined_scope = '../SDK_BETA/;
-        // '/PWA-Pizza-Engine/SDK_BETA/';
+    const getDefined_scope = '/PWA-Pizza-Engine/SDK_BETA/';
     const getDefined_swPath = './ServiceWorker.js';
     
     // 🎯 DOM UI Elements
