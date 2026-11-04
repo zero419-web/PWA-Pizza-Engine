@@ -1,4 +1,4 @@
-// v5.0.2
+// v5.0.3
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -346,7 +346,7 @@ async function waitForServiceWorker() {
         // Mettiamo un timeout di sicurezza (es. 2s ) per evitare blocchi eterni su reti lentissime
         await Promise.race([
             navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 1500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 2000))
         ]);
         return !!navigator.serviceWorker.controller;
     } catch (e) {
@@ -382,11 +382,14 @@ async function loadImageAsync(imgElement, folder, ID) {
                     method: 'HEAD',
                     cache: 'force-cache'
                 });
+				if ( response && !response.ok ) { continue; }
                 if (response && response.ok) {
+					/*
                     const pwaSource = response.headers.get('X-PWA-Source');
                     if (pwaSource === 'Bunker-Placeholder') {
                         continue;
                     }
+					*/
                     validUrl = testUrl;
                     break;
                 }
@@ -408,6 +411,7 @@ async function loadImageAsync(imgElement, folder, ID) {
                     cache: 'default',
                     headers: { 'Cache-Control': 'max-age=600' }
                 });
+				if ( response && !response.ok ) { continue; }
                 if (response && response.ok) {
                     const pwaSource = response.headers.get('X-PWA-Source');
                     if (pwaSource === 'Bunker-Placeholder') {
