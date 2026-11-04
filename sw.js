@@ -2067,7 +2067,7 @@ self.addEventListener('fetch', (event) => {
 		const finalStrategy = assegnaFlussoPolimorfo(cached, self.navigator);
 		const currentMethod = event.request.method.toUpperCase();
 		// 🎯 STRATEGIA: Network-First, altrimenti SWR se c'è cache ( zero attese su reti lente ).
-		if( finalStrategy === 'NetworkFirst' || ( isCoreAsset && !cached ) ){
+		if( finalStrategy === 'NetworkFirst' || ( isCoreAsset && !cached ) || isNewInstallation ){
 			// 🌐❌ Se NetworkFirst fallisce per rete assente ma c'è la cache, evitiamo di bloccare e passiamo alla cache
 			const netRes = await SWR_SAVE(event, currentMethod);
 			if ( netRes !== null ) {
