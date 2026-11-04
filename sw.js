@@ -1945,9 +1945,11 @@ self.addEventListener('fetch', (event) => {
                 const UserlocalLastMod = cached ? cached.headers.get('X-PWA-LastMod') : null;
 
                 if (lastMod && ((localLastMod && lastMod === localLastMod) || (UserlocalLastMod && lastMod === UserlocalLastMod))) {
-                    return;
+					console.info(`👮‍♂🚫♻️ SW: Risorsa Fresca Esistente !\n🌐💾🚫 SALVATAGGIO Anullato : ${finalPath}`);
+					return;
                 }
-
+				console.info(`👮‍♂⚡️ SW: TENTO SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
+				
                 const check = await isValidBlob(responseToProcess, contentType, 0, false, controllerSignal);
                 if (check.valid) {
                     let finalBlob = check.blob;
@@ -2047,7 +2049,6 @@ self.addEventListener('fetch', (event) => {
 					// 🛡️🚧 SBARRAMENTO & VALIDAZIONE RISPOSTA DI RETE
 					if ( networkResponse && networkResponse.ok ) {
 						if ( isLogicEnabled && !isSyncing ) {
-							console.info(`👮‍♂⚡️ SW: SALVA RISORSA da WEB In Background :\n 🌐💾 ${finalPath} `);
 							event.waitUntil(processAndStore( (networkResponse.clone()) , fetchSignal));
 						}
 					}
