@@ -2257,16 +2257,20 @@ self.addEventListener('fetch', (event) => {
 			            }
 			        }
 					// 🎯 FALLBACK DI EMERGENZA.
-			        if (isImageRequest && !isHTML && !isExcluded) {
-			            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
-			            return new Response(GLOBAL_BROKEN_BLOB, {
-	                        status: 200,
-			                headers: {
-			                    'Content-Type': 'image/svg+xml',
-			                    'X-PWA-Source': 'Bunker-Placeholder'
-			                }
-			            });
-			        }
+			        if( currentMethod !== 'HEAD' ){
+						if (isImageRequest && !isHTML && !isExcluded) {
+				            console.info(`🖼️🩹❌ SW Placeholder Fallback: Emergenza :\n ${finalPath}`);
+				            return new Response(GLOBAL_BROKEN_BLOB, {
+		                        status: 200,
+				                headers: {
+				                    'Content-Type': 'image/svg+xml',
+				                    'X-PWA-Source': 'Bunker-Placeholder'
+				                }
+				            });
+			        	}
+					} else {
+						return new Response(null, { status: 404, statusText: "HEAD RES IMG NOT FOUND" });
+					}
 			    }
 			}	
 		    // 🖥️ SEZIONE V: DISPOSITIVO DI TOLLERANZA AI GUASTI ( CRITICAL FALLBACK BLOCK )
