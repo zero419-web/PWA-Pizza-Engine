@@ -343,10 +343,10 @@ async function waitForServiceWorker() {
     if (!('serviceWorker' in navigator)) return false;
     if (navigator.serviceWorker.controller) return true;
     try {
-        // Mettiamo un timeout di sicurezza (es. 2s ) per evitare blocchi eterni su reti lentissime
+        // Mettiamo un timeout di sicurezza (es. 0.5s ) per evitare blocchi eterni su reti lentissime
         await Promise.race([
             navigator.serviceWorker.ready,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SW_TIMEOUT')), 500))
         ]);
         return !!navigator.serviceWorker.controller;
     } catch (e) {
