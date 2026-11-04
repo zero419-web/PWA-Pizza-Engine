@@ -222,57 +222,42 @@ const mimeType = response.headers.get('Content-Type') || blob.type || 'applicati
                     </body>
                     </html>
                 `;
-            } else if (mimeType.includes('pdf')) {
-                // Rendering PDF Universale tramite pdf_worker_min.js (Default Scale 1.0 -> 100%) con Scroll Bidirezionale
+                } else if (mimeType.includes('pdf')) {
+                // Rendering PDF con cattura errori diagnostica offline
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
                     <head>
                         <meta charset="UTF-8">
-                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; connect-src blob: data:;">
+                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' https://cdnjs.cloudflare.com blob: data:; style-src 'unsafe-inline'; connect-src blob: data:;">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body, html {
-                                width: 100%;
-                                height: 100%;
-                                background: #111;
-                                overflow: auto;
-                                font-family: sans-serif;
-                                -webkit-overflow-scrolling: touch;
-                                touch-action: pan-x pan-y;
-                            }
-                            #pdf-container {
-                                display: flex;
-                                flex-direction: column;
-                                align-items: center;
-                                padding: 40px 50vw;
-                                min-width: 100%;
-                                min-height: 100%;
-                                width: max-content;
-                                margin: 0 auto;
-                                gap: 20px;
-                                touch-action: pan-x pan-y;
-                            }
-                            canvas {
-                                max-width: none;
-                                height: auto;
-                                box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-                                background: #fff;
-                                border-radius: 4px;
-                                -webkit-touch-callout: none;
-                                touch-action: pan-x pan-y;
-                                flex-shrink: 0;
-                            }
+                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+                            body, html { width: 100%; height: 100%; background: #111; overflow: auto; font-family: sans-serif; }
+                            #pdf-container { display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100%; gap: 20px; }
+                            canvas { max-width: 100%; height: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.8); background: #fff; border-radius: 4px; }
                             .loading { color:#fff; font-size:1rem; display:flex; justify-content:center; align-items:center; height:100vh; text-align:center; padding:20px; }
+                            .error-box { color:#ff6b6b; background: #220000; border: 1px solid #ff6b6b; padding: 20px; border-radius: 8px; margin: 20px; word-break: break-all; }
                         </style>
-                        <script src="./js/pdf_min.js"></script>
+                        <script src="./js/pdf_min.js"><\/script>
                     </head>
-                    <body oncontextmenu="return false;" ondragstart="return false;">
+                    <body oncontextmenu="return false;">
                         <div id="loading" class="loading">⏳ Caricamento visore PDF di sicurezza...</div>
                         <div id="pdf-container"></div>
                         <script>
+                            // Intercettazione globale errori all'interno dell'iframe
+                            window.onerror = function(msg, url, line) {
+                                document.getElementById('loading').style.display = 'none';
+                                document.getElementById('pdf-container').innerHTML = '<div class="error-box">❌ Errore JS Sandbox: ' + msg + '<br><small>Linea: ' + line + '</small></div>';
+                            };
+
                             const pdfUrl = "${activeObjectUrl}";
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = "${workerBlobUrl}";
+                            
+                            // Configurazione worker con fallback di sicurezza
+                            if (typeof pdfjsLib !== 'undefined') {
+                                pdfjsLib.GlobalWorkerOptions.workerSrc = './js/pdf_worker_min.js';
+                            } else {
+                                throw new Error("Libreria pdfjsLib non definita o bloccata dalla CSP/Offline.");
+                            }
 
                             async function renderPDF() {
                                try {
@@ -283,16 +268,12 @@ const mimeType = response.headers.get('Content-Type') || blob.type || 'applicati
 
                                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                                        const page = await pdfDoc.getPage(pageNum);
-                                       const scale = 1.0; // 🔍 SCALA BASE IMPOSTATA A 1.0 (100% REALE)
-                                       const viewport = page.getViewport({ scale: scale });
+                                       const viewport = page.getViewport({ scale: 1.0 });
 
                                        const canvas = document.createElement('canvas');
                                        const context = canvas.getContext('2d');
                                        canvas.height = viewport.height;
                                        canvas.width = viewport.width;
-
-                                       canvas.dataset.baseWidth = viewport.width;
-                                       canvas.dataset.baseHeight = viewport.height;
                                        canvas.style.width = viewport.width + 'px';
                                        canvas.style.height = viewport.height + 'px';
 
@@ -305,7 +286,7 @@ const mimeType = response.headers.get('Content-Type') || blob.type || 'applicati
                                    }
                                } catch (err) {
                                    document.getElementById('loading').style.display = 'none';
-                                   document.getElementById('pdf-container').innerHTML = '<div style="color:#ff6b6b; padding:20px; text-align:center;">❌ Errore rendering PDF: ' + err.message + '</div>';
+                                   document.getElementById('pdf-container'].innerHTML = '<div class="error-box">❌ Errore rendering PDF: ' + err.message + '</div>';
                                }
                             }
                             renderPDF();
