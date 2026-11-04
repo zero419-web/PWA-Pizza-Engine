@@ -1,11 +1,7 @@
 /**
- * 🛡️ PanzerSDK - Beta v1.1
- *
- * Client Bridge v1.4.6 ( Bunker Mode 🛡️📦 )
- *
+ * 🛡️ PanzerSDK - v2.0.1
+ * 
  * 👤 Autore: Valentino Aglianó
- * Perito Informatico / Idoneo ASMEL 2025
- *
  * 📜 License: EUPL-1.2
  */
 export class PanzerSDK {
@@ -13,7 +9,7 @@ export class PanzerSDK {
         this.swPath = options.swPath || './ServiceWorker.js';
         this.scope = options.scope || '/';
         this.coreAssets = options.coreAssets || [
-			'./',
+            './',
             './index.html',
             './Res-PA-manifest.json',
             './PWA.webmanifest',
@@ -22,13 +18,10 @@ export class PanzerSDK {
             './js/app.js'
         ];
 
-        // ⏱️ Timeout del Watchdog configurabile e modificabile nel tempo tramite le opzioni dell'SDK
-        this.checkTimeout = options.checkTimeout || 7000;
-		if(this.checkTimeout < 7000){
-			this.checkTimeout = 7000;
-		}
+        // ⏱️ Timeout del Watchdog configurabile (minimo 7000ms)
+        this.checkTimeout = Math.max(options.checkTimeout || 7000, 7000);
 
-        // 🛑 Configurazione dinamica personalizzabile per l'overlay Anti-Incognito (Contenuto, Colori e Azioni)
+        // 🛑 Configurazione dinamica personalizzabile per l'overlay Anti-Incognito
         this.incognitoBlocker = {
             Icons: options.incognitoBlocker?.Icons || options.incognitoBlocker?.CardIcon || '🕵️⚠️',
             ID: options.incognitoBlocker?.blockerID || 'panzer-incognito-blocker',
@@ -45,7 +38,7 @@ export class PanzerSDK {
             buttonTextCol: options.incognitoBlocker?.buttonTextCol || "#ffffff"
         };
 
-        // ⚙️ Hook di callback UI e Telemetria
+        // ⚙️ Hook di callback UI e Telemetria completi
         this.onProgress = options.onProgress || (() => {});
         this.onComplete = options.onComplete || (() => {});
         this.onError = options.onError || (() => {});
@@ -55,34 +48,34 @@ export class PanzerSDK {
         this.onLogMessage = options.onLogMessage || (() => {});
 
         this._registerSW();
-
-        // 🕵️‍♂️ Avvio automatico del watchdog ambientale e anti-incognito all'istanza dell'SDK usando il timeout configurabile
+        this._setupMessageBridge();
         this.initPwaEnvironmentCheck(this.checkTimeout);
     }
 
-    // 🔍 Cicla le cache del browser per trovare
-	// una versione attiva di PWA_PIZZA_ENGINE
+    /**
+     * 🔍 Cicla le cache del browser per trovare una versione attiva di PWA_PIZZA_ENGINE[span_5](start_span)[span_5](end_span)
+     */
     async _detectActiveCacheVersion(namecache, fallbackVersion) {
-        if (!('caches' in window)) return ( namecache + fallbackVersion );
+        if (!('caches' in window)) return (namecache + fallbackVersion);
         try {
             const keys = await caches.keys();
-            // Cicla e cerca la stiva che corrisponde al motore PWA
             const targetKey = keys.find(k => k.startsWith('PWA_PIZZA_ENGINE_v'));
             if (targetKey) {
-                // Estrae la versione dal nome ...
                 const match = targetKey.match(/v(.+)$/);
                 if (match && match[1]) {
                     this.onLogMessage('info', `🔍 SDK: Trovata stiva attiva nel browser -> [ ${targetKey} ]`);
-                    return ( namecache + match[1] );
+                    return (namecache + match[1]);
                 }
             }
         } catch (e) {
             this.onLogMessage('warn', `⚠️ SDK: Errore durante la scansione delle cache: ${e.message}`);
         }
-        return ( namecache + fallbackVersion );
-	}
+        return (namecache + fallbackVersion);
+    }
 
-    // 📡 Registrazione standard SW senza alterarne il codice
+    /**
+     * 📡 Registrazione standard del Service Worker[span_6](start_span)[span_6](end_span)
+     */
     async _registerSW() {
         if ('serviceWorker' in navigator) {
             try {
@@ -97,8 +90,107 @@ export class PanzerSDK {
     }
 
     /**
-     * 🕵️‍♂️ WATCHDOG AMBIENTALE: Rilevamento Incognito e Restrizioni Storage su Chromium
-     * @param {number} timeoutMs Tempo limite di attesa per gli eventi di installazione (configurabile)
+     * 🔀 BRIDGE IPC (Inter-Process Communication):
+     * Ascolta i messaggi e la telemetria trasmessi dal ServiceWorker.js[span_7](start_span)[span_7](end_span)[span_8](start_span)[span_8](end_span).
+     */
+    _setupMessageBridge() {
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data || typeof data !== 'object') return;
+
+            switch (data.type) {
+                case 'SYNC_START':
+                    this.onSyncStart({ total: data.total || 0 });
+                    this.onLogMessage('sync', '🚀 SW: Sincronizzazione e cifratura Bunker avviate...');
+                    break;
+
+                case 'SYNC_PROGRESS':
+                    if (data.details) {
+                        this.onProgress(data.details);
+                    }
+                    break;
+
+                case 'SYNC_END':
+                    this.onLogMessage('success', '✅ Sincronizzazione e cifratura Bunker completate dal Service Worker!');
+                    this.onComplete(data.details || {});
+                    break;
+
+                case 'SYNC_RETRY':
+                    this.onSyncRetry(data);
+                    this.onLogMessage('warn', '⚠️ SW: Rete assente o instabile. In attesa di riconnessione...');
+                    break;
+
+                case 'CORE_UPDATE_RELOAD':
+                    this.onLogMessage('warn', '🔄 SW: Aggiornamento critico Core rilevato. Ricaricamento in corso...');
+                    if (data.msg === 'DESTROY_ALL_CACHE') {
+                        this.onError(new Error("Vault compromesso - Tabula rasa eseguita"));
+                    } else {
+                        window.location.reload();
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        });
+    }
+
+    /**
+     * 🚀 INIZIALIZZAZIONE & SYNC (VERO WRAPPER IPC):
+     * Invia il comando INIT_DB al ServiceWorker.js, delegando il DNA Check e la cifratura AES-GCM[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span).
+     */
+    async initDB(version, manifestData, overrideCoreAssets = null) {
+        this.onLogMessage('sync', `🚀 SDK: Invio comando INIT_DB al Service Worker (Versione: ${version})...`);
+
+        if (!('serviceWorker' in navigator)) {
+            this.onLogMessage('error', '❌ Cache/Service Worker API non supportata nel browser.');
+            this.onError(new Error('ServiceWorker unsupported'));
+            return;
+        }
+
+        try {
+            await navigator.serviceWorker.ready;
+            
+            if (!navigator.serviceWorker.controller) {
+                this.onLogMessage('warn', '⚠️ Nessun controller attivo trovato. Ricarico la pagina per stabilire il bridge...');
+                window.location.reload();
+                return;
+            }
+
+            // Invio del pacchetto di configurazione al Service Worker via postMessage[span_11](start_span)[span_11](end_span)[span_12](start_span)[span_12](end_span)
+            navigator.serviceWorker.controller.postMessage({
+                type: 'INIT_DB',
+                version: version,
+                data: manifestData,
+                overrideCoreAssets: overrideCoreAssets || this.coreAssets
+            });
+
+        } catch (err) {
+            this.onLogMessage('error', `❌ Errore di comunicazione IPC con il Service Worker: ${err.message}`);
+            this.onError(err);
+        }
+    }
+
+    /**
+     * 🚨 Purga diretta di tutte le istanze Cache Storage dal Client[span_13](start_span)[span_13](end_span)
+     */
+    async purgeVault() {
+        if (!('caches' in window)) return;
+        try {
+            this.onLogMessage('warn', '🚨 Avvio purga diretta di tutti i bunker Cache Storage...');
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => caches.delete(key)));
+            this.onLogMessage('success', '🚨 Purga totale della stiva completata con successo.');
+            this.onPurgeComplete();
+        } catch (err) {
+            this.onLogMessage('error', `❌ Errore durante la purga: ${err.message}`);
+        }
+    }
+
+    /**
+     * 🕵️‍♂️ WATCHDOG AMBIENTALE: Rilevamento Incognito e Restrizioni Storage su Chromium[span_14](start_span)[span_14](end_span)
      */
     async initPwaEnvironmentCheck(timeoutMs) {
         if (!('serviceWorker' in navigator)) return;
@@ -117,39 +209,6 @@ export class PanzerSDK {
             item.brand.toLowerCase().includes('chrome') ||
             item.brand.toLowerCase().includes('chromium')
         ) || false;
-
-let isSuspiciousQuota = false;
-if (isChromium) {
-	isSuspiciousQuota = true;
-}
-
-const checkPwaInstallabilityCriteria = async () => {
-    const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (!isSecure) return false;
-    if (!('serviceWorker' in navigator)) return false;
-    try {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        if (registrations.length === 0) return false;
-    } catch (e) {
-        return false;
-    }
-    const manifestLink = document.querySelector('link[rel="manifest"]');
-    if (!manifestLink) return false;
-    try {
-        const response = await fetch(manifestLink.href);
-        if (!response.ok) return false;
-        const manifest = await response.json();
-
-        if (!manifest.name && !manifest.short_name) return false;
-        if (!manifest.start_url) return false;
-        if (!manifest.icons || manifest.icons.length === 0) return false;
-    } catch (e) {
-        return false;
-    }
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (isStandalone) return false;
-    return true;
-};
 
         const pwaEventRace = new Promise((resolve) => {
             const timer = setTimeout(() => {
@@ -182,37 +241,29 @@ const checkPwaInstallabilityCriteria = async () => {
         let installEventTriggered = await pwaEventRace;
         const PWAisInstall = localStorage.getItem('pwa_app_Isinstall');
 
-        if( checkPwaInstallabilityCriteria === false ){
-            SetupdatePwaStatus('sw_not_work');
-			this.onLogMessage('warn', "PWA: Rilevata modalità Incognito / Sandbox restrittiva su Chromium.");
-            return;
-        }
-
         if (!installEventTriggered) {
             if (isChromium && !PWAisInstall) {
-                if( !window.matchMedia('(display-mode: standalone)').matches ){
+                if (!window.matchMedia('(display-mode: standalone)').matches) {
                     this.onLogMessage('warn', "PWA: Rilevata modalità Incognito / Sandbox restrittiva su Chromium.");
                     setTimeout(() => {
                         this._showIncognitoBlocker();
                     }, 3000);
                 }
-            }else{
-				this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
-			}
-        }else{
-			this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
-		}
+            } else {
+                this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
+            }
+        } else {
+            this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
+        }
     }
 
     /**
-      * 🛑 INTERFACCIA VISIVA DI BLOCCO
-      * ( Anti-Incognito Overlay personalizzabile e responsive )
-     **/
+      * 🛑 INTERFACCIA VISIVA DI BLOCCO ANTI-INCOGNITO[span_15](start_span)[span_15](end_span)
+     */
     _showIncognitoBlocker() {
         const cfg = this.incognitoBlocker;
         if (document.getElementById(cfg.ID)) return;
 
-        // 🔒 Blocca lo scroll della pagina su tutti i livelli
         document.body.style.overflow = 'hidden';
         if (document.documentElement) {
             document.documentElement.style.overflow = 'hidden';
@@ -229,11 +280,6 @@ const checkPwaInstallabilityCriteria = async () => {
             bottom: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            max-width: none !important;
-            max-height: none !important;
-            transform: none !important;
-            filter: none !important;
-            perspective: none !important;
             background: ${cfg.overlayBg} !important;
             z-index: 2147483647 !important;
             display: flex !important;
@@ -241,7 +287,6 @@ const checkPwaInstallabilityCriteria = async () => {
             justify-content: center !important;
             padding: 16px !important;
             box-sizing: border-box !important;
-            margin: 0 !important;
         `;
 
         const card = document.createElement('div');
@@ -254,7 +299,6 @@ const checkPwaInstallabilityCriteria = async () => {
             padding: 24px !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
             box-sizing: border-box !important;
-            margin: auto !important;
             text-align: center !important;
         `;
 
@@ -294,15 +338,12 @@ const checkPwaInstallabilityCriteria = async () => {
 
         card.appendChild(button);
         blocker.appendChild(card);
-
-        // 🚀 Inserimento diretto sul nodo radice (html) per aggirare qualsiasi blocco di layout dei container interni
-        const targetRoot = document.documentElement || document.body;
-        targetRoot.appendChild(blocker);
+        (document.documentElement || document.body).appendChild(blocker);
     }
 
     /**
-      * 🧬 UTILITY PROFILO: Recupero dettagliato dei Client Hints del browser
-     **/
+      * 🧬 UTILITY PROFILO: Recupero dettagliato dei Client Hints del browser[span_16](start_span)[span_16](end_span)
+     */
     async _getFullBrowserProfile() {
         let profile = { userAgent: navigator.userAgent, isHighEntropyDataAvailable: false, details: {} };
         if (navigator.userAgentData) {
@@ -321,124 +362,12 @@ const checkPwaInstallabilityCriteria = async () => {
     }
 
     /**
-     * 📱 UTILITY OS: Riconoscimento rapido della piattaforma mobile o desktop
+     * 📱 UTILITY OS: Riconoscimento rapido della piattaforma mobile o desktop[span_17](start_span)[span_17](end_span)
      */
     _getMobileOS() {
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'iOS';
         if (/android/i.test(ua)) return 'Android';
         return 'Desktop';
-    }
-
-    /**
-     * 🚀 Inizializza il Download Resiliente e la Cifratura diretta lato Client
-     * @param {string} version Versione del manifesto
-     * @param {Object} manifestData Oggetto manifesto caricato
-     * @param {Array} [overrideCoreAssets] Lista parametrica opzionale dei Core Assets
-     */
-    async initDB(version, manifestData, overrideCoreAssets = null) {
-		const dynamicCacheName = await this._detectActiveCacheVersion('PWA_PIZZA_ENGINE_v', '7.9');
-        const customCore = overrideCoreAssets || this.coreAssets || [];
-        const manifestAssets = (manifestData && manifestData.assets) ? manifestData.assets : [];
-
-        // Unione e de-duplicazione degli URL (Core Assets + Manifesto Assets)
-        const combinedUrls = Array.from(new Set([
-            ...customCore,
-            ...manifestAssets.map(a => typeof a === 'string' ? a : a.url)
-        ]));
-
-        const total = combinedUrls.length;
-        this.onSyncStart({ total });
-        this.onLogMessage('sync', `🚀 Avvio sincronizzazione diretta client: ${total} risorse totali (Core + Manifesto)...`);
-
-        if (!('caches' in window)) {
-            this.onLogMessage('error', '❌ Cache API non supportata nel browser.');
-            this.onError(new Error('Cache API unsupported'));
-            return;
-        }
-
-        try {
-            const cache = await caches.open(dynamicCacheName);
-
-            let completed = 0;
-            let failed = 0;
-            let retries = 0;
-
-            for (const rawUrl of combinedUrls) {
-                const resolveUrl = (rawUrl, baseUrl = window.location.href) => {
-				  try {
-					  return new URL(rawUrl, baseUrl).href;
-					}catch (e) {
-						//console.error("URL non valido:", rawUrl);
-						this.onLogMessage('error', `❌ URL non valido: ${rawUrl}`);
-						return null;
-					}
-				};
-
-				const normalizedUrl = resolveUrl(rawUrl);
-                let success = false;
-
-                // Tolleranza ai guasti con tentativi di Retry (max 3)
-                for (let attempt = 1; attempt <= 3; attempt++) {
-                    try {
-                        const response = await fetch(normalizedUrl, { cache: 'reload' });
-                        if (response.ok) {
-                            await cache.put(normalizedUrl, response);
-                            success = true;
-                            break;
-                        } else {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                    } catch (err) {
-                        retries++;
-                        this.onSyncRetry({
-                            retries,
-                            request_failed: failed,
-                            message: `Retry ${attempt}/3 per: ${rawUrl}`
-                        });
-                        this.onLogMessage('warn', `⚠️ Tentativo ${attempt}/3 fallito per ${rawUrl}: ${err.message}`);
-                    }
-                }
-
-                if (success) {
-                    completed++;
-                } else {
-                    failed++;
-                }
-
-                const percent = Math.round(((completed + failed) / total) * 100);
-                this.onProgress({
-                    current: completed + failed,
-                    completed,
-                    total,
-                    percent,
-                    request_failed: failed,
-                    retries
-                });
-            }
-
-            this.onLogMessage('success', '✅ Sincronizzazione e cifratura completate con successo dal client!');
-            this.onComplete({ current: completed, total, request_failed: failed, retries });
-
-        } catch (err) {
-            this.onLogMessage('error', `❌ Errore durante la sincronizzazione della stiva: ${err.message}`);
-            this.onError(err);
-        }
-    }
-
-    /**
-     * 🚨 Purga diretta di tutte le istanze Cache Storage dal Client
-     */
-    async purgeVault() {
-        if (!('caches' in window)) return;
-        try {
-            this.onLogMessage('warn', '🚨 Avvio purga diretta di tutti i bunker Cache Storage...');
-            const keys = await caches.keys();
-            await Promise.all(keys.map(key => caches.delete(key)));
-            this.onLogMessage('success', '🚨 Purga totale della stiva completata con successo.');
-            this.onPurgeComplete();
-        } catch (err) {
-            this.onLogMessage('error', `❌ Errore durante la purga: ${err.message}`);
-        }
     }
 }
