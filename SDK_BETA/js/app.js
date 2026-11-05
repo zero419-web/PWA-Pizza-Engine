@@ -1,7 +1,7 @@
 /**
  * ⚙️⚡ App Controller 
  * Dashboard PA & Gestione UI
- * v1.9.5
+ * v1.9.6
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -143,7 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 🔒 Visore Sandbox.
-        // 🔒 Visore Sandbox Protetto (Anti-Download & Rendering Canvas In-Memory)
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
@@ -227,14 +226,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <script src="${PDFlib}"><\/script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
-                        <div id="loading" class="loading"><div>⏳📄 Decrittazione e rendering PDF...</div></div>
+                        <div id="loading" class="loading"><div>⏳📄 PDF Loading.../div></div>
                         <div id="pdf-wrapper"></div>
                         <script>
                             async function renderSecurePDF() {
                                 try {
                                     if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF non disponibile.");
                                     
-                                    // Configurazione corretta del worker assoluto
                                     pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDFworker}';
 
                                     const loadingTask = pdfjsLib.getDocument({
@@ -294,20 +292,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxModal.classList.add('active');
 
             logToTerminal('success', `🛡️ Risorsa decifrata e caricata in sicurezza nel visore.`);
-        } catch (err) {
-            logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
-        }
-    };
-            }
-
-            setTimeout(() => {
-                sandboxFrame.srcdoc = renderedContentHtml;
-            }, 50);
-
-            sandboxTitle.textContent = `🔎🔒 Visore Protetto \n ${fileName || url}`;
-            sandboxModal.classList.add('active');
-
-            logToTerminal('success', `🛡📦️ Risorsa decifrata e caricata in sicurezza nel visore.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
