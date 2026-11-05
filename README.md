@@ -24,7 +24,7 @@
 >    - **📂 Dir Resouces del comune:** `RES_DATAS`.
 > 
 > - ⚙️📜 **Framework Core Panzer v7.x+**
->    - **📄 File:** <br> `ServiceWorker.js ⚙️🪖` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
+>    - **📄 File:** <br> `ServiceWorker.js ⚙️🪖`, versione modificata per adattarla al `SDK` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
 >
 <h2 align="center">
  <a href="https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/">
