@@ -1225,9 +1225,6 @@ Object.freeze(getNetworkProfile);
  * @returns {Promise<boolean>} Esito formale dello stato di connettività reale.
  */
 const checkRealOnline = async (mode = 'fetch') => {
-    // 1. Controllo preliminare nativo dell'hardware
-    if (navigator.onLine === false) return false;
-    
     const netProfile = getNetworkProfile(self.navigator);
     const profiles = CONFIG.networkResilient.profiles;
     const profileName = Object.keys(profiles).find(key =>
@@ -1240,39 +1237,24 @@ const checkRealOnline = async (mode = 'fetch') => {
         if (navigator.connection && navigator.connection.saveData) return false;
         timeoutMs = Math.min(netProfile.timeout * 1000, 15000);
     } else {
-        timeoutMs = (profileName === 'Fast' || profileName === 'Ultrafast') ? 2500 : 5500;
+        timeoutMs = (profileName === 'Fast' || profileName === 'ultrafast') ? 2500 : 5500;
     }
-
     try {
         const controller = new AbortController();
         const tId = setTimeout(() => controller.abort(), timeoutMs);
-        
-        const testUrl = new URL(BASE_PATH + '/?_t=' + Date.now(), self.location.href).href;
-        
-        const networkResponse = await fetch(testUrl, {
+        const networkResponse = await fetch(BASE_PATH + '?t=' + Date.now(), {
             method: 'HEAD',
             cache: 'no-store',
-            signal: syncAbortController ?
-                    AbortSignal.any([syncAbortController?.signal, controller?.signal]) :
-                    controller.signal
+            mode: 'no-cors',
+			signal: syncAbortController ?
+					AbortSignal.any([syncAbortController?.signal, controller?.signal]) :
+					controller?.signal
         });
-        
         clearTimeout(tId);
-        
-        // 3. Verifica reale: se la risposta è ok o se è una risposta opaca valida, siamo online
-        return networkResponse.ok || networkResponse.type === 'opaque' || networkResponse.status === 304;
-        
+        return true;
     } catch (e) {
-        // Se va in timeout (AbortError), la rete è effettivamente lenta/assente
-        if (e.name === 'AbortError') {
-            console.log(`🌐⏱️ SW: Timeout di connettività in ${mode} (Profilo: ${profileName})`);
-        } else {
-            console.log(`🌐❌ SW: Offline reale in ${mode} -> ${e.message}`);
-        }
-        
-        // 4. Fallback estremo: se il browser dice che siamo online ma il fetch ha fallito percors (CORS/GitHub Pages), 
-        // diamo fiducia a navigator.onLine per evitare falsi blocchi della stiva.
-        return navigator.onLine;
+        console.log(`🌐❌ SW: Offline in ${mode} (Profilo: ${profileName})`);
+        return false;
     }
 };
 Object.freeze(checkRealOnline);
