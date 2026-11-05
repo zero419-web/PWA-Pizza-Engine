@@ -83,20 +83,22 @@
        - 🔀🎭 **Regolatore di Flusso Polimorfo**
        - 🖼️🩹 **Placeholder, non Ritorna per una risorsa Immagine su una richiesta HEAD, ma restituisce 404 erorr**
        - 🧠 **Universal-Scan, Fix bug's**
+    
     - ➕ **🧭 `Safari`, Supporto in sperimentazione ...**
        - 🧭🚫🐺 **Watchdog `Anti-Incognito` ❌🕵️ non `Supportato`**
 
 - **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 BUG Fix`
     - 🪳 **Bug Fixed : `Evento Fetch` Del SW ( ⚙️🪖 ),**
        - ➕ **`Content-Length`, risposta del `SW` alle Risorse da servire al Browser.**
+
     - 🐺️🐤 **WATCHDOG DI SICUREZZA :**
-       - ➕ **Controllo, 3 tentativi prima di dichiarare se la 🔑 di cifratura e compromessa veramente.**
+       - ➕ **Controllo, 3 tentativi prima di dichiarare se la 🔑🗄️ di cifratura e compromessa veramente.**
  
 - **🪖 NOVITÀ v7.9.5+ :** <br> `🐛 BUG Fix`
    - 🪳 **Molti Bug Fixed !**
-   - 🚀 **SWR, Strategia migliorata su reti degradate.**
-   - 🔀🎭 **Fix: `Regolatore di Flusso Polimorfo`, ora si adatta alle reti degradate e decide la strategia migliore.**
-   - 🎯 **Riorganizzazione Del `Evento Fetch` Del SW ( ⚙️🪖 ), Per Il `NetworkFirst/SaveBackground, SWR, CacheFirst ( Off-line )`**
+      - 🚀 **SWR, Strategia migliorata su reti degradate.**
+      - 🔀🎭 **Fix: `Regolatore di Flusso Polimorfo`, ora si adatta alle reti degradate e decide la strategia migliore.**
+      - 🎯 **Riorganizzazione Del `Evento Fetch` Del SW ( ⚙️🪖 ), Per Il `NetworkFirst/SaveBackground, SWR, CacheFirst ( Off-line )`**
  
 - **🪖 NOVITÀ v7.9+ :** <br> `🪨 Hardening contro il Red-Team 🔴`
    - 🔍 **1. Validazione Forense Blob (`isValidBlob`)**
