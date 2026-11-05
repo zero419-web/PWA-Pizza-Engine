@@ -6,14 +6,20 @@
 > [!Important]
 >   - 🔃 **Last Update :** `v2.1`
 > 
-> 🌀🧪 **Questo SDK + DashBoard e un PoC**
+> 🌀🧪 **SDK + DashBoard :**
+> **E un PoC, `Proof of Concept`**
 > 
-> 📦 **SDK_BETA : NOVITÀ, BUG Fix & Altro...**
+> ⚙️📦 **SDK_BETA : NOVITÀ, BUG Fix & Altro...**
 > - **📣 NOVITÀ v2.1 :** <br> `🐛 BUG Fix`
->    - **🪳 BUG Fix: ServiceWorker.js**
->    - **🪳 BUG Fix, ( 🔒 Sandbox CSP )**
->    - **🪳 BUG Fix, 🛡️🗄️ Sync Stiva Bunker.**
+>    - **🪳 BUG Fix :**
+>       - **📜 ServiceWorker.js**
+>       - **🔒👁️‍🗨️ Sandbox Visore ❌💾**
+>       - **🛡️🗄️ Sync Stiva Bunker.**
+> 
+>    - **🔄📊 Aggiornamento GUI DashBoard**
+>       - **File :** `app.js`
 >
+> ***
 > - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo `Xsec`, minimo o Massimo personalizzato, Time-out per dichiarare lo stato **🕵️ Incognito del Browser!**
 > 
 > - **📊 Dashboard :**  
