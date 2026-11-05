@@ -131,11 +131,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-        // 🔒 Visore Sandbox.
+    // 🔒 Visore Sandbox Nativo
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
-            logToTerminal('vault', `🫙🔒 Apertura visore sicuro per: ${fileName || url}`);
+            logToTerminal('vault', `🫙🔒 Apertura visore nativo per: ${fileName || url}`);
             
             let response = null;
             if ('caches' in window) {
@@ -165,125 +165,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (activeObjectUrl) {
                 URL.revokeObjectURL(activeObjectUrl);
             }
-            activeObjectUrl = URL.createObjectURL(blob);
 
-            let renderedContentHtml = '';
+            // 🛡️ Creazione Blob con MIME type esplicito e forzato
+            const typedBlob = new Blob([blob], { type: mimeType });
+            activeObjectUrl = URL.createObjectURL(typedBlob);
 
-            // 🖼️ 1. GESTIONE IMMAGINI
-            if (mimeType.startsWith('image/')) {
-                renderedContentHtml = `
-                    <!DOCTYPE html>
-                    <html lang="it">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <style>
-                            * { margin: 0; padding: 0; box-sizing: border-box; }
-                            html, body {
-                                width: 100%;
-                                height: 100%;
-                                background-color: #090d16;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                overflow: auto;
-                                -webkit-overflow-scrolling: touch;
-                            }
-                            .container {
-                                width: 100%;
-                                height: 100%;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                padding: 10px;
-                            }
-                            img {
-                                max-width: 100%;
-                                max-height: 100%;
-                                object-fit: contain;
-                                border-radius: 4px;
-                                box-shadow: 0 4px 25px rgba(0,0,0,0.8);
-                            }
-                        </style>
-                    </head>
-                    <body oncontextmenu="return false;">
-                        <div class="container">
-                            <img src="${activeObjectUrl}" alt="Immagine Protetta" />
-                        </div>
-                    </body>
-                    </html>
-                `;
-            } else if (mimeType.includes('pdf')) {
-                // 📄 2. GESTIONE PDF
-                renderedContentHtml = `
-                    <!DOCTYPE html>
-                    <html lang="it">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <style>
-                            * { margin: 0; padding: 0; box-sizing: border-box; }
-                            html, body {
-                                width: 100%;
-                                height: 100%;
-                                background-color: #0f172a;
-                                overflow: hidden;
-                            }
-                            embed, object {
-                                width: 100%;
-                                height: 100%;
-                                border: none;
-                            }
-                            .fallback {
-                                color: #f8fafc;
-                                font-family: sans-serif;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                height: 100%;
-                                text-align: center;
-                                padding: 20px;
-                            }
-                        </style>
-                    </head>
-                    <body oncontextmenu="return false;">
-                        <object data="${activeObjectUrl}" type="application/pdf">
-                            <embed src="${activeObjectUrl}" type="application/pdf" />
-                            <div class="fallback">
-                                <p>Il tuo browser non supporta la visualizzazione diretta dei PDF. <br><a href="${activeObjectUrl}" target="_blank" style="color: #60a5fa;">Scarica il documento</a></p>
-                            </div>
-                        </object>
-                    </body>
-                    </html>
-                `;
-            } else {
-                // 📄 3. FALLBACK GENERICO
-                renderedContentHtml = `
-                    <!DOCTYPE html>
-                    <html lang="it">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <style>
-                            body { background: #090d16; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin:0; }
-                        </style>
-                    </head>
-                    <body>
-                        <p>Formato risorsa non visualizzabile direttamente.</p>
-                    </body>
-                    </html>
-                `;
-            }
-
+            // Pulizia e rimozione di qualsiasi restrizione sandbox.
             sandboxFrame.removeAttribute('sandbox');
-            sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms');
             sandboxFrame.src = 'about:blank';
-            sandboxFrame.srcdoc = renderedContentHtml;
 
-            sandboxTitle.textContent = `🔎🔒 Visore Sicuro \n ${fileName || url}`;
+            // Assegnazione diretta del Blob URL all'iframe.
+            setTimeout(() => {
+                sandboxFrame.src = activeObjectUrl;
+            }, 50);
+
+            sandboxTitle.textContent = `🔎🔒 Visore Nativo \n ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ Risorsa aperta correttamente nel visore.`);
+            logToTerminal('success', `🛡️ Risorsa caricata correttamente nel visore nativo.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
@@ -291,18 +190,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const closeSandbox = () => {
         sandboxModal.classList.remove('active');
-        sandboxFrame.srcdoc = '';
         sandboxFrame.src = 'about:blank';
 
         if (activeObjectUrl) {
             URL.revokeObjectURL(activeObjectUrl);
             activeObjectUrl = null;
         }
-        if (activeWorkerObjectUrl) {
-            URL.revokeObjectURL(activeWorkerObjectUrl);
-            activeWorkerObjectUrl = null;
-        }
-        logToTerminal('info', '🔒 Visore Sandbox CSP chiuso.');
+        logToTerminal('info', '🔒 Visore chiuso.');
     };
 
     btnCloseSandbox.addEventListener('click', closeSandbox);
