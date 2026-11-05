@@ -99,10 +99,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         return mimeMap[ext] || headerType || 'application/octet-stream';
     };
 
-    // 🔍 Zoom dinamico per PDF (Canvas)
+    // 🔍 Zoom dinamico universale (per Immagini e Canvas/PDF)
     const applyZoom = () => {
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
+            
+            // 1. Gestione Zoom per Immagini
+            const targetImg = iframeDoc.getElementById('target-img');
+            if (targetImg) {
+                targetImg.style.transform = `scale(${currentZoom})`;
+                targetImg.style.transformOrigin = 'center center';
+                logToTerminal('vault', `🔍 Zoom immagine impostato al ${Math.round(currentZoom * 100)}%`);
+                return;
+            }
+
+            // 2. Gestione Zoom per Canvas (PDF o grafici)
             const canvases = iframeDoc.querySelectorAll('canvas');
             if (canvases.length > 0) {
                 canvases.forEach(canvas => {
@@ -113,32 +124,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         canvas.style.height = (baseH * currentZoom) + 'px';
                     }
                 });
-                logToTerminal('vault', `🔍 Zoom visore PDF impostato al ${Math.round(currentZoom * 100)}%`);
+                logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}%`);
             }
         } catch (e) {
-            console.warn("Zoom custom limitato o non applicabile a questo tipo di risorsa.", e);
+            console.warn("Zoom custom limitato o non applicabile a questa risorsa.", e);
         }
     };
 
-    // Gestori eventi Zoom
-    btnZoomIn.addEventListener('click', () => {
-        currentZoom = Math.min(currentZoom + 0.25, 3.0);
-        applyZoom();
-    });
-
-    btnZoomOut.addEventListener('click', () => {
-        currentZoom = Math.max(currentZoom - 0.25, 0.5);
-        applyZoom();
-    });
-
-    // 🔒 Visore Sandbox Nativo.
+    // 🔒 Visore Sandbox Nativo ottimizzato per Android e Desktop
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
             logToTerminal('vault', `🫙🔒 Apertura visore nativo per: ${fileName || url}`);
             
             const response = await fetch(url);
-            
             if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
             const blob = await response.blob();
@@ -149,16 +148,65 @@ document.addEventListener('DOMContentLoaded', async () => {
                 URL.revokeObjectURL(activeObjectUrl);
             }
 
-            // 🛡️ Creazione Blob con MIME type.
             const typedBlob = new Blob([blob], { type: mimeType });
             activeObjectUrl = URL.createObjectURL(typedBlob);
 
-            // Pulizia e assegnazione all'iframe nativo del browser
             sandboxFrame.removeAttribute('sandbox');
             sandboxFrame.src = 'about:blank';
 
+            let renderedContentHtml = '';
+
+            if (mimeType.startsWith('image/')) {
+                // 🖼️ Wrapper HTML_IMG
+                renderedContentHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            * { margin:0; padding:0; box-sizing:border-box; }
+                            body, html { width:100%; height:100%; background:#000; overflow:auto; display:flex; justify-content:center; align-items:center; }
+                            img { max-width:100%; max-height:100%; object-fit:contain; transition: transform 0.1s ease; }
+                        </style>
+                    </head>
+                    <body>
+                        <img id="target-img" src="${activeObjectUrl}" alt="Risorsa Cifrata" />
+                    </body>
+                    </html>
+                `;
+            } else if (mimeType.includes('pdf')) {
+                // 📄 Wrapper HTML.
+                renderedContentHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            * { margin:0; padding:0; box-sizing:border-box; }
+                            body, html { width:100%; height:100%; background:#0f172a; overflow:hidden; }
+                            embed { width:100%; height:100%; border:none; }
+                        </style>
+                    </head>
+                    <body>
+                        <embed src="${activeObjectUrl}" type="application/pdf" width="100%" height="100%" />
+                    </body>
+                    </html>
+                `;
+            } else {
+                // 🌐 Fallback per altri formati
+                renderedContentHtml = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head><meta charset="UTF-8"></head>
+                    <body style="margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh;">
+                        <object data="${activeObjectUrl}" type="${mimeType}" width="100%" height="100%"></object>
+                    </body>
+                    </html>
+                `;
+            }
+
             setTimeout(() => {
-                sandboxFrame.src = activeObjectUrl;
+                sandboxFrame.srcdoc = renderedContentHtml;
             }, 50);
 
             sandboxTitle.textContent = `🔎🔒 Visore Nativo \n ${fileName || url}`;
