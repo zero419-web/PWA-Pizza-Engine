@@ -131,31 +131,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox Nativo
+    // 🔒 Visore Sandbox Nativo.
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
             logToTerminal('vault', `🫙🔒 Apertura visore nativo per: ${fileName || url}`);
             
-            let response = null;
-            if ('caches' in window) {
-                const cacheNames = await caches.keys();
-                for (const name of cacheNames) {
-                    const cache = await caches.open(name);
-                    response = await cache.match(url) 
-                             || await cache.match(url.replace('./', '')) 
-                             || await cache.match(window.location.origin + url.replace('.', ''));
-                
-                    if (response) {
-                        logToTerminal('success', `🟢 Trovato in cache (${name}) per: ${url}`);
-                        break;
-                    }
-                }
-            }
-            if (!response) {
-                logToTerminal('warn', `⚠️ Risorsa non in cache, recupero di rete: ${url}`);
-                response = await fetch(url);
-            }
+            const response = await fetch(url);
+            
             if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
             const blob = await response.blob();
@@ -166,15 +149,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 URL.revokeObjectURL(activeObjectUrl);
             }
 
-            // 🛡️ Creazione Blob con MIME type esplicito e forzato
+            // 🛡️ Creazione Blob con MIME type.
             const typedBlob = new Blob([blob], { type: mimeType });
             activeObjectUrl = URL.createObjectURL(typedBlob);
 
-            // Pulizia e rimozione di qualsiasi restrizione sandbox.
+            // Pulizia e assegnazione all'iframe nativo del browser
             sandboxFrame.removeAttribute('sandbox');
             sandboxFrame.src = 'about:blank';
 
-            // Assegnazione diretta del Blob URL all'iframe.
             setTimeout(() => {
                 sandboxFrame.src = activeObjectUrl;
             }, 50);
@@ -182,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxTitle.textContent = `🔎🔒 Visore Nativo \n ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ Risorsa caricata correttamente nel visore nativo.`);
+            logToTerminal('success', `🛡️ Risorsa decifrata e caricata correttamente nel visore.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
