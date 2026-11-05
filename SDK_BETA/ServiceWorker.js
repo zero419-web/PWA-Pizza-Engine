@@ -1593,27 +1593,44 @@ Object.freeze(universalScanner);
                 const fullWorkSet = new Set([...manifestList, ...Array.from(scanSet)]);
                 const coreNormalized = activeCoreAssets;
                 console.info(`⛓️ SW: Unificazione completata. Risorse totali da elaborare: ${fullWorkSet.size}`);
+                
                 uniqueList = Array.from(fullWorkSet).filter(url => {
                     const norm = normalize(url);
 
+                    // 1. Salta se è un asset core o la root
                     if (coreNormalized.includes(norm) || norm === '/' || norm === CONFIG.ROOT) {
                         return false;
                     }
-                    const ext = url.split('.').pop().toLowerCase();
+
+                    // 2. Estraiamo l'estensione in modo sicuro da 'norm'
+                    const cleanPathWithoutQuery = norm.split('?')[0].split('#')[0];
+                    const lastSegment = cleanPathWithoutQuery.split('/').pop();
+                    
+                    // Se il segmento non ha un punto, non ha un'estensione valida
+                    if (!lastSegment.includes('.')) {
+                        console.log(`📄⚠️ SW: Risorsa senza estensione esclusa: ${url}`);
+                        return false;
+                    }
+
+                    const ext = lastSegment.split('.').pop().toLowerCase();
                     const isAllowed = CONFIG.extensions.includes(ext);
+                    
                     if (!isAllowed) {
                         console.log(`📄⚠️ SW: Estensione .${ext} non autorizzata, risorsa esclusa: ${url}`);
                     }
                     return isAllowed;
                 });
+
                 console.info(`🚜 SW: Rastrellamento terminato. ${uniqueList.length} risorse pronte per la stiva (esclusi Core Assets).`);
 
                 let limit = getNetworkProfile(self.navigator).limit;
 				List_File_Download = uniqueList.length;
+                let Ccheckonline = await checkRealOnline('sync');
                 for (let i = 0; i < List_File_Download; i += limit) {
                     if (syncAbortController?.signal.aborted) return;
-                    if ( !(await checkRealOnline('sync')) ) { isSyncing = false; return; }
-					if ((!await checkRealOnline('sync')) || (limit === CONFIG.networkResilient.profiles['Verylow'].limit)) {
+                    
+                    if ( !Ccheckonline ) { isSyncing = false; return; }
+					if (!Ccheckonline || (limit === CONFIG.networkResilient.profiles['Verylow'].limit)) {
 						console.log("📡❌ SW Stop: Rete persa o Verylow, durante il 🔄 sync.");
 						if (syncAbortController) {
 							syncAbortController.abort();
