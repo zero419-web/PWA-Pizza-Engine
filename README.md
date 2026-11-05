@@ -3,13 +3,15 @@
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.7+-4f4f00)
 
 > [!Important]
->   - 🔃 **Last Update :** `v1.8`
+>   - 🔃 **Last Update :** `v2.1`
 > 
 > 🌀🧪 **Questo SDK + DashBoard e un PoC**
 > 
-> 📦 **FrameWork Panzer <br> SDK BETA v2.x GUI v1.2 :**
->    - **Update: 🪳🐛 BUG Fix ServiceWorker. ( ⚙️🪖 Panzer )**
->    - **Update: 🪳🐛 BUG Fix, ( 🔒 Sandbox CSP )**
+> 📦 **SDK_BETA : NOVITÀ, BUG Fix & Altro...**
+> - **📣 NOVITÀ v2.1 :** <br> `🐛 BUG Fix`
+>    - **🪳 BUG Fix: ServiceWorker.js**
+>    - **🪳 BUG Fix, ( 🔒 Sandbox CSP )**
+>    - **🪳 BUG Fix, 🛡️🗄️ Sync Stiva Bunker.**
 > 
 > - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* )
 >    - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo `Xsec`, minimo o Massimo personalizzato, Time-out per dichiarare lo stato **Incognito del Browser!**
