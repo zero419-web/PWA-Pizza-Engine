@@ -1,7 +1,7 @@
 /**
  * ⚙️⚡ App Controller 
  * Dashboard PA & Gestione UI
- * v1.9.7
+ * v1.9.8
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -148,7 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentZoom = 1.0;
             logToTerminal('vault', `🫙🔒 Apertura visore protetto per: ${fileName || url}`);
             
-            // 1. Scarichiamo e verifichiamo la risorsa tramite il Service Worker ( Bunker AES-GCM )
             const response = await fetch(url);
             if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
@@ -169,7 +168,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 URL.revokeObjectURL(activeObjectUrl);
             }
 
-            // 2. Object URL tipizzato
             const typedBlob = new Blob([blob], { type: mimeType });
             activeObjectUrl = URL.createObjectURL(typedBlob);
 
@@ -207,9 +205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // 📄 PDF PROTETTO SU CANVAS.
+                // 📄 PDF PROTETTO SU CANVAS
                 const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
                 const PDFlib = baseUrl + 'js/pdf_min.js';
+                const PDFworker = baseUrl + 'js/pdf_worker_min.js';
 
                 renderedContentHtml = `
                     <!DOCTYPE html>
@@ -227,19 +226,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <script src="${PDFlib}"><\/script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
-                        <div id="loading" class="loading"><div>⏳📄 PDF Loading...</div></div>
+                        <div id="loading" class="loading"><div>⏳📄  Loading...</div></div>
                         <div id="pdf-wrapper"></div>
                         <script>
                             async function renderSecurePDF() {
                                 try {
-                                    if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF_min.js non disponibile.");
+                                    if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF.js non disponibile.");
                                     
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+                                    // Colleghiamo il worker reale del progetto
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDFworker}';
 
-                                    // Utilizziamo l'Object URL sicuro generato in precedenza
                                     const loadingTask = pdfjsLib.getDocument({
                                         url: "${activeObjectUrl}",
-                                        disableWorker: true,
                                         isEvalSupported: false
                                     });
 
@@ -269,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         }).promise;
                                     }
                                 } catch (err) {
-                                    document.getElementById('loading').innerHTML = '<div style="color:#f87171; text-align:center; padding:20px;">❌📄 Errore rendering PDF: ' + err.message + '</div>';
+                                    document.getElementById('loading').innerHTML = '<div style="color:#f87171; text-align:center; padding:20px;">❌ Errore rendering PDF: ' + err.message + '</div>';
                                 }
                             }
                             window.addEventListener('DOMContentLoaded', renderSecurePDF);
@@ -296,9 +294,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxTitle.textContent = `🔎🔒 ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ Risorsa decifrata e caricata correttamente nel visore.`);
+            logToTerminal('success', `🛡📦️ Risorsa decifrata e caricata correttamente nel visore.`);
         } catch (err) {
-            logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
+            logToTerminal('error', `❌ 👁️‍🗨️Errore apertura visore: ${err.message}`);
         }
     };
 
