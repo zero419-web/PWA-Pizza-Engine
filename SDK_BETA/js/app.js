@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let activeWorkerObjectUrl = null;
     let currentZoom = 1.0;
     let totalCombinedCount = 0;
+    let isPdfActive = false;
 
     const logToTerminal = (level, text) => {
         const timeString = new Date().toLocaleTimeString('it-IT', { hour12: false });
@@ -99,43 +100,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         return mimeMap[ext] || headerType || 'application/octet-stream';
     };
 
-    // 🔍 Zoom dinamico universale (per Immagini e Canvas/PDF)
+     // 🔍 Zoom dinamico (Attivo solo per le immagini, disabilitato per i PDF)
     const applyZoom = () => {
+        if (isPdfActive) {
+            logToTerminal('vault', `⚠️ Zoom manuale disabilitato per i PDF nativi (usa le gesture del dispositivo).`);
+            return;
+        }
+
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
-            
-            // 1. Gestione Zoom per Immagini
             const targetImg = iframeDoc.getElementById('target-img');
             if (targetImg) {
                 targetImg.style.transform = `scale(${currentZoom})`;
-                targetImg.style.transformOrigin = 'center center';
                 logToTerminal('vault', `🔍 Zoom immagine impostato al ${Math.round(currentZoom * 100)}%`);
-                return;
-            }
-
-            // 2. Gestione Zoom per Canvas (PDF o grafici)
-            const canvases = iframeDoc.querySelectorAll('canvas');
-            if (canvases.length > 0) {
-                canvases.forEach(canvas => {
-                    const baseW = parseFloat(canvas.dataset.baseWidth);
-                    const baseH = parseFloat(canvas.dataset.baseHeight);
-                    if (baseW && baseH) {
-                        canvas.style.width = (baseW * currentZoom) + 'px';
-                        canvas.style.height = (baseH * currentZoom) + 'px';
-                    }
-                });
-                logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}%`);
             }
         } catch (e) {
-            console.warn("Zoom custom limitato o non applicabile a questa risorsa.", e);
+            console.warn("Zoom non applicabile.", e);
         }
     };
 
-    // 🔒 Visore Sandbox Nativo ottimizzato per Android e Desktop
+    // Gestori eventi Zoom
+    btnZoomIn.addEventListener('click', () => {
+        if (isPdfActive) return; // 🛑 Impedisce l'azione se è un PDF
+        currentZoom = Math.min(currentZoom + 0.25, 3.0);
+        applyZoom();
+    });
+
+    btnZoomOut.addEventListener('click', () => {
+        if (isPdfActive) return; // 🛑 Impedisce l'azione se è un PDF
+        currentZoom = Math.max(currentZoom - 0.25, 0.5);
+        applyZoom();
+    });
+
+    // 🔒 Visore Sandbox.
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
-            logToTerminal('vault', `🫙🔒 Apertura visore nativo per: ${fileName || url}`);
+            logToTerminal('vault', `🫙🔒 Apertura visore protetto per: ${fileName || url}`);
             
             const response = await fetch(url);
             if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
@@ -143,6 +144,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const blob = await response.blob();
             const rawMime = response.headers.get('Content-Type') || blob.type;
             const mimeType = detectMimeType(url, rawMime);
+
+            // 🎯 Rilevamento tipo risorsa
+            isPdfActive = mimeType.includes('pdf');
+
+            // 🎛️ Gestione visiva dei pulsanti Zoom (Disabilitati per PDF, Attivi per Immagini)
+            if (btnZoomIn && btnZoomOut) {
+                btnZoomIn.disabled = isPdfActive;
+                btnZoomOut.disabled = isPdfActive;
+                btnZoomIn.style.opacity = isPdfActive ? '0.3' : '1';
+                btnZoomIn.style.cursor = isPdfActive ? 'not-allowed' : 'pointer';
+                btnZoomOut.style.opacity = isPdfActive ? '0.3' : '1';
+                btnZoomOut.style.cursor = isPdfActive ? 'not-allowed' : 'pointer';
+            }
 
             if (activeObjectUrl) {
                 URL.revokeObjectURL(activeObjectUrl);
@@ -157,43 +171,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             let renderedContentHtml = '';
 
             if (mimeType.startsWith('image/')) {
-                // 🖼️ Wrapper HTML_IMG
+                // 🖼️ IMMAGINE PROTETTA.
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
                     <head>
                         <meta charset="UTF-8">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width:100%; height:100%; background:#000; overflow:auto; display:flex; justify-content:center; align-items:center; }
-                            img { max-width:100%; max-height:100%; object-fit:contain; transition: transform 0.1s ease; }
+                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+                            body, html { width:100%; height:100%; background:#000; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; justify-content:center; align-items:center; }
+                            .container { width:100%; height:100%; display:flex; justify-content:center; align-items:center; padding:20px; }
+                            img { 
+                                max-width: 100%; 
+                                height: auto; 
+                                object-fit: contain; 
+                                pointer-events: none;
+                                -webkit-user-drag: none; 
+                                transition: transform 0.15s ease;
+                            }
                         </style>
                     </head>
-                    <body>
-                        <img id="target-img" src="${activeObjectUrl}" alt="Risorsa Cifrata" />
+                    <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
+                        <div class="container">
+                            <img id="target-img" src="${activeObjectUrl}" alt="Immagine protetta" />
+                        </div>
                     </body>
                     </html>
                 `;
-            } else if (mimeType.includes('pdf')) {
-                // 📄 Wrapper HTML.
+            } else if (isPdfActive) {
+                // 📄 PDF NATIVO.
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
                     <head>
                         <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; }
                             body, html { width:100%; height:100%; background:#0f172a; overflow:hidden; }
-                            embed { width:100%; height:100%; border:none; }
+                            iframe { width:100%; height:100%; border:none; background:#fff; }
                         </style>
                     </head>
-                    <body>
-                        <embed src="${activeObjectUrl}" type="application/pdf" width="100%" height="100%" />
+                    <body oncontextmenu="return false;">
+                        <iframe src="${url}#toolbar=0&navpanes=0&scrollbar=0" width="100%" height="100%"></iframe>
                     </body>
                     </html>
                 `;
             } else {
-                // 🌐 Fallback per altri formati
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -209,10 +233,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sandboxFrame.srcdoc = renderedContentHtml;
             }, 50);
 
-            sandboxTitle.textContent = `🔎🔒 Visore Nativo \n ${fileName || url}`;
+            sandboxTitle.textContent = `🔎🔒 Visore Protetto \n ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ Risorsa decifrata e caricata correttamente nel visore.`);
+            logToTerminal('success', `🛡️ Risorsa decifrata e caricata in sicurezza.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
