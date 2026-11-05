@@ -1,15 +1,17 @@
 /**
- * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.9.3
+ * ⚙️⚡ App Controller 
+ * Dashboard PA & Gestione UI
+ * v1.9.5
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
+ *
  * * 📜 License: EUPL-1.2
  */
 import { PanzerSDK } from './SDK.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // ⚙️ Funzione Parametrica per definire i Core Assets
+    // ⚙️📄 Funzione per definire i Core Assets
     const getDefinedCoreAssets = () => [
         './',
         './index.html',
@@ -55,10 +57,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let manifestCache = null;
     let activeObjectUrl = null;
-    let activeWorkerObjectUrl = null;
     let currentZoom = 1.0;
     let totalCombinedCount = 0;
-    let isPdfActive = false;
 
     const logToTerminal = (level, text) => {
         const timeString = new Date().toLocaleTimeString('it-IT', { hour12: false });
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = `badge-status ${badgeClass}`;
     };
 
-    // 🔍 Helper per l'inferenza del MIME Type in assenza di header corretti
+    // 🔍 Helper per MIME Type in assenza di header corretti.
     const detectMimeType = (url, headerType) => {
         if (headerType && headerType !== 'application/octet-stream' && headerType !== 'text/plain') {
             return headerType;
@@ -100,34 +100,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         return mimeMap[ext] || headerType || 'application/octet-stream';
     };
 
-     // 🔍 Zoom dinamico (Attivo solo per le immagini, disabilitato per i PDF)
+    // 🔍 Zoom dinamico universale.
     const applyZoom = () => {
-        if (isPdfActive) {
-            logToTerminal('vault', `⚠️ Zoom manuale disabilitato per i PDF nativi (usa le gesture del dispositivo).`);
-            return;
-        }
-
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
+            
+            // 1. Zoom Immagini
             const targetImg = iframeDoc.getElementById('target-img');
             if (targetImg) {
                 targetImg.style.transform = `scale(${currentZoom})`;
-                logToTerminal('vault', `🔍 Zoom immagine impostato al ${Math.round(currentZoom * 100)}%`);
+                logToTerminal('vault', `🔍🖼️ Zoom immagine: ${Math.round(currentZoom * 100)}%`);
+                return;
+            }
+
+            // 2. Zoom Canvas PDF
+            const canvases = iframeDoc.querySelectorAll('canvas');
+            if (canvases.length > 0) {
+                canvases.forEach(canvas => {
+                    const baseW = parseFloat(canvas.dataset.baseWidth);
+                    const baseH = parseFloat(canvas.dataset.baseHeight);
+                    if (baseW && baseH) {
+                        canvas.style.width = (baseW * currentZoom) + 'px';
+                        canvas.style.height = (baseH * currentZoom) + 'px';
+                    }
+                });
+                logToTerminal('vault', `🔍📄 Zoom PDF: ${Math.round(currentZoom * 100)}%`);
             }
         } catch (e) {
-            console.warn("Zoom non applicabile.", e);
+            console.warn("❌🔎 Zoom non applicabile.", e);
         }
     };
 
     // Gestori eventi Zoom
     btnZoomIn.addEventListener('click', () => {
-        if (isPdfActive) return; // 🛑 Impedisce l'azione se è un PDF
         currentZoom = Math.min(currentZoom + 0.25, 3.0);
         applyZoom();
     });
 
     btnZoomOut.addEventListener('click', () => {
-        if (isPdfActive) return; // 🛑 Impedisce l'azione se è un PDF
         currentZoom = Math.max(currentZoom - 0.25, 0.5);
         applyZoom();
     });
@@ -145,17 +155,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const rawMime = response.headers.get('Content-Type') || blob.type;
             const mimeType = detectMimeType(url, rawMime);
 
-            // 🎯 Rilevamento tipo risorsa
-            isPdfActive = mimeType.includes('pdf');
-
-            // 🎛️ Gestione visiva dei pulsanti Zoom (Disabilitati per PDF, Attivi per Immagini)
             if (btnZoomIn && btnZoomOut) {
-                btnZoomIn.disabled = isPdfActive;
-                btnZoomOut.disabled = isPdfActive;
-                btnZoomIn.style.opacity = isPdfActive ? '0.3' : '1';
-                btnZoomIn.style.cursor = isPdfActive ? 'not-allowed' : 'pointer';
-                btnZoomOut.style.opacity = isPdfActive ? '0.3' : '1';
-                btnZoomOut.style.cursor = isPdfActive ? 'not-allowed' : 'pointer';
+                btnZoomIn.disabled = false;
+                btnZoomOut.disabled = false;
+                btnZoomIn.style.opacity = '1';
+                btnZoomIn.style.cursor = 'pointer';
+                btnZoomOut.style.opacity = '1';
+                btnZoomOut.style.cursor = 'pointer';
             }
 
             if (activeObjectUrl) {
@@ -198,8 +204,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </body>
                     </html>
                 `;
-            } else if (isPdfActive) {
-                // 📄 PDF NATIVO.
+            } else if (mimeType.includes('pdf')) {
+                // 📄 PDF PROTETTO.
+                const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                const PDFlib = PDFlibP + 'js/pdf_min.js';
+
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -207,13 +216,58 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width:100%; height:100%; background:#0f172a; overflow:hidden; }
-                            iframe { width:100%; height:100%; border:none; background:#fff; }
+                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+                            body, html { width:100%; height:100%; background:#0f172a; overflow:auto; -webkit-overflow-scrolling:touch; }
+                            #pdf-wrapper { display:flex; flex-direction:column; align-items:center; padding:20px 10px; min-width:100%; width:max-content; margin:0 auto; gap:15px; }
+                            canvas { max-width:100%; height:auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); background:#fff; border-radius:6px; pointer-events:none; transition: width 0.15s ease, height 0.15s ease; }
+                            .loading { color:#f8fafc; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; gap:10px; }
                         </style>
+                        <script src="${PDFlib}"></script>
                     </head>
-                    <body oncontextmenu="return false;">
-                        <iframe src="${url}#toolbar=0&navpanes=0&scrollbar=0" width="100%" height="100%"></iframe>
+                    <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
+                        <div id="loading" class="loading"><div>⏳📄 PDF Loading...</div></div>
+                        <div id="pdf-wrapper"></div>
+                        <script>
+                            async function renderSecurePDF() {
+                                try {
+                                    if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF non disponibile.");
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+
+                                    const loadingTask = pdfjsLib.getDocument({
+                                        url: "${activeObjectUrl}",
+                                        disableWorker: true,
+                                        isEvalSupported: false
+                                    });
+
+                                    const pdfDoc = await loadingTask.promise;
+                                    document.getElementById('loading').style.display = 'none';
+                                    const container = document.getElementById('pdf-wrapper');
+
+                                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                                        const page = await pdfDoc.getPage(pageNum);
+                                        const viewport = page.getViewport({ scale: 1.5 });
+                                        
+                                        const canvas = document.createElement('canvas');
+                                        const context = canvas.getContext('2d');
+                                        canvas.height = viewport.height;
+                                        canvas.width = viewport.width;
+
+                                        canvas.dataset.baseWidth = viewport.width;
+                                        canvas.dataset.baseHeight = viewport.height;
+
+                                        container.appendChild(canvas);
+
+                                        await page.render({
+                                            canvasContext: context,
+                                            viewport: viewport
+                                        }).promise;
+                                    }
+                                } catch (err) {
+                                    document.getElementById('loading').innerHTML = '<div style="color:#f87171;">❌ Errore rendering: ' + err.message + '</div>';
+                                }
+                            }
+                            window.addEventListener('DOMContentLoaded', renderSecurePDF);
+                        </script>
                     </body>
                     </html>
                 `;
@@ -236,7 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sandboxTitle.textContent = `🔎🔒 Visore Protetto \n ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ Risorsa decifrata e caricata in sicurezza.`);
+            logToTerminal('success', `🛡📦️ Risorsa decifrata e caricata in sicurezza nel visore.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
@@ -250,12 +304,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             URL.revokeObjectURL(activeObjectUrl);
             activeObjectUrl = null;
         }
-        logToTerminal('info', '🔒 Visore chiuso.');
+        logToTerminal('info', '🔎🔒 Visore chiuso.');
     };
 
     btnCloseSandbox.addEventListener('click', closeSandbox);
 
-    // 🚀 Inizializzazione SDK con Passaggio Parametrico dei Core Assets
+    // 🚀 Inizializzazione SDK
     const sdk = new PanzerSDK({
         swPath: getDefined_swPath,
         scope: getDefined_scope,
@@ -281,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         onLogMessage: (level, msg) => logToTerminal(level, msg),
         onSyncStart: () => {
-            setStatusBadge('⚡ Sincronizzazione...', 'badge-sync');
+            setStatusBadge('📡⚡ Sincronizzazione...', 'badge-sync');
             const coreCount = getDefinedCoreAssets().length;
             const totalFiles = totalCombinedCount > 0 ? totalCombinedCount : coreCount;
             metricTotal.textContent = totalFiles;
@@ -306,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
         onSyncRetry: (details) => {
-            setStatusBadge('🔄 Retry Rete...', 'badge-warn');
+            setStatusBadge('📡🔄 Retry Rete...', 'badge-warn');
             if (details) {
                 if (details.retries !== undefined) metricRetries.textContent = details.retries;
                 if (details.request_failed !== undefined) metricFailed.textContent = details.request_failed;
@@ -336,11 +390,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderStorageTable();
         },
         onError: (err) => {
-            setStatusBadge('🚨 Errore Sync', 'badge-error');
+            setStatusBadge('🚨📡 Errore Sync', 'badge-error');
         }
     });
 
-    // 📂 Rendering Tabella Ispezione Stiva
+    // 📂 Rendering Tabella Ispezione Stiva (Senza tasto "Apri" insicuro)
     const renderStorageTable = async () => {
         const showCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
 
@@ -414,7 +468,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${cacheBadge}</td>
                 <td>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <a href="${asset.url}" target="_blank" class="btn btn-sm">🔓👁️💾 Apri</a>
                         <button class="btn btn-sm btn-sandbox-trigger" data-url="${asset.url}" style="border-color: var(--accent-purple); color: var(--accent-purple);">🔒👁️ S.CSP ❌💾</button>
                     </div>
                 </td>
@@ -439,33 +492,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         manifestCache = await res.json();
-        logToTerminal('success', `✅ Manifesto caricato: ${manifestCache.ente} (v${manifestCache.version})`);
+        logToTerminal('success', `✅📜 Manifesto caricato: ${manifestCache.ente} (v${manifestCache.version})`);
         
         totalCombinedCount = new Set([...getDefinedCoreAssets(), ...manifestCache.assets.map(a => a.url)]).size;
         metricTotal.textContent = totalCombinedCount;
-        setStatusBadge('⚡ Inattivo', 'badge-init');
+        setStatusBadge('⚡🪫 Inattivo', 'badge-init');
         renderStorageTable();
 
     } catch (err) {
-        logToTerminal('error', `❌ Errore caricamento Res-PA-manifest.json: ${err.message}`);
-        setStatusBadge('🚨 Errore Manifesto', 'badge-error');
+        logToTerminal('error', `❌ Errore caricamento, 📜 Res-PA-manifest.json: ${err.message}`);
+        setStatusBadge('🚨📜 Errore Manifesto', 'badge-error');
     }
 
     // 🎮 Event Handlers
     btnSync.addEventListener('click', () => {
       setTimeout(() => {
         if (!manifestCache) {
-            logToTerminal('error', '❌ Manifesto asset non disponibile.');
+            logToTerminal('error', '❌ 🛒 Manifesto asset non disponibile !');
             return;
         }
 
-        logToTerminal('sync', '🚀 Avvio sincronizzazione completa (Core + Manifesto Assets)...');
+        logToTerminal('sync', '🚀 Avvio sincronizzazione ( ⚙️📄 Core-File + Manifesto Assets 🛒📄 ) ...');
         sdk.initDB(manifestCache.version, manifestCache, getDefinedCoreAssets());
       }, 666);
     });
 
     btnPurge.addEventListener('click', () => {
-        if (confirm('🚨 Confermi la purga totale della stiva e della cache locale?')) {
+        if (confirm('🚨🗑🗄️️ Confermi la purga totale della stiva e della cache locale?️')) {
             sdk.purgeVault();
         }
     });

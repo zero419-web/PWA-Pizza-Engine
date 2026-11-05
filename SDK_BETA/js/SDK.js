@@ -1,8 +1,11 @@
 /**
- * 🛡️ PanzerSDK - v2.0.1
+ * 🛡️ PanzerSDK - v2.0.2
  * 
- * 👤 Autore: Valentino Aglianó
- * 📜 License: EUPL-1.2
+ *
+ * * 👤 Autore: Valentino Aglianó
+ * Perito Informatico / Idoneo ASMEL 2025
+ *
+ * * 📜 License: EUPL-1.2
  */
 export class PanzerSDK {
     constructor(options = {}) {
@@ -27,7 +30,7 @@ export class PanzerSDK {
             ID: options.incognitoBlocker?.blockerID || 'panzer-incognito-blocker',
             title: options.incognitoBlocker?.title || "Modalità Incognito Rilevata",
             message: options.incognitoBlocker?.message || "Il motore di sicurezza e la stiva resiliente <strong>PANZER SDK</strong> non possono operare in ambienti di navigazione in incognito o sandbox restrittive su Chromium a causa delle limitazioni di persistenza dei dati.<br><br>Per utilizzare correttamente l'applicazione e garantire la continuità operativa, <strong>apri questa pagina in una finestra di navigazione normale</strong>.",
-            buttonText: options.incognitoBlocker?.buttonText || "Ho capito, ricarica in modalità normale",
+            buttonText: options.incognitoBlocker?.buttonText || "Ho capito, ricarica...",
             buttonAction: options.incognitoBlocker?.buttonAction || (() => window.location.reload()),
             overlayBg: options.incognitoBlocker?.overlayBg || "rgba(15, 23, 42, 0.95)",
             cardBg: options.incognitoBlocker?.cardBg || "#1e293b",
@@ -38,7 +41,7 @@ export class PanzerSDK {
             buttonTextCol: options.incognitoBlocker?.buttonTextCol || "#ffffff"
         };
 
-        // ⚙️ Hook di callback UI e Telemetria completi
+        // ⚙️ Hook di callback UI e Telemetria.
         this.onProgress = options.onProgress || (() => {});
         this.onComplete = options.onComplete || (() => {});
         this.onError = options.onError || (() => {});
@@ -53,46 +56,47 @@ export class PanzerSDK {
     }
 
     /**
-     * 🔍 Cicla le cache del browser per trovare una versione attiva di PWA_PIZZA_ENGINE[span_5](start_span)[span_5](end_span)
+     * 🔍 Cicla le cache del browser per trovare una versione attiva di PA_PANZER_ENGINE
      */
     async _detectActiveCacheVersion(namecache, fallbackVersion) {
         if (!('caches' in window)) return (namecache + fallbackVersion);
         try {
             const keys = await caches.keys();
-            const targetKey = keys.find(k => k.startsWith('PWA_PIZZA_ENGINE_v'));
+            const targetKey = keys.find(k => k.startsWith('PA_PANZER_ENGINE_v'));
             if (targetKey) {
                 const match = targetKey.match(/v(.+)$/);
                 if (match && match[1]) {
-                    this.onLogMessage('info', `🔍 SDK: Trovata stiva attiva nel browser -> [ ${targetKey} ]`);
+                    this.onLogMessage('info', `🔍🗄️ SDK: Trovata stiva attiva nel browser -> [ ${targetKey} ]`);
                     return (namecache + match[1]);
                 }
             }
         } catch (e) {
-            this.onLogMessage('warn', `⚠️ SDK: Errore durante la scansione delle cache: ${e.message}`);
+            this.onLogMessage('warn', `⚠️🔎🗄️ SDK: Errore durante la scansione delle cache: ${e.message}`);
         }
         return (namecache + fallbackVersion);
     }
 
     /**
-     * 📡 Registrazione standard del Service Worker[span_6](start_span)[span_6](end_span)
+     * 📡 Registrazione del Service Worker.
      */
     async _registerSW() {
         if ('serviceWorker' in navigator) {
             try {
                 const swUrl = new URL(this.swPath, window.location.origin + this.scope).href;
                 await navigator.serviceWorker.register(swUrl, { scope: this.scope });
-                this.onLogMessage('success', '📡 Service Worker Panzer registrato con successo.');
+                this.onLogMessage('success', '✅ SW ⚙️🪖 Core_Panzer registrato con successo.');
             } catch (err) {
                 this.onLogMessage('warn', `⚠️ Registrazione SW non completata: ${err.message}`);
             }
         } else {
-            this.onLogMessage('error', '❌ Service Worker non supportato da questo browser.');
+            this.onLogMessage('error', '❌ SW non supportato da questo browser. 🌐🚫');
         }
     }
 
     /**
-     * 🔀 BRIDGE IPC (Inter-Process Communication):
-     * Ascolta i messaggi e la telemetria trasmessi dal ServiceWorker.js[span_7](start_span)[span_7](end_span)[span_8](start_span)[span_8](end_span).
+     * 🔀 BRIDGE IPC
+     * ( Inter-Process Communication ):
+     * Ascolta i messaggi e la telemetria trasmessi dal ServiceWorker.js
      */
     _setupMessageBridge() {
         if (!('serviceWorker' in navigator)) return;
@@ -139,8 +143,10 @@ export class PanzerSDK {
     }
 
     /**
-     * 🚀 INIZIALIZZAZIONE & SYNC (VERO WRAPPER IPC):
-     * Invia il comando INIT_DB al ServiceWorker.js, delegando il DNA Check e la cifratura AES-GCM[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span).
+     * 🚀 INIZIALIZZAZIONE & SYNC:
+     * Invia il comando INIT_DB al 
+     * ServiceWorker.js, delegando il 
+     * DNA Check e la cifratura AES-GCM.
      */
     async initDB(version, manifestData, overrideCoreAssets = null) {
         this.onLogMessage('sync', `🚀 SDK: Invio comando INIT_DB al Service Worker (Versione: ${version})...`);
@@ -175,15 +181,15 @@ export class PanzerSDK {
     }
 
     /**
-     * 🚨 Purga diretta di tutte le istanze Cache Storage dal Client[span_13](start_span)[span_13](end_span)
+     * 🚨 Purga diretta di tutte le istanze Cache Storage dal Client.
      */
     async purgeVault() {
         if (!('caches' in window)) return;
         try {
-            this.onLogMessage('warn', '🚨 Avvio purga diretta di tutti i bunker Cache Storage...');
+            this.onLogMessage('warn', '🚨🗑️ Avvio purga diretta di tutti i bunker Cache Storage...');
             const keys = await caches.keys();
             await Promise.all(keys.map(key => caches.delete(key)));
-            this.onLogMessage('success', '🚨 Purga totale della stiva completata con successo.');
+            this.onLogMessage('success', '🚨✅ Purga totale della stiva completata con successo.');
             this.onPurgeComplete();
         } catch (err) {
             this.onLogMessage('error', `❌ Errore durante la purga: ${err.message}`);
@@ -191,7 +197,7 @@ export class PanzerSDK {
     }
 
     /**
-     * 🕵️‍♂️ WATCHDOG AMBIENTALE: Rilevamento Incognito e Restrizioni Storage su Chromium[span_14](start_span)[span_14](end_span)
+     * 🕵️‍♂️ WATCHDOG AMBIENTALE: Rilevamento Incognito su Chromium.
      */
     async initPwaEnvironmentCheck(timeoutMs) {
         if (!('serviceWorker' in navigator)) return;
@@ -245,21 +251,22 @@ export class PanzerSDK {
         if (!installEventTriggered) {
             if (isChromium && !PWAisInstall) {
                 if (!window.matchMedia('(display-mode: standalone)').matches) {
-                    this.onLogMessage('warn', "PWA: Rilevata modalità Incognito / Sandbox restrittiva su Chromium.");
+                    this.onLogMessage('warn', "PWA: 🕵️ Rilevata modalità Incognito / Sandbox su Chromium.");
                     setTimeout(() => {
                         this._showIncognitoBlocker();
                     }, 3000);
                 }
             } else {
-                this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
+                this.onLogMessage('info', "PWA: Utente No Incognito Mode ! ✅");
             }
         } else {
-            this.onLogMessage('info', "PWA: Utente No Incognito Mode !");
+            this.onLogMessage('info', "PWA: Utente No Incognito Mode ! ✅");
         }
     }
 
     /**
-      * 🛑 INTERFACCIA VISIVA DI BLOCCO ANTI-INCOGNITO[span_15](start_span)[span_15](end_span)
+      * 🛑 INTERFACCIA VISIVA DI 
+      * BLOCCO ANTI-INCOGNITO
      */
     _showIncognitoBlocker() {
         const cfg = this.incognitoBlocker;
@@ -343,7 +350,9 @@ export class PanzerSDK {
     }
 
     /**
-      * 🧬 UTILITY PROFILO: Recupero dettagliato dei Client Hints del browser[span_16](start_span)[span_16](end_span)
+      * 🧬 UTILITY PROFILO: 
+      * Recupero dettagliato dei 
+      * Client Hints del browser
      */
     async _getFullBrowserProfile() {
         let profile = { userAgent: navigator.userAgent, isHighEntropyDataAvailable: false, details: {} };
@@ -363,7 +372,9 @@ export class PanzerSDK {
     }
 
     /**
-     * 📱 UTILITY OS: Riconoscimento rapido della piattaforma mobile o desktop[span_17](start_span)[span_17](end_span)
+     * 📱 UTILITY OS: 
+     * Riconoscimento rapido 
+     * della piattaforma mobile o desktop.
      */
     _getMobileOS() {
         const ua = navigator.userAgent || navigator.vendor || window.opera;
