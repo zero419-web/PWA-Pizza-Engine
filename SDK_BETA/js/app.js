@@ -131,11 +131,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox CSP Ottimizzato (Blob Nativo per Immagini + PDF.js Worker Blob)
+        // 🔒 Visore Sandbox.
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
-            logToTerminal('vault', `🫙🔒 Isolamento Sandbox CSP avviato per: ${fileName || url}`);
+            logToTerminal('vault', `🫙🔒 Apertura visore sicuro per: ${fileName || url}`);
             
             let response = null;
             if ('caches' in window) {
@@ -167,213 +167,125 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             activeObjectUrl = URL.createObjectURL(blob);
 
-            // 🖼️ CASO 1: IMMAGINI -> Assegnazione diretta del Blob URL all'iframe (Elimina icona rotta su Chrome Mobile)
-            if (mimeType.startsWith('image/')) {
-                sandboxFrame.removeAttribute('sandbox');
-                sandboxFrame.setAttribute('sandbox', 'allow-same-origin');
-                sandboxFrame.srcdoc = ''; // Pulizia preventiva
-                sandboxFrame.src = activeObjectUrl;
-
-                sandboxTitle.textContent = `🔎🔒 Visore Immagine \n ${fileName || url}`;
-                sandboxModal.classList.add('active');
-
-                logToTerminal('success', `🛡️ Immagine caricata nativamente nel visore.`);
-                return;
-            }
-
             let renderedContentHtml = '';
 
-            // 📄 CASO 2: PDF -> Rendering con PDF.js e Worker via Blob
-            if (mimeType.includes('pdf')) {
-                const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                const PDFlib = PDFlibP + 'js/pdf_min.js';
-                
-                if (activeWorkerObjectUrl) {
-                    URL.revokeObjectURL(activeWorkerObjectUrl);
-                    activeWorkerObjectUrl = null;
-                }
-
-                let workerBlobUrl = '';
-                try {
-                    let workerRes = null;
-                    if ('caches' in window) {
-                        const cacheNames = await caches.keys();
-                        for (const name of cacheNames) {
-                            const cache = await caches.open(name);
-                            workerRes = await cache.match('./js/pdf_worker_min.js') || await cache.match('js/pdf_worker_min.js');
-                            if (workerRes) break;
-                        }
-                    }
-                    if (!workerRes) {
-                        workerRes = await fetch('./js/pdf_worker_min.js');
-                    }
-                    if (workerRes && workerRes.ok) {
-                        const workerBlob = await workerRes.blob();
-                        activeWorkerObjectUrl = URL.createObjectURL(workerBlob);
-                        workerBlobUrl = activeWorkerObjectUrl;
-                    } else {
-                        workerBlobUrl = PDFlibP + 'js/pdf_worker_min.js';
-                    }
-                } catch (wErr) {
-                    console.warn("Fallback su path standard per il worker PDF:", wErr);
-                    workerBlobUrl = PDFlibP + 'js/pdf_worker_min.js';
-                }
-                
-                renderedContentHtml = `
-                    <!DOCTYPE html>
-                    <html lang="it">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
-                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; script-src 'unsafe-inline' blob: data: http: https:; style-src 'unsafe-inline'; connect-src blob: data: http: https:;">
-                        <style>
-                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-                            body, html {
-                                width: 100%;
-                                height: 100%;
-                                background: #0f172a;
-                                overflow: auto;
-                                font-family: sans-serif;
-                                -webkit-overflow-scrolling: touch;
-                                touch-action: pan-x pan-y;
-                            }
-                            #pdf-wrapper {
-                                display: flex;
-                                flex-direction: column;
-                                align-items: center;
-                                padding: 20px 10px;
-                                min-width: 100%;
-                                min-height: 100%;
-                                width: max-content;
-                                margin: 0 auto;
-                                gap: 15px;
-                            }
-                            canvas {
-                                max-width: 100%;
-                                height: auto;
-                                box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-                                background: #fff;
-                                border-radius: 6px;
-                                pointer-events: auto;
-                            }
-                            .loading-box {
-                                color: #f8fafc;
-                                font-size: 1rem;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                align-items: center;
-                                height: 100vh;
-                                text-align: center;
-                                gap: 10px;
-                            }
-                            .error-msg {
-                                color: #f87171;
-                                background: #1e1b4b;
-                                padding: 15px;
-                                border-radius: 8px;
-                                border: 1px solid #ef4444;
-                                max-width: 90%;
-                                word-break: break-all;
-                            }
-                        </style>
-                        <script src="${PDFlib}"></script>
-                    </head>
-                    <body oncontextmenu="return false;" ondragstart="return false;">
-                        <div id="loading" class="loading-box">
-                            <div>⏳ Rendering PDF in corso...</div>
-                        </div>
-                        <div id="pdf-wrapper"></div>
-                        <script>
-                            const pdfUrl = "${activeObjectUrl}";
-                            const workerUrl = "${workerBlobUrl}";
-                
-                            async function startRender() {
-                                try {
-                                    if (typeof pdfjsLib === 'undefined') {
-                                        throw new Error("Libreria PDF non caricata.");
-                                    }
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-                                    const loadingTask = pdfjsLib.getDocument({
-                                        url: pdfUrl,
-                                        isEvalSupported: false,
-                                        disableFontFace: true
-                                    });
-                
-                                    const pdfDoc = await loadingTask.promise;
-                                    document.getElementById('loading').style.display = 'none';
-                                    const container = document.getElementById('pdf-wrapper');
-                
-                                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-                                        const page = await pdfDoc.getPage(pageNum);
-                                        const unscaledViewport = page.getViewport({ scale: 1.0 });
-                                        const screenWidth = Math.min(window.innerWidth - 30, 800);
-                                        const scale = screenWidth / unscaledViewport.width;
-                                        const viewport = page.getViewport({ scale: Math.max(scale, 1.0) });
-                
-                                        const canvas = document.createElement('canvas');
-                                        const context = canvas.getContext('2d');
-                                        canvas.height = viewport.height;
-                                        canvas.width = viewport.width;
-                
-                                        canvas.dataset.baseWidth = viewport.width;
-                                        canvas.dataset.baseHeight = viewport.height;
-                
-                                        container.appendChild(canvas);
-                
-                                        await page.render({
-                                            canvasContext: context,
-                                            viewport: viewport
-                                        }).promise;
-                                    }
-                                } catch (err) {
-                                    document.getElementById('loading').style.display = 'none';
-                                    document.getElementById('pdf-wrapper').innerHTML = '<div class="error-msg">❌ Errore Visore Cifrato: ' + err.message + '</div>';
-                                }
-                            }
-                            window.addEventListener('DOMContentLoaded', startRender);
-                        </script>
-                    </body>
-                    </html>
-                `;
-            } else {
-                // 📄 CASO 3: Fallback Generico
+            // 🖼️ 1. GESTIONE IMMAGINI
+            if (mimeType.startsWith('image/')) {
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html lang="it">
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; frame-src blob:; object-src blob:;">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width:100%; height:100%; background:#090d16; overflow:auto; -webkit-overflow-scrolling: touch; }
-                            #container { width:100%; height:100%; display:flex; justify-content:center; align-items:center; padding:20px; }
-                            object { width:100%; height:100%; border:none; }
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            html, body {
+                                width: 100%;
+                                height: 100%;
+                                background-color: #090d16;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                overflow: auto;
+                                -webkit-overflow-scrolling: touch;
+                            }
+                            .container {
+                                width: 100%;
+                                height: 100%;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                padding: 10px;
+                            }
+                            img {
+                                max-width: 100%;
+                                max-height: 100%;
+                                object-fit: contain;
+                                border-radius: 4px;
+                                box-shadow: 0 4px 25px rgba(0,0,0,0.8);
+                            }
                         </style>
                     </head>
-                    <body oncontextmenu="return false;" ondragstart="return false;">
-                        <div id="container">
-                            <object data="${activeObjectUrl}" type="${mimeType}">
-                                <p style="color:#cbd5e1; text-align:center;">Impossibile visualizzare la risorsa direttamente nel visore.</p>
-                            </object>
+                    <body oncontextmenu="return false;">
+                        <div class="container">
+                            <img src="${activeObjectUrl}" alt="Immagine Protetta" />
                         </div>
+                    </body>
+                    </html>
+                `;
+            } else if (mimeType.includes('pdf')) {
+                // 📄 2. GESTIONE PDF
+                renderedContentHtml = `
+                    <!DOCTYPE html>
+                    <html lang="it">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            html, body {
+                                width: 100%;
+                                height: 100%;
+                                background-color: #0f172a;
+                                overflow: hidden;
+                            }
+                            embed, object {
+                                width: 100%;
+                                height: 100%;
+                                border: none;
+                            }
+                            .fallback {
+                                color: #f8fafc;
+                                font-family: sans-serif;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100%;
+                                text-align: center;
+                                padding: 20px;
+                            }
+                        </style>
+                    </head>
+                    <body oncontextmenu="return false;">
+                        <object data="${activeObjectUrl}" type="application/pdf">
+                            <embed src="${activeObjectUrl}" type="application/pdf" />
+                            <div class="fallback">
+                                <p>Il tuo browser non supporta la visualizzazione diretta dei PDF. <br><a href="${activeObjectUrl}" target="_blank" style="color: #60a5fa;">Scarica il documento</a></p>
+                            </div>
+                        </object>
+                    </body>
+                    </html>
+                `;
+            } else {
+                // 📄 3. FALLBACK GENERICO
+                renderedContentHtml = `
+                    <!DOCTYPE html>
+                    <html lang="it">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <style>
+                            body { background: #090d16; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin:0; }
+                        </style>
+                    </head>
+                    <body>
+                        <p>Formato risorsa non visualizzabile direttamente.</p>
                     </body>
                     </html>
                 `;
             }
 
             sandboxFrame.removeAttribute('sandbox');
-            sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            sandboxFrame.src = 'about:blank'; // Pulizia
+            sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms');
+            sandboxFrame.src = 'about:blank';
             sandboxFrame.srcdoc = renderedContentHtml;
 
-            sandboxTitle.textContent = `🔎🔒 Visore Cifrato \n ${fileName || url}`;
+            sandboxTitle.textContent = `🔎🔒 Visore Sicuro \n ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ Risorsa renderizzata in Sandbox CSP con successo.`);
+            logToTerminal('success', `🛡️ Risorsa aperta correttamente nel visore.`);
         } catch (err) {
-            logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
+            logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
     };
 
