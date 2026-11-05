@@ -1242,7 +1242,9 @@ const checkRealOnline = async (mode = 'fetch') => {
     try {
         const controller = new AbortController();
         const tId = setTimeout(() => controller.abort(), timeoutMs);
-        const networkResponse = await fetch(BASE_PATH + '?t=' + Date.now(), {
+        const testUrl = BASE_PATH + 'index.html?t=' + Date.now();
+
+        const networkResponse = await fetch(testUrl, {
             method: 'HEAD',
             cache: 'no-store',
             mode: 'no-cors',
