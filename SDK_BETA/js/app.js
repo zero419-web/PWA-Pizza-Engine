@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 🔒 Visore Sandbox.
+        // 🔒 Visore Sandbox Protetto (Anti-Download & Rendering Canvas In-Memory)
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
@@ -205,9 +206,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // 📄 PDF PROTETTO.
-                const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                const PDFlib = PDFlibP + 'js/pdf_min.js';
+                // 📄 PDF PROTETTO:
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                const PDFlib = baseUrl + 'js/pdf_min.js';
+                const PDFworker = baseUrl + 'js/pdf_worker_min.js';
 
                 renderedContentHtml = `
                     <!DOCTYPE html>
@@ -222,20 +224,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                             canvas { max-width:100%; height:auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); background:#fff; border-radius:6px; pointer-events:none; transition: width 0.15s ease, height 0.15s ease; }
                             .loading { color:#f8fafc; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; gap:10px; }
                         </style>
-                        <script src="${PDFlib}"></script>
+                        <script src="${PDFlib}"><\/script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
-                        <div id="loading" class="loading"><div>⏳📄 PDF Loading...</div></div>
+                        <div id="loading" class="loading"><div>⏳📄 Decrittazione e rendering PDF...</div></div>
                         <div id="pdf-wrapper"></div>
                         <script>
                             async function renderSecurePDF() {
                                 try {
                                     if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF non disponibile.");
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+                                    
+                                    // Configurazione corretta del worker assoluto
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDFworker}';
 
                                     const loadingTask = pdfjsLib.getDocument({
                                         url: "${activeObjectUrl}",
-                                        disableWorker: true,
                                         isEvalSupported: false
                                     });
 
@@ -263,11 +266,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         }).promise;
                                     }
                                 } catch (err) {
-                                    document.getElementById('loading').innerHTML = '<div style="color:#f87171;">❌ Errore rendering: ' + err.message + '</div>';
+                                    document.getElementById('loading').innerHTML = '<div style="color:#f87171; text-align:center; padding:20px;">❌ Errore worker/rendering: ' + err.message + '</div>';
                                 }
                             }
                             window.addEventListener('DOMContentLoaded', renderSecurePDF);
-                        </script>
+                        <\/script>
                     </body>
                     </html>
                 `;
@@ -281,6 +284,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </body>
                     </html>
                 `;
+            }
+
+            setTimeout(() => {
+                sandboxFrame.srcdoc = renderedContentHtml;
+            }, 50);
+
+            sandboxTitle.textContent = `🔎🔒 Visore Protetto \n ${fileName || url}`;
+            sandboxModal.classList.add('active');
+
+            logToTerminal('success', `🛡️ Risorsa decifrata e caricata in sicurezza nel visore.`);
+        } catch (err) {
+            logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
+        }
+    };
             }
 
             setTimeout(() => {
