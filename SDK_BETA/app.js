@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.9.0
+ * v1.9.1
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let manifestCache = null;
     let activeObjectUrl = null;
-    // 🔍 Zoom iniziale fissato al 100%
     let currentZoom = 1.0;
     let totalCombinedCount = 0;
 
@@ -81,12 +80,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = `badge-status ${badgeClass}`;
     };
 
-    // 🔍 Funzione per applicare lo zoom dinamico responsive (Mobile & Desktop)
+    // 🔍 Helper per l'inferenza del MIME Type in assenza di header corretti
+    const detectMimeType = (url, headerType) => {
+        if (headerType && headerType !== 'application/octet-stream' && headerType !== 'text/plain') {
+            return headerType;
+        }
+        const ext = url.split('.').pop().toLowerCase();
+        const mimeMap = {
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'webp': 'image/webp',
+            'gif': 'image/gif',
+            'svg': 'image/svg+xml',
+            'pdf': 'application/pdf'
+        };
+        return mimeMap[ext] || headerType || 'application/octet-stream';
+    };
+
+    // 🔍 Zoom dinamico universalmente compatibile per Immagini e PDF (Mobile & Desktop)
     const applyZoom = () => {
         try {
             const iframeDoc = sandboxFrame.contentDocument || sandboxFrame.contentWindow.document;
 
-            // Gestione zoom per PDF (Canvas)
+            // Zoom per PDF (Canvas)
             const canvases = iframeDoc.querySelectorAll('canvas');
             if (canvases.length > 0) {
                 canvases.forEach(canvas => {
@@ -99,71 +116,68 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // Gestione zoom per Immagini
-            const img = iframeDoc.querySelector('img');
+            // Zoom per Immagini (Responsive & Scalabile)
+            const img = iframeDoc.querySelector('#sandbox-target-img');
             if (img) {
                 if (!img.dataset.naturalWidth && img.naturalWidth) {
                     img.dataset.naturalWidth = img.naturalWidth;
                     img.dataset.naturalHeight = img.naturalHeight;
                 }
-                const natW = parseFloat(img.dataset.naturalWidth);
-                if (natW) {
+                const natW = parseFloat(img.dataset.naturalWidth) || img.clientWidth;
+                if (natW > 0) {
                     img.style.width = (natW * currentZoom) + 'px';
                     img.style.maxWidth = 'none';
                     img.style.height = 'auto';
                 }
             }
 
-            logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}% (Scroll bidirezionale attivo)`);
+            logToTerminal('vault', `🔍 Zoom visore impostato al ${Math.round(currentZoom * 100)}%`);
         } catch (e) {
-            console.warn("Zoom custom limitato da policy restrittive dell'iframe nativo.", e);
+            console.warn("Zoom custom limitato da policy dell'iframe.", e);
         }
     };
 
     // Gestori eventi Zoom
     btnZoomIn.addEventListener('click', () => {
-        currentZoom = Math.min(currentZoom + 0.25, 3.0); // Zoom massimo al 300%
+        currentZoom = Math.min(currentZoom + 0.25, 3.0);
         applyZoom();
     });
 
     btnZoomOut.addEventListener('click', () => {
-        currentZoom = Math.max(currentZoom - 0.25, 0.5); // Zoom minimo al 50%
+        currentZoom = Math.max(currentZoom - 0.25, 0.5);
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox CSP con PDF.js a 100% di default, Scroll Bidirezionale & Ottimizzazione Touch
+    // 🔒 Visore Sandbox CSP Riprogettato per Chrome Mobile & Desktop
     const openInSandbox = async (url, fileName) => {
         try {
-            currentZoom = 1.0; // Reset rigoroso al 100% all'apertura
-            logToTerminal('vault', `🫙🔒 Isolamento Sandbox CSP, avviato per: ${fileName || url}`);
+            currentZoom = 1.0;
+            logToTerminal('vault', `🫙🔒 Isolamento Sandbox CSP avviato per: ${fileName || url}`);
             
             let response = null;
             if ('caches' in window) {
                 const cacheNames = await caches.keys();
-                logToTerminal('vault', `🔍 Cache disponibili: ${cacheNames.join(', ')}`);
-    
                 for (const name of cacheNames) {
-                     const cache = await caches.open(name);
-        
-                    // Tentativo di match con diverse varianti di percorso per lo scope
-                     response = await cache.match(url) 
-                     || await cache.match(url.replace('./', '')) 
-                     || await cache.match(window.location.origin + url.replace('.', ''));
+                    const cache = await caches.open(name);
+                    response = await cache.match(url) 
+                             || await cache.match(url.replace('./', '')) 
+                             || await cache.match(window.location.origin + url.replace('.', ''));
                 
-                     if (response) {
-                         logToTerminal('success', `🟢 Trovato in cache (${name}) per: ${url}`);
-                         break;
-                     }
+                    if (response) {
+                        logToTerminal('success', `🟢 Trovato in cache (${name}) per: ${url}`);
+                        break;
+                    }
                 }
             }
             if (!response) {
-                logToTerminal('warn', `⚠️ Risorsa non in cache, tentativo fetch di rete: ${url}`);
+                logToTerminal('warn', `⚠️ Risorsa non in cache, recupero di rete: ${url}`);
                 response = await fetch(url);
             }
-           if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
+            if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
-           const blob = await response.blob();
-           const mimeType = response.headers.get('Content-Type') || blob.type || 'application/pdf';
+            const blob = await response.blob();
+            const rawMime = response.headers.get('Content-Type') || blob.type;
+            const mimeType = detectMimeType(url, rawMime);
 
             if (activeObjectUrl) {
                 URL.revokeObjectURL(activeObjectUrl);
@@ -173,27 +187,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             let renderedContentHtml = '';
 
             if (mimeType.startsWith('image/')) {
-                // Rendering Immagine Protetta con Scroll Bidirezionale e Touch Panning
+                // 🖼️ Rendering Immagini Ottimizzato per Touch/Mobile & Desktop Layout
                 renderedContentHtml = `
                     <!DOCTYPE html>
-                    <html>
+                    <html lang="it">
                     <head>
                         <meta charset="UTF-8">
-                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data:; style-src 'unsafe-inline'; frame-src blob:; object-src blob:;">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+                        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data: http: https:; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
                         <style>
-                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; }
-                            body, html { width:100%; height:100%; background:#000; overflow:auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
-                            #img-container { display:flex; justify-content:center; align-items:center; min-width:100%; min-height:100%; width:max-content; margin:0 auto; padding:40px 50vw; touch-action: pan-x pan-y; }
-                            img { max-width:100%; height:auto; object-fit:contain; -webkit-touch-callout:none; touch-action: pan-x pan-y; flex-shrink: 0; pointer-events: none; }
+                            * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
+                            html, body {
+                                width: 100%;
+                                height: 100%;
+                                background-color: #090d16;
+                                overflow: auto;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                -webkit-overflow-scrolling: touch;
+                                touch-action: pan-x pan-y pinch-zoom;
+                            }
+                            #img-wrapper {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-width: 100%;
+                                min-height: 100%;
+                                padding: 15px;
+                            }
+                            img {
+                                max-width: 100%;
+                                height: auto;
+                                object-fit: contain;
+                                border-radius: 4px;
+                                box-shadow: 0 4px 25px rgba(0,0,0,0.8);
+                                transition: width 0.15s ease-out;
+                                pointer-events: auto;
+                                -webkit-touch-callout: none;
+                            }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
-                        <div id="img-container" oncontextmenu="return false;">
-                            <img src="${activeObjectUrl}"
-                            alt="Risorsa Cifrata Protetta"
-                            oncontextmenu="return false;"
-                            ondragstart="return false;"
-                            onload="this.dataset.naturalWidth=this.naturalWidth; this.dataset.naturalHeight=this.naturalHeight; this.style.width=this.naturalWidth+'px';" />
+                        <div id="img-wrapper">
+                            <img id="sandbox-target-img" 
+                                 src="${activeObjectUrl}" 
+                                 alt="Risorsa Cifrata Protetta"
+                                 onload="this.dataset.naturalWidth=this.naturalWidth; this.dataset.naturalHeight=this.naturalHeight;" />
                         </div>
                         <script>
                             document.addEventListener('contextmenu', e => e.preventDefault());
@@ -210,12 +250,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (mimeType.includes('pdf')) {
                 const PDFlibP = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
                 const workerBlobUrl = PDFlibP + 'js/pdf_worker_min.js';
-                
                 const PDFlib = PDFlibP + 'js/pdf_min.js';
                 
                 renderedContentHtml = `
                     <!DOCTYPE html>
-                    <html>
+                    <html lang="it">
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
@@ -287,11 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     if (typeof pdfjsLib === 'undefined') {
                                         throw new Error("Libreria PDF non caricata.");
                                     }
-                                    
-                                    // Assegnazione del Worker via path nativo gestito dal SW
                                     pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-                
-                                    // Caricamento Documento
                                     const loadingTask = pdfjsLib.getDocument({
                                         url: pdfUrl,
                                         isEvalSupported: false,
@@ -302,10 +337,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     document.getElementById('loading').style.display = 'none';
                                     const container = document.getElementById('pdf-wrapper');
                 
-                                    // Rendering Canvas Pagina per Pagina
                                     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                                         const page = await pdfDoc.getPage(pageNum);
-                                        
                                         const unscaledViewport = page.getViewport({ scale: 1.0 });
                                         const screenWidth = Math.min(window.innerWidth - 30, 800);
                                         const scale = screenWidth / unscaledViewport.width;
@@ -331,31 +364,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     document.getElementById('pdf-wrapper').innerHTML = '<div class="error-msg">❌ Errore Visore Cifrato: ' + err.message + '</div>';
                                 }
                             }
-                
                             window.addEventListener('DOMContentLoaded', startRender);
                         </script>
                     </body>
                     </html>
                 `;
             } else {
-                // 📄 Rendering Generale / Testo / Altri Formati
+                // 📄 Fallback Generico per Testo / Altri formati
                 renderedContentHtml = `
                     <!DOCTYPE html>
-                    <html>
+                    <html lang="it">
                     <head>
                         <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
                         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; frame-src blob:; object-src blob:;">
                         <style>
                             * { margin:0; padding:0; box-sizing:border-box; }
-                            body, html { width:100%; height:100%; background:#111; overflow:auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
-                            #pdf-container { width:max-content; min-width:100%; min-height:100%; margin:0 auto; display:flex; justify-content:center; align-items:center; padding:40px 50vw; touch-action: pan-x pan-y; }
-                            iframe, object { width:100%; height:100%; border:none; touch-action: pan-x pan-y; flex-shrink: 0; }
+                            body, html { width:100%; height:100%; background:#090d16; overflow:auto; -webkit-overflow-scrolling: touch; }
+                            #container { width:100%; height:100%; display:flex; justify-content:center; align-items:center; padding:20px; }
+                            object { width:100%; height:100%; border:none; }
                         </style>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;">
-                        <div id="pdf-container">
+                        <div id="container">
                             <object data="${activeObjectUrl}" type="${mimeType}">
-                                <p style="color:#aaa; text-align:center;">Impossibile anteporre la risorsa nel visore diretto.</p>
+                                <p style="color:#cbd5e1; text-align:center;">Impossibile visualizzare la risorsa direttamente nel visore.</p>
                             </object>
                         </div>
                     </body>
@@ -363,15 +396,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }
 
+            // Ripristino e impostazione isolamento Sandbox
             sandboxFrame.removeAttribute('sandbox');
             sandboxFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             sandboxFrame.srcdoc = renderedContentHtml;
 
             sandboxTitle.textContent = `🔎🔒 Visore Cifrato \n ${fileName || url}`;
-
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ PDF / Risorsa renderizzato ...`);
+            logToTerminal('success', `🛡️ Risorsa renderizzata in Sandbox CSP con successo.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura Sandbox CSP: ${err.message}`);
         }
@@ -396,11 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         swPath: getDefined_swPath,
         scope: getDefined_scope,
         coreAssets: getDefinedCoreAssets(),
-
-        // ⏱️ Timeout personalizzato per il 🐺 Watchdog
         checkTimeout: 6660,
-
-        // 🛑 Personalizzazione completa dell'overlay Anti-Incognito
         incognitoBlocker: {
             Icons: `⚠️ ❌🕵️`,
             ID: 'PA_popup_Incognite',
@@ -419,70 +448,62 @@ document.addEventListener('DOMContentLoaded', async () => {
             buttonBg: "#2563eb",
             buttonTextCol: "#ffffff"
         },
-
         onLogMessage: (level, msg) => logToTerminal(level, msg),
-
-    onSyncStart: () => {
-        setStatusBadge('⚡ Sincronizzazione...', 'badge-sync');
-        const coreCount = getDefinedCoreAssets().length;
-        const totalFiles = totalCombinedCount > 0 ? totalCombinedCount : coreCount;
-        metricTotal.textContent = totalFiles;
-        metricCompleted.textContent = '0';
-        progressBar.value = 0;
-        progressText.textContent = `0% ( 0 / ${totalFiles} )`;
-    },
-
-    onProgress: (details) => {
-        if (details) {
+        onSyncStart: () => {
+            setStatusBadge('⚡ Sincronizzazione...', 'badge-sync');
             const coreCount = getDefinedCoreAssets().length;
-            // Calcola il totale, file completati (Core già scaricati + Manifest in corso)
-            const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : (coreCount + (details.total || 0));
-            const completedTotal = coreCount + (details.current || 0);
-            const pct = grandTotal > 0 ? Math.min(100, Math.round((completedTotal / grandTotal) * 100)) : (details.percent ? Math.round(details.percent) : 0);
+            const totalFiles = totalCombinedCount > 0 ? totalCombinedCount : coreCount;
+            metricTotal.textContent = totalFiles;
+            metricCompleted.textContent = '0';
+            progressBar.value = 0;
+            progressText.textContent = `0% ( 0 / ${totalFiles} )`;
+        },
+        onProgress: (details) => {
+            if (details) {
+                const coreCount = getDefinedCoreAssets().length;
+                const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : (coreCount + (details.total || 0));
+                const completedTotal = coreCount + (details.current || 0);
+                const pct = grandTotal > 0 ? Math.min(100, Math.round((completedTotal / grandTotal) * 100)) : (details.percent ? Math.round(details.percent) : 0);
 
-            progressBar.value = pct;
-            progressText.textContent = `${pct}% ( ${completedTotal} / ${grandTotal} )`;
+                progressBar.value = pct;
+                progressText.textContent = `${pct}% ( ${completedTotal} / ${grandTotal} )`;
 
-            metricCompleted.textContent = completedTotal;
+                metricCompleted.textContent = completedTotal;
+                metricTotal.textContent = grandTotal;
+                metricFailed.textContent = details.request_failed || 0;
+                metricRetries.textContent = details.retries || 0;
+            }
+        },
+        onSyncRetry: (details) => {
+            setStatusBadge('🔄 Retry Rete...', 'badge-warn');
+            if (details) {
+                if (details.retries !== undefined) metricRetries.textContent = details.retries;
+                if (details.request_failed !== undefined) metricFailed.textContent = details.request_failed;
+            }
+        },
+        onComplete: (data) => {
+            progressBar.value = 100;
+            progressText.textContent = '100% ( Completato )';
+            setStatusBadge('🛡️🗄️ Stiva Pronta', 'badge-ready');
+            const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : getDefinedCoreAssets().length;
+            metricCompleted.textContent = grandTotal;
             metricTotal.textContent = grandTotal;
-            metricFailed.textContent = details.request_failed || 0;
-            metricRetries.textContent = details.retries || 0;
-        }
-    },
-
-    onSyncRetry: (details) => {
-        setStatusBadge('🔄 Retry Rete...', 'badge-warn');
-        if (details) {
-            if (details.retries !== undefined) metricRetries.textContent = details.retries;
-            if (details.request_failed !== undefined) metricFailed.textContent = details.request_failed;
-        }
-    },
-
-    onComplete: (data) => {
-        progressBar.value = 100;
-        progressText.textContent = '100% ( Completato )';
-        setStatusBadge('🛡️🗄️ Stiva Pronta', 'badge-ready');
-        const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : getDefinedCoreAssets().length;
-        metricCompleted.textContent = grandTotal;
-        metricTotal.textContent = grandTotal;
-        if (data) {
-            metricFailed.textContent = data.request_failed || 0;
-            metricRetries.textContent = data.retries || 0;
-        }
-        renderStorageTable();
-    },
-
-    onPurgeComplete: () => {
-        progressBar.value = 0;
-        progressText.textContent = '0% ( 0 / 0 )';
-        metricCompleted.textContent = '0';
-        metricTotal.textContent = '0';
-        metricFailed.textContent = '0';
-        metricRetries.textContent = '0';
-        setStatusBadge('🗑️⚡ Purgato', 'badge-init');
-        renderStorageTable();
-    },
-
+            if (data) {
+                metricFailed.textContent = data.request_failed || 0;
+                metricRetries.textContent = data.retries || 0;
+            }
+            renderStorageTable();
+        },
+        onPurgeComplete: () => {
+            progressBar.value = 0;
+            progressText.textContent = '0% ( 0 / 0 )';
+            metricCompleted.textContent = '0';
+            metricTotal.textContent = '0';
+            metricFailed.textContent = '0';
+            metricRetries.textContent = '0';
+            setStatusBadge('🗑️⚡ Purgato', 'badge-init');
+            renderStorageTable();
+        },
         onError: (err) => {
             setStatusBadge('🚨 Errore Sync', 'badge-error');
         }
@@ -497,6 +518,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (url.endsWith('.js')) mime = 'application/javascript';
             else if (url.endsWith('.html') || url === '/') mime = 'text/html';
             else if (url.endsWith('.json') || url.endsWith('.webmanifest')) mime = 'application/json';
+            else if (url.endsWith('.png')) mime = 'image/png';
+            else if (url.endsWith('.jpg') || url.endsWith('.jpeg')) mime = 'image/jpeg';
 
             return {
                 url: url,
@@ -592,7 +615,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         setStatusBadge('⚡ Inattivo', 'badge-init');
         renderStorageTable();
 
-
     } catch (err) {
         logToTerminal('error', `❌ Errore caricamento Res-PA-manifest.json: ${err.message}`);
         setStatusBadge('🚨 Errore Manifesto', 'badge-error');
@@ -639,4 +661,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnSync.click();
     }, 2500);
 });
-
