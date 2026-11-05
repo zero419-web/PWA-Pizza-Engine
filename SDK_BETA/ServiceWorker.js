@@ -1247,7 +1247,7 @@ const checkRealOnline = async (mode = 'fetch') => {
         const controller = new AbortController();
         const tId = setTimeout(() => controller.abort(), timeoutMs);
         
-        const testUrl = new URL('./index.html?_t=' + Date.now(), self.location.href).href;
+        const testUrl = new URL(BASE_PATH + '/?_t=' + Date.now(), self.location.href).href;
         
         const networkResponse = await fetch(testUrl, {
             method: 'HEAD',
