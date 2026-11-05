@@ -1,7 +1,7 @@
 /*
  * 📄 [ DISCIPLINARE TECNICO DI CONFORMITÀ ]
  *
- * ⚙️ CORE: 🪖 PANZER v7.9.7+ ( v1.0 SDK ⛓️)
+ * ⚙️ CORE: 🪖 PANZER v7.9.7+ ( v2.x SDK ⛓️)
  *
  * 🛡️ REQUISITI OPERATIVI DI SISTEMA :
  *
@@ -234,19 +234,9 @@ const CONFIG = {
     coreAssets: [ BASE_PATH ],
     manifestPath: ``,
     mappingLogic: {
-		idKeys: [
-			'id'
-		],
-        contexts: {
-            'docs_it': { path: 'dir_img/pdf/ita/', ext: '.pdf' },
-            'docs_en': { path: 'dir_img/pdf/eng/', ext: '.pdf' },
-            'base':    { path: 'dir_img/',          ext: '.webp' }
-        },
-        parentSpecials: {
-            'pizze':   { prefix: 'pz_', ext: '.webp' },
-            'piatti':  { prefix: 'pi_', ext: '.webp' },
-            'gallery': { prefix: '',    ext: '.jpg', isSequential: true }
-        }
+		idKeys: [],
+        contexts: {},
+        parentSpecials: {}
     },
 	defPlaceHolderLogo: ``,
     defaultExt: '.webp',
@@ -1332,7 +1322,7 @@ self.addEventListener('message', (event) => {
         isLogicEnabled = true;
         const customCoreAssets = eventDataSnapshot?.overrideCoreAssets; // SDK wrapper
         // Se l'SDK passa dei coreAssets personalizzati, li normalizziamo, altrimenti usiamo quelli di default del SW
-        const activeCoreAssets = (customCoreAssets && Array.isArray(customCoreAssets) && customCoreAssets.length > 0) ? customCoreAssets.map(asset => normalize(asset)) : CONFIG.coreAssets;
+        activeCoreAssets = (customCoreAssets && Array.isArray(customCoreAssets) && customCoreAssets.length > 0) ? customCoreAssets.map(asset => normalize(asset)) : CONFIG.coreAssets;
     CORE_ASSETS_SET = new Set(activeCoreAssets);
 
         const performSync = async (event) => {
@@ -1448,44 +1438,45 @@ self.addEventListener('message', (event) => {
 				const core_Down_OK = coreResults.filter(r => r.status === 'fulfilled' && r.value === "DOWNLOADED").length;
 				console.info(`✅⚙️ SW: Core File Scaricati effettivi da rete: ${core_Down_OK}/${coreResults.length}`);
 
-				console.info(`⚙️📜 SW: Avvio Raccolta Lista File dal Manifest...`);
-				const manifestList = [];
-				if ((!await checkRealOnline('sync')) || isCriticalLow) {
-					console.log("📡❌ SW Stop: Rete persa durante il 🔄 sync.");
-					if (syncAbortController) {
-						syncAbortController.abort();
-					}
-					isSyncing = false;
-					broadcast({ type: 'SYNC_RETRY' });
-					return;
-				}
-				try {
-					const manifestRes = await fetch(CONFIG.manifestPath, {
-						cache: 'no-cache',
-						signal: syncAbortController?.signal
-					});
-					if (!manifestRes || !manifestRes.ok || manifestRes.status !== 200) {
-						throw new Error(`MANIFEST_SERVER_ERROR_STATUS_${manifestRes?.status}`);
-					}
-					broadcast({ type: 'SYNC_PROGRESS' });
-					let structured;
-					try {
-						structured = await manifestRes.json();
-					} catch (jsonErr) {
-						throw new Error("MANIFEST_JSON_CORRUPTED");
-					}
-					if (Array.isArray(structured)) {
-						structured.forEach(group => {
-							const directory = group.dir || "";
-							if (group.files && Array.isArray(group.files)) {
-								group.files.forEach(f => {
-									const fullPath = normalize(CONFIG.ROOT + directory + f);
-									manifestList.push(fullPath);
-								});
-							}
-						});
-					}
-					console.info(`✅📜 SW: Lista completata. File raccolti dal manifest: ${manifestList.length}`);
+				    console.info(`⚙️📜 SW: Estrazione Lista File dal Manifesto IPC...`);
+    const manifestList = [];
+    try {
+        broadcast({ type: 'SYNC_PROGRESS' });
+        
+        // 🎯 LETTURA: manifesto passato dall'SDK
+        const structured = eventDataSnapshot?.data;
+        
+        if (!structured) {
+            throw new Error("MANIFEST_DATA_MISSING");
+        }
+
+        // Supporto formato 1: Oggetto con array 'assets' (es. { assets: [{url: '...'}, ...] })
+        if (structured.assets && Array.isArray(structured.assets)) {
+            structured.assets.forEach(item => {
+                if (item && item.url) {
+                    const fullPath = normalize(CONFIG.ROOT + item.url.replace(/^\.\//, ''));
+                    manifestList.push(fullPath);
+                }
+            });
+        } 
+        // Supporto formato 2: Array di gruppi con directory e files (es. [{dir: '...', files: [...]}, ...])
+        else if (Array.isArray(structured)) {
+            structured.forEach(group => {
+                const directory = group.dir || "";
+                if (group.files && Array.isArray(group.files)) {
+                    group.files.forEach(f => {
+                        const fullPath = normalize(CONFIG.ROOT + directory + f);
+                        manifestList.push(fullPath);
+                    });
+                }
+            });
+        }
+
+        console.info(`✅📜 SW: Lista completata. File raccolti dal manifest: ${manifestList.length}`);
+    } catch (e) {
+        console.error("🚫⚠️ SW: Errore Critico durante l'elaborazione dell'Assets Manifest:", e.message);
+        throw new Error("ASSETS_MANIFEST_CORRUPTED");
+    }
 				} catch (e) {
 					console.error("🚫⚠️ SW: Errore Critico durante l'elaborazione dell'Assets Manifest:", e.message);
 					throw new Error("ASSETS_MANIFEST_CORRUPTED");
@@ -1528,7 +1519,7 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
         }
         // 🪨️ HARDENING 3: Micro-pausa ogni X nodi per non congelare il worker...
         if (nodeState.count % 250 === 0) {
-			 sleep(10);
+			 await sleep(10);
         }
 
         if (typeof val === 'object' && val !== null) {
@@ -1720,16 +1711,14 @@ Object.freeze(universalScanner);
                 }
 
 				if (syncAbortController?.signal.aborted) return;
-                const expectedPaths = new Set([...coreNormalized, normalize(CONFIG.ROOT), ...uniqueList]);
-                const allCachedRequests = await cache.keys();
-                for (const request of allCachedRequests) {
-                    const cleanPathInCache = normalize(new URL(request.url).pathname);
-                    if (!expectedPaths.has(cleanPathInCache)) {
-                        if (!cleanPathInCache.includes(CONFIG.manifestPath)) {
-                            await cache.delete(request);
-                        }
-                    }
-                }
+const expectedPaths = new Set([...coreNormalized, normalize(CONFIG.ROOT), ...uniqueList]);
+const allCachedRequests = await cache.keys();
+for (const request of allCachedRequests) {
+    const cleanPathInCache = normalize(new URL(request.url).pathname);
+    if (!expectedPaths.has(cleanPathInCache)) {
+        await cache.delete(request);
+    }
+}
 
 		} catch (err) {
 		    // 🪝🛡️⏱️ INNESTO:
@@ -1814,10 +1803,9 @@ const assegnaFlussoPolimorfo = (hasCache, nav = self.navigator) => {
 Object.freeze(assegnaFlussoPolimorfo);
 
 // 📄⚙️ normaliza file core...
-let CORE_ASSETS_SET = new Set([
-    normalize(BASE_PATH),
-    normalize(BASE_PATH + 'index.html')
-]);
+// Definizione globale iniziale per evitare ReferenceError
+let activeCoreAssets = [normalize(BASE_PATH)];
+let CORE_ASSETS_SET = new Set(activeCoreAssets);
 
 /**
  * 🛡️ Security Headers Injector- v2.0
@@ -2203,7 +2191,7 @@ self.addEventListener('fetch', (event) => {
                                             secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
                                         }
                         
-                                        const variantResponse = new Response(exactBuffer, { status: 200, headers: secureHeaders });
+                                        const variantResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
                                         new Uint8Array(buffer).fill(0);
                                         if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                                         decrypted = null;
