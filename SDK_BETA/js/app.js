@@ -1,7 +1,7 @@
 /**
  * ⚙️⚡ App Controller 
  * Dashboard PA & Gestione UI
- * v1.9.8
+ * v2.0
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -138,15 +138,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     btnZoomOut.addEventListener('click', () => {
-        currentZoom = Math.max(currentZoom - 0.25, 0.5);
+        currentZoom = Math.max(currentZoom - 0.25, 0.25);
         applyZoom();
     });
 
     // 🔒 Visore Sandbox Protetto.
     const openInSandbox = async (url, fileName) => {
         try {
-            currentZoom = 1.0;
-            logToTerminal('vault', `🫙🔒 Apertura visore protetto per: ${fileName || url}`);
+            // 📱/💻 Rilevamento Responsivo: 50% su Mobile (<=768px), 100% su Desktop
+            const isMobile = window.innerWidth <= 768;
+            currentZoom = isMobile ? 0.5 : 1.0;
+
+            logToTerminal('vault', `🫙🔒 Apertura visore protetto per: ${fileName || url} (Zoom iniziale: ${Math.round(currentZoom * 100)}%)`);
             
             const response = await fetch(url);
             if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
@@ -193,6 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 object-fit: contain; 
                                 pointer-events: none;
                                 -webkit-user-drag: none; 
+                                transform: scale(${currentZoom});
                                 transition: transform 0.15s ease;
                             }
                         </style>
@@ -220,20 +224,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
                             body, html { width:100%; height:100%; background:#0f172a; overflow:auto; -webkit-overflow-scrolling:touch; }
                             #pdf-wrapper { display:flex; flex-direction:column; align-items:center; padding:20px 10px; min-width:100%; width:max-content; margin:0 auto; gap:15px; }
-                            canvas { max-width:100%; height:auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); background:#fff; border-radius:6px; pointer-events:none; display:block; }
+                            canvas { max-width:100%; height:auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); background:#fff; border-radius:6px; pointer-events:none; display:block; transition: width 0.15s ease, height 0.15s ease; }
                             .loading { color:#f8fafc; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; gap:10px; }
                         </style>
                         <script src="${PDFlib}"><\/script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
-                        <div id="loading" class="loading"><div>⏳📄  Loading...</div></div>
+                        <div id="loading" class="loading"><div>⏳📄 Loading...</div></div>
                         <div id="pdf-wrapper"></div>
                         <script>
                             async function renderSecurePDF() {
                                 try {
                                     if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF.js non disponibile.");
                                     
-                                    // Colleghiamo il worker reale del progetto
                                     pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDFworker}';
 
                                     const loadingTask = pdfjsLib.getDocument({
@@ -244,6 +247,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     const pdfDoc = await loadingTask.promise;
                                     document.getElementById('loading').style.display = 'none';
                                     const container = document.getElementById('pdf-wrapper');
+
+                                    const initialZoom = ${currentZoom};
 
                                     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                                         const page = await pdfDoc.getPage(pageNum);
@@ -256,8 +261,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                                         canvas.dataset.baseWidth = viewport.width;
                                         canvas.dataset.baseHeight = viewport.height;
-                                        canvas.style.width = viewport.width + 'px';
-                                        canvas.style.height = viewport.height + 'px';
+                                        canvas.style.width = (viewport.width * initialZoom) + 'px';
+                                        canvas.style.height = (viewport.height * initialZoom) + 'px';
 
                                         container.appendChild(canvas);
 
@@ -472,7 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${cacheBadge}</td>
                 <td>
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button class="btn btn-sm btn-sandbox-trigger" data-url="${asset.url}" style="border-color: var(--accent-purple); color: var(--accent-purple);">🔒👁️ S.CSP ❌💾</button>
+                        <button class="btn btn-sm btn-sandbox-trigger" data-url="${asset.url}" style="border-color: var(--accent-purple); color: var(--accent-purple);">🔒👁 Visore ❌💾</button>
                     </div>
                 </td>
             `;
@@ -522,7 +527,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     btnPurge.addEventListener('click', () => {
-        if (confirm('🚨🗑🗄️️ Confermi la purga totale della stiva e della cache locale?️')) {
+        if (confirm('🚨🗑🗄 Confermi la purga totale della stiva e della cache locale?️')) {
             sdk.purgeVault();
         }
     });
