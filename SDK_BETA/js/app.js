@@ -1,6 +1,6 @@
 /**
  * ⚡ App Controller - Dashboard PA & Gestione UI
- * v1.8.8
+ * v1.9.0
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -55,7 +55,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let manifestCache = null;
     let activeObjectUrl = null;
-    let currentZoom = 1.0; // 🔍 Zoom iniziale fissato al 100%
+    // 🔍 Zoom iniziale fissato al 100%
+    let currentZoom = 1.0;
+    let totalCombinedCount = 0;
 
     const logToTerminal = (level, text) => {
         const timeString = new Date().toLocaleTimeString('it-IT', { hour12: false });
@@ -444,54 +446,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         onLogMessage: (level, msg) => logToTerminal(level, msg),
 
-        onSyncStart: () => {
-            setStatusBadge('⚡ Sincronizzazione...', 'badge-sync');
-        },
+    onSyncStart: () => {
+        setStatusBadge('⚡ Sincronizzazione...', 'badge-sync');
+        const coreCount = getDefinedCoreAssets().length;
+        const totalFiles = totalCombinedCount > 0 ? totalCombinedCount : coreCount;
+        metricTotal.textContent = totalFiles;
+        metricCompleted.textContent = '0';
+        progressBar.value = 0;
+        progressText.textContent = `0% ( 0 / ${totalFiles} )`;
+    },
 
-        onProgress: (details) => {
-            if (details) {
-                const pct = details.percent ? Math.round(details.percent) : 0;
-                progressBar.value = pct;
-                progressText.textContent = `${pct}% ( ${details.current || 0} / ${details.total || 0} )`;
+    onProgress: (details) => {
+        if (details) {
+            const coreCount = getDefinedCoreAssets().length;
+            // Calcola il totale, file completati (Core già scaricati + Manifest in corso)
+            const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : (coreCount + (details.total || 0));
+            const completedTotal = coreCount + (details.current || 0);
+            const pct = grandTotal > 0 ? Math.min(100, Math.round((completedTotal / grandTotal) * 100)) : (details.percent ? Math.round(details.percent) : 0);
 
-                metricCompleted.textContent = details.current || 0;
-                metricTotal.textContent = details.total || 0;
-                metricFailed.textContent = details.request_failed || 0;
-                metricRetries.textContent = details.retries || 0;
-            }
-        },
+            progressBar.value = pct;
+            progressText.textContent = `${pct}% ( ${completedTotal} / ${grandTotal} )`;
 
-        onSyncRetry: (details) => {
-            setStatusBadge('🔄 Retry Rete...', 'badge-warn');
-            if (details) {
-                if (details.retries !== undefined) metricRetries.textContent = details.retries;
-                if (details.request_failed !== undefined) metricFailed.textContent = details.request_failed;
-            }
-        },
+            metricCompleted.textContent = completedTotal;
+            metricTotal.textContent = grandTotal;
+            metricFailed.textContent = details.request_failed || 0;
+            metricRetries.textContent = details.retries || 0;
+        }
+    },
 
-        onComplete: (data) => {
-            progressBar.value = 100;
-            progressText.textContent = '100% ( Completato )';
-            setStatusBadge('🛡️🗄️ Stiva Pronta', 'badge-ready');
-            if (data) {
-                if (data.current !== undefined) metricCompleted.textContent = data.current;
-                if (data.total !== undefined) metricTotal.textContent = data.total;
-                if (data.request_failed !== undefined) metricFailed.textContent = data.request_failed;
-                if (data.retries !== undefined) metricRetries.textContent = data.retries;
-            }
-            renderStorageTable();
-        },
+    onSyncRetry: (details) => {
+        setStatusBadge('🔄 Retry Rete...', 'badge-warn');
+        if (details) {
+            if (details.retries !== undefined) metricRetries.textContent = details.retries;
+            if (details.request_failed !== undefined) metricFailed.textContent = details.request_failed;
+        }
+    },
 
-        onPurgeComplete: () => {
-            progressBar.value = 0;
-            progressText.textContent = '0% ( 0 / 0 )';
-            metricCompleted.textContent = '0';
-            metricTotal.textContent = '0';
-            metricFailed.textContent = '0';
-            metricRetries.textContent = '0';
-            setStatusBadge('🗑️⚡ Purgato', 'badge-init');
-            renderStorageTable();
-        },
+    onComplete: (data) => {
+        progressBar.value = 100;
+        progressText.textContent = '100% ( Completato )';
+        setStatusBadge('🛡️🗄️ Stiva Pronta', 'badge-ready');
+        const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : getDefinedCoreAssets().length;
+        metricCompleted.textContent = grandTotal;
+        metricTotal.textContent = grandTotal;
+        if (data) {
+            metricFailed.textContent = data.request_failed || 0;
+            metricRetries.textContent = data.retries || 0;
+        }
+        renderStorageTable();
+    },
+
+    onPurgeComplete: () => {
+        progressBar.value = 0;
+        progressText.textContent = '0% ( 0 / 0 )';
+        metricCompleted.textContent = '0';
+        metricTotal.textContent = '0';
+        metricFailed.textContent = '0';
+        metricRetries.textContent = '0';
+        setStatusBadge('🗑️⚡ Purgato', 'badge-init');
+        renderStorageTable();
+    },
 
         onError: (err) => {
             setStatusBadge('🚨 Errore Sync', 'badge-error');
@@ -596,12 +610,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         manifestCache = await res.json();
         logToTerminal('success', `✅ Manifesto caricato: ${manifestCache.ente} (v${manifestCache.version})`);
-
-        const totalCombinedCount = new Set([...getDefinedCoreAssets(), ...manifestCache.assets.map(a => a.url)]).size;
+        
+        totalCombinedCount = new Set([...getDefinedCoreAssets(), ...manifestCache.assets.map(a => a.url)]).size;
         metricTotal.textContent = totalCombinedCount;
-
         setStatusBadge('⚡ Inattivo', 'badge-init');
         renderStorageTable();
+
 
     } catch (err) {
         logToTerminal('error', `❌ Errore caricamento Res-PA-manifest.json: ${err.message}`);
