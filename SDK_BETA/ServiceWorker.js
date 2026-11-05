@@ -1477,10 +1477,6 @@ self.addEventListener('message', (event) => {
         console.error("🚫⚠️ SW: Errore Critico durante l'elaborazione dell'Assets Manifest:", e.message);
         throw new Error("ASSETS_MANIFEST_CORRUPTED");
     }
-				} catch (e) {
-					console.error("🚫⚠️ SW: Errore Critico durante l'elaborazione dell'Assets Manifest:", e.message);
-					throw new Error("ASSETS_MANIFEST_CORRUPTED");
-				}
 
                 const db = eventDataSnapshot?.data;
                 const scanSet = new Set();
