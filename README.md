@@ -2,6 +2,7 @@
 ![LOGO](https://img.shields.io/badge/PoC-📱_PWA_x_PA-af0000)
 ![LOGO](https://img.shields.io/badge/File:_📜_sw.js_=-_⚙️🪖_FrameWork_CORE_PANZER_v7.9.7+-4f4f00)
 
+## 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* )
 > [!Important]
 >   - 🔃 **Last Update :** `v2.1`
 > 
@@ -12,10 +13,8 @@
 >    - **🪳 BUG Fix: ServiceWorker.js**
 >    - **🪳 BUG Fix, ( 🔒 Sandbox CSP )**
 >    - **🪳 BUG Fix, 🛡️🗄️ Sync Stiva Bunker.**
-> 
-> - 🏗️ **SDK** <br> ( ⚙️📦 *Software Development Kit* )
->    - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo `Xsec`, minimo o Massimo personalizzato, Time-out per dichiarare lo stato **Incognito del Browser!**
->       - **Update v1.0.0200, per l'ultima versione di Chromium.**
+>
+> - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo `Xsec`, minimo o Massimo personalizzato, Time-out per dichiarare lo stato **🕵️ Incognito del Browser!**
 > 
 > - **📊 Dashboard :**  
 > **🌀 PoC per la PA 🏛️** <br> Un esempio pratico di dashboard sviluppata per la Pubblica Amministrazione orientata alla consultazione sicura in modalità `🛡️ Bunker`.
@@ -29,7 +28,7 @@
 <h2 align="center">
  <a href="https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/">
   <strong>
-    👁️‍🗨️ SDK DEMO ···> on-line
+    👁️‍🗨️ SDK DEMO ➡️ On-line 🌐
   </strong>
  </a>
 </h2>
@@ -68,9 +67,9 @@
 <h2 align="center">
  <a href="https://zero419-web.github.io/PWA-Pizza-Engine/">
   <strong>
-   🍕 PWA Pizza Engine !
+   🌐🍕 PWA Pizza Engine !
     <br>
-   📲 Prova la Demo Live
+   📲 Prova la Demo Live 🌐
   </strong>
  </a>
 </h2>
