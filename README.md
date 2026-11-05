@@ -53,6 +53,7 @@
 > ⚙️🌐 Motore di **Chromium : js V8 ⚡**
 >
 > `Es. Edge, Brave, Opera, Vivaldi, Arc `.
+> - Supporto 🐺 Watchdog Anti-Incognito ❌🕵️
 
 ***
 # 🍕 PIZZA ENGINE <br> PWA Resiliente ad Alta Sicurezza <br> ( ⚙️🪖 **Motore Panzer v7.x+** )
@@ -81,7 +82,9 @@
        - 🚀 **SWR - `Stale-While-Revalidate`**
        - 🔀🎭 **Regolatore di Flusso Polimorfo**
        - 🖼️🩹 **Placeholder, non Ritorna per una risorsa Immagine su una richiesta HEAD, ma restituisce 404 erorr**
+       - 🧠 **Universal-Scan, Fix bug's**
     - ➕ **🧭 `Safari`, Supporto in sperimentazione ...**
+       - 🧭🚫🐺 **Watchdog `Anti-Incognito` ❌🕵️ non `Supportato`**
 
 - **🪖 NOVITÀ v7.9.6+ :** <br> `🐛 BUG Fix`
     - 🪳 **Bug Fixed : `Evento Fetch` Del SW ( ⚙️🪖 ),**
