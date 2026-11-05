@@ -142,17 +142,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox.
+    // 🔒 Visore Sandbox Protetto (Anti-Download & Canvas PDF Render Diretto)
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
             logToTerminal('vault', `🫙🔒 Apertura visore protetto per: ${fileName || url}`);
             
+            // Verifichiamo che la risorsa esista prima di aprire la modale
             const response = await fetch(url);
             if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
-            const blob = await response.blob();
-            const rawMime = response.headers.get('Content-Type') || blob.type;
+            const rawMime = response.headers.get('Content-Type') || '';
             const mimeType = detectMimeType(url, rawMime);
 
             if (btnZoomIn && btnZoomOut) {
@@ -164,20 +164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btnZoomOut.style.cursor = 'pointer';
             }
 
-            if (activeObjectUrl) {
-                URL.revokeObjectURL(activeObjectUrl);
-            }
-
-            const typedBlob = new Blob([blob], { type: mimeType });
-            activeObjectUrl = URL.createObjectURL(typedBlob);
-
             sandboxFrame.removeAttribute('sandbox');
             sandboxFrame.src = 'about:blank';
 
             let renderedContentHtml = '';
 
             if (mimeType.startsWith('image/')) {
-                // 🖼️ IMMAGINE PROTETTA.
+                const blob = await response.blob();
+                if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+                activeObjectUrl = URL.createObjectURL(new Blob([blob], { type: mimeType }));
+
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -208,7 +204,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 📄 PDF PROTETTO:
                 const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
                 const PDFlib = baseUrl + 'js/pdf_min.js';
-                const PDFworker = baseUrl + 'js/pdf_worker_min.js';
 
                 renderedContentHtml = `
                     <!DOCTYPE html>
@@ -220,23 +215,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                             * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
                             body, html { width:100%; height:100%; background:#0f172a; overflow:auto; -webkit-overflow-scrolling:touch; }
                             #pdf-wrapper { display:flex; flex-direction:column; align-items:center; padding:20px 10px; min-width:100%; width:max-content; margin:0 auto; gap:15px; }
-                            canvas { max-width:100%; height:auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); background:#fff; border-radius:6px; pointer-events:none; transition: width 0.15s ease, height 0.15s ease; }
+                            canvas { max-width:100%; height:auto; box-shadow:0 4px 20px rgba(0,0,0,0.6); background:#fff; border-radius:6px; pointer-events:none; display:block; }
                             .loading { color:#f8fafc; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; gap:10px; }
                         </style>
                         <script src="${PDFlib}"><\/script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
-                        <div id="loading" class="loading"><div>⏳📄 PDF Loading.../div></div>
+                        <div id="loading" class="loading"><div>⏳📄 Rendering PDF...</div></div>
                         <div id="pdf-wrapper"></div>
                         <script>
                             async function renderSecurePDF() {
                                 try {
-                                    if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF non disponibile.");
+                                    if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF_min.js non disponibile.");
                                     
-                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDFworker}';
+                                    // Disabilitiamo il worker esterno.
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
                                     const loadingTask = pdfjsLib.getDocument({
-                                        url: "${activeObjectUrl}",
+                                        url: "${url}",
+                                        disableWorker: true,
                                         isEvalSupported: false
                                     });
 
@@ -252,9 +249,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         const context = canvas.getContext('2d');
                                         canvas.height = viewport.height;
                                         canvas.width = viewport.width;
-
                                         canvas.dataset.baseWidth = viewport.width;
                                         canvas.dataset.baseHeight = viewport.height;
+                                        canvas.style.width = viewport.width + 'px';
+                                        canvas.style.height = viewport.height + 'px';
 
                                         container.appendChild(canvas);
 
@@ -264,7 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         }).promise;
                                     }
                                 } catch (err) {
-                                    document.getElementById('loading').innerHTML = '<div style="color:#f87171; text-align:center; padding:20px;">❌ Errore worker/rendering: ' + err.message + '</div>';
+                                    document.getElementById('loading').innerHTML = '<div style="color:#f87171; text-align:center; padding:20px;">❌📄 Errore rendering PDF: ' + err.message + '</div>';
                                 }
                             }
                             window.addEventListener('DOMContentLoaded', renderSecurePDF);
@@ -278,7 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <html>
                     <head><meta charset="UTF-8"></head>
                     <body style="margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh;">
-                        <object data="${activeObjectUrl}" type="${mimeType}" width="100%" height="100%"></object>
+                        <object data="${url}" type="${mimeType}" width="100%" height="100%"></object>
                     </body>
                     </html>
                 `;
@@ -288,10 +286,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sandboxFrame.srcdoc = renderedContentHtml;
             }, 50);
 
-            sandboxTitle.textContent = `🔎🔒 Visore Protetto \n ${fileName || url}`;
+            sandboxTitle.textContent = `🔎🔒\n ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡️ Risorsa decifrata e caricata in sicurezza nel visore.`);
+            logToTerminal('success', `🛡📦️ Risorsa decifrata e caricata correttamente nel visore.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
