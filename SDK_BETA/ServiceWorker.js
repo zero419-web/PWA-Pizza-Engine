@@ -1784,7 +1784,10 @@ Object.freeze(assegnaFlussoPolimorfo);
 
 // 📄⚙️ normaliza file core...
 // Definizione globale iniziale per evitare ReferenceError
-let activeCoreAssets = [normalize(BASE_PATH)];
+let activeCoreAssets = [
+    normalize(BASE_PATH),
+    normalize(BASE_PATH + 'index.html')
+];
 let CORE_ASSETS_SET = new Set(activeCoreAssets);
 
 /**
