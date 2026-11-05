@@ -1,7 +1,7 @@
 /**
  * ⚙️⚡ App Controller 
  * Dashboard PA & Gestione UI
- * v1.9.6
+ * v1.9.7
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -142,17 +142,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyZoom();
     });
 
-    // 🔒 Visore Sandbox Protetto (Anti-Download & Canvas PDF Render Diretto)
+    // 🔒 Visore Sandbox Protetto.
     const openInSandbox = async (url, fileName) => {
         try {
             currentZoom = 1.0;
             logToTerminal('vault', `🫙🔒 Apertura visore protetto per: ${fileName || url}`);
             
-            // Verifichiamo che la risorsa esista prima di aprire la modale
+            // 1. Scarichiamo e verifichiamo la risorsa tramite il Service Worker ( Bunker AES-GCM )
             const response = await fetch(url);
             if (!response || !response.ok) throw new Error(`HTTP ${response?.status || 'Risorsa irreperibile'}`);
 
-            const rawMime = response.headers.get('Content-Type') || '';
+            const blob = await response.blob();
+            const rawMime = response.headers.get('Content-Type') || blob.type;
             const mimeType = detectMimeType(url, rawMime);
 
             if (btnZoomIn && btnZoomOut) {
@@ -164,16 +165,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btnZoomOut.style.cursor = 'pointer';
             }
 
+            if (activeObjectUrl) {
+                URL.revokeObjectURL(activeObjectUrl);
+            }
+
+            // 2. Object URL tipizzato
+            const typedBlob = new Blob([blob], { type: mimeType });
+            activeObjectUrl = URL.createObjectURL(typedBlob);
+
             sandboxFrame.removeAttribute('sandbox');
             sandboxFrame.src = 'about:blank';
 
             let renderedContentHtml = '';
 
             if (mimeType.startsWith('image/')) {
-                const blob = await response.blob();
-                if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
-                activeObjectUrl = URL.createObjectURL(new Blob([blob], { type: mimeType }));
-
+                // 🖼️ IMMAGINE PROTETTA
                 renderedContentHtml = `
                     <!DOCTYPE html>
                     <html>
@@ -201,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </html>
                 `;
             } else if (mimeType.includes('pdf')) {
-                // 📄 PDF PROTETTO:
+                // 📄 PDF PROTETTO SU CANVAS.
                 const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
                 const PDFlib = baseUrl + 'js/pdf_min.js';
 
@@ -221,18 +227,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <script src="${PDFlib}"><\/script>
                     </head>
                     <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
-                        <div id="loading" class="loading"><div>⏳📄 Rendering PDF...</div></div>
+                        <div id="loading" class="loading"><div>⏳📄 PDF Loading...</div></div>
                         <div id="pdf-wrapper"></div>
                         <script>
                             async function renderSecurePDF() {
                                 try {
                                     if (typeof pdfjsLib === 'undefined') throw new Error("Libreria PDF_min.js non disponibile.");
                                     
-                                    // Disabilitiamo il worker esterno.
                                     pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
+                                    // Utilizziamo l'Object URL sicuro generato in precedenza
                                     const loadingTask = pdfjsLib.getDocument({
-                                        url: "${url}",
+                                        url: "${activeObjectUrl}",
                                         disableWorker: true,
                                         isEvalSupported: false
                                     });
@@ -249,6 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         const context = canvas.getContext('2d');
                                         canvas.height = viewport.height;
                                         canvas.width = viewport.width;
+
                                         canvas.dataset.baseWidth = viewport.width;
                                         canvas.dataset.baseHeight = viewport.height;
                                         canvas.style.width = viewport.width + 'px';
@@ -276,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <html>
                     <head><meta charset="UTF-8"></head>
                     <body style="margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh;">
-                        <object data="${url}" type="${mimeType}" width="100%" height="100%"></object>
+                        <object data="${activeObjectUrl}" type="${mimeType}" width="100%" height="100%"></object>
                     </body>
                     </html>
                 `;
@@ -286,10 +293,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sandboxFrame.srcdoc = renderedContentHtml;
             }, 50);
 
-            sandboxTitle.textContent = `🔎🔒\n ${fileName || url}`;
+            sandboxTitle.textContent = `🔎🔒 ${fileName || url}`;
             sandboxModal.classList.add('active');
 
-            logToTerminal('success', `🛡📦️ Risorsa decifrata e caricata correttamente nel visore.`);
+            logToTerminal('success', `🛡️ Risorsa decifrata e caricata correttamente nel visore.`);
         } catch (err) {
             logToTerminal('error', `❌ Errore apertura visore: ${err.message}`);
         }
