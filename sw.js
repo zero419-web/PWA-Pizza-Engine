@@ -1484,10 +1484,10 @@ self.addEventListener('message', (event) => {
                 const scanSet = new Set();
                 const knownDirs = new Set(Object.values(CONFIG.mappingLogic.contexts).map(c => c.path));
 
-/**
+/* v3.0
  * 🧠🧬 Universal Object Scanner
- * Deep Validation ( 🪨 Hardened 🪖 v7.9+ ).
- * Esegue la scansione ricorsiva polimorfa del database fornito in input il file db.json,
+ * Deep Validation & Safe Fallback ( 🪨 Hardened 🪖 v7.9.x+ ).
+ * Esegue la scansione ricorsiva polimorfa del database fornito in input,
  * isolando chiavi identificative e percorsi per agganciare in modo predittivo gli asset extra correlati.
  * Mantiene la profondità di 12 livelli con protezione anti-DoS (Cap a 250 nodi, Sanitizzazione Path & Yielding CPU).
  * @param {Object} obj - Il nodo o sotto-albero JSON da sottoporre a ispezione.
@@ -1517,13 +1517,13 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
         }
         // 🪨️ HARDENING 3: Micro-pausa ogni X nodi per non congelare il worker...
         if (nodeState.count % 250 === 0) {
-			 await sleep(10);
+             await sleep(10);
         }
 
         if (typeof val === 'object' && val !== null) {
             let nextCtx = currentCtx;
             if (parentKey === 'pdf' && (key === 'it' || key === 'en')) nextCtx = `docs_${key}`;
-            else if (CONFIG.mappingLogic.contexts[key]) nextCtx = key;
+            else if (CONFIG?.mappingLogic?.contexts && CONFIG.mappingLogic.contexts[key]) nextCtx = key;
             await universalScanner(val, nextCtx, key, depth + 1, nodeState);
             continue;
         }
@@ -1538,22 +1538,28 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
         const valStr = String(val).trim();
         if (valStr.length < 2) continue;
 
-        // 🛡️ HARDENING 4: Sanitizzazione Valori di Percorso (Anti Path Traversal / Injection)
+        // 🪨 HARDENING 4: Sanitizzazione Valori di Percorso (Anti Path Traversal / Injection)
         if (valStr.includes('../') || valStr.includes('..\\') || valStr.includes('\0')) {
             continue;
         }
 
-        const logic = CONFIG.mappingLogic.parentSpecials[parentKey] ||
-                      CONFIG.mappingLogic.contexts[currentCtx] ||
-                      CONFIG.mappingLogic.contexts['base'];
+        // 🛡️ SICUREZZA: Se contexts o parentSpecials sono vuoti
+        const logic = CONFIG?.mappingLogic?.parentSpecials?.[parentKey] ||
+                      CONFIG?.mappingLogic?.contexts?.[currentCtx] ||
+                      CONFIG?.mappingLogic?.contexts?.['base'] ||
+                      { path: './', prefix: '', ext: CONFIG.defaultExt, isSequential: false };
+
         const isExplicitFile = CONFIG.syncRegex.test(valStr);
-        const isIdKey = CONFIG.mappingLogic.idKeys.includes(key.toLowerCase()) || /^[0-9]+$/.test(valStr);
+        const isIdKey = (CONFIG?.mappingLogic?.idKeys || []).includes(key.toLowerCase()) || /^[0-9]+$/.test(valStr);
+        
         if (isExplicitFile || isIdKey) {
             let fileToProbe = valStr;
             if (isIdKey && !isExplicitFile) {
                 fileToProbe = (logic.prefix || "") + valStr + (logic.ext || CONFIG.defaultExt);
             }
-            const cleanDir = logic.path.replace(/^(\.\.\/|\.\/)+/, '');
+            
+            const rawPath = logic.path || './';
+            const cleanDir = rawPath.replace(/^(\.\.\/|\.\/)+/, '');
             const primaryUrl = normalize(CONFIG.ROOT + cleanDir + fileToProbe);
 
             const targets = [primaryUrl];
@@ -1579,9 +1585,9 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
                     });
                     if (probe.ok && probe.status === 200) {
                         scanSet.add(url);
-                        console.info(`🎯🕵️‍♂️ SW Scanner: Asset Agganciato -> ${url}`);
+                        console.info(`🎯🕵️‍♂️ SW Scanner: Asset Agganciato\n🌐 ${url}`);
 
-                        if (logic.isSequential && /\d+/.test(fileToProbe)) {
+                        if (logic?.isSequential && /\d+/.test(fileToProbe)) {
                             const nextUrl = url.replace(/\d+/, n => parseInt(n) + 1);
                             if (!scanSet.has(nextUrl) && !manifestList.includes(nextUrl)) {
                                 const nextProbe = await fetch(nextUrl, {
@@ -1606,7 +1612,8 @@ Object.freeze(universalScanner);
 
                 console.info("️🧠🧬 SW: Avvio Universal Scanner...");
                 await universalScanner(db);
-                console.info(`🎯🏁 SW: Analisi terminata. Asset extra trovati: ${scanSet.size}`);
+
+			    console.info(`🎯🏁 SW: Analisi terminata.\n🔎📄 Asset extra trovati : ${scanSet.size}`);
 
                 const fullWorkSet = new Set([...manifestList, ...Array.from(scanSet)]);
                 const coreNormalized = CONFIG.coreAssets.map(a => normalize(a));
@@ -1624,7 +1631,7 @@ Object.freeze(universalScanner);
                     }
                     return isAllowed;
                 });
-                console.info(`🚜 SW: Rastrellamento terminato. ${uniqueList.length} risorse pronte per la stiva (esclusi Core Assets).`);
+                console.info(`📄🚜 SW: Rastrellamento terminato.\n🎯📄 ${uniqueList.length} risorse pronte per la stiva ( Esclusi ⚙️ Core Assets ).`);
 
                 let limit = getNetworkProfile(self.navigator).limit;
 				List_File_Download = uniqueList.length;
