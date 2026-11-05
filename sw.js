@@ -1517,7 +1517,7 @@ const universalScanner = async (obj, currentCtx = 'base', parentKey = '', depth 
         }
         // 🪨️ HARDENING 3: Micro-pausa ogni X nodi per non congelare il worker...
         if (nodeState.count % 250 === 0) {
-			 sleep(10);
+			 await sleep(10);
         }
 
         if (typeof val === 'object' && val !== null) {
@@ -2199,7 +2199,7 @@ self.addEventListener('fetch', (event) => {
                                             secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
                                         }
                         
-                                        const variantResponse = new Response(exactBuffer, { status: 200, headers: secureHeaders });
+                                        const variantResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
                                         new Uint8Array(buffer).fill(0);
                                         if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                                         decrypted = null;
