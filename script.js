@@ -1,4 +1,4 @@
-// v5.0.4
+// v5.1.0
 
 let isChromium_Browser = false;
 let site_title_now = document.title;
@@ -1163,7 +1163,7 @@ async function initGallery() {
             const itemData = (DATA?.gallery?.[id - 1] && DATA.gallery[id - 1][lang]) ? DATA.gallery[id - 1][lang] : "";
             wrap.innerHTML = `
                 <div class="gal-img-wrapper">
-                    <img class="gal-img" loading="lazy" alt="${itemData}">
+                    <img class="gal-img" loading="lazy" alt="${itemData}" draggable="false" oncontextmenu="return false;">
                 </div>
                 <div class="zoom-icon-badge" title="Zoom">${ICONS.zoom}</div>
             `;
@@ -1242,7 +1242,7 @@ async function checkSpecials(isManual = false, shouldShow = true) {
                 card.innerHTML = `
                     <div class="special-top-area">
                         <div class="special-card-img-wrapper">
-                            <img id="img-${prefix}${item.id}" class="special-img" alt="${titolo}" loading="lazy">
+                            <img id="img-${prefix}${item.id}" class="special-img" alt="${titolo}" loading="lazy" draggable="false" oncontextmenu="return false;">
                         </div>
                         <div class="zoom-icon-badge">${ICONS.zoom}</div>
                     </div>
@@ -1298,6 +1298,8 @@ async function openZoom(src, description = "") {
         zoomImg = document.createElement('img');
         zoomImg.id = 'modal-zoom-img';
         zoomImg.loading = "eager";
+		zoomImg.draggable = false;
+        zoomImg.addEventListener('contextmenu', e => e.preventDefault());
         zoomImg.style.cssText = "max-width:90%;height:75vh;max-height:80vh;object-fit:contain;display:none;margin:auto;box-shadow: 0 0 30px var(--Sshadow);background-color: inherit; transition: opacity 0.3s ease-in-out;";
         iframe.parentNode.insertBefore(zoomImg, iframe);
     }
