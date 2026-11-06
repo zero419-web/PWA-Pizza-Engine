@@ -2104,10 +2104,14 @@ self.addEventListener('fetch', (event) => {
 	                    const ext = dotIdx !== -1 ? finalPath.substring(dotIdx + 1).toLowerCase() : '';
 	                    
 	                    decrypted = new Uint8Array(decrypted);
+	                    const exactBuffer = decrypted.buffer.slice(
+	                        decrypted.byteOffset, 
+	                        decrypted.byteOffset + decrypted.byteLength
+	                    );
 	                    const secureHeaders = new Headers({
 	                        'Content-Type': detectedContentType,
 	                        'X-PWA-Source': 'Bunker-Decrypted', 
-	                        'Content-Length': cached.headers.get('Content-Length'),
+	                        'Content-Length': exactBuffer.byteLength.toString(),
 	                        'Cache-Control': 'private, no-cache, max-age=0',
 	                        'Pragma': 'no-cache',
 	                        'Expires': '0'
@@ -2116,7 +2120,7 @@ self.addEventListener('fetch', (event) => {
 	                        secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${ext}"`);
 	                    }
 	
-	                    const outResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
+	                    const outResponse = new Response(exactBuffer, { status: 200, headers: secureHeaders });
 						new Uint8Array(buffer).fill(0);
 	                    if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
 	                    decrypted = null;
@@ -2194,10 +2198,14 @@ self.addEventListener('fetch', (event) => {
                                     if (decrypted) {
                                         const variantExtLower = variantExt.toLowerCase();
                                         
+                                        const exactBufferIMG = decrypted.buffer.slice(
+                                            decrypted.byteOffset, 
+                                            decrypted.byteOffset + decrypted.byteLength
+                                        );
                                         const secureHeaders = new Headers({
                                             'Content-Type': contentTypeIMG,
                                             'X-PWA-Source': 'Bunker-Decrypted', 
-                                            'Content-Length': altCached.headers.get('Content-Length'),
+                                            'Content-Length': exactBufferIMG.byteLength.toString(),
                                             'Cache-Control': 'private, no-cache, max-age=0',
                                             'Pragma': 'no-cache',
                                             'Expires': '0'
@@ -2206,7 +2214,7 @@ self.addEventListener('fetch', (event) => {
                                             secureHeaders.set('Content-Disposition', `inline; filename="secure_document.${variantExtLower}"`);
                                         }
                         
-                                        const variantResponse = new Response(decrypted, { status: 200, headers: secureHeaders });
+                                        const variantResponse = new Response(exactBufferIMG, { status: 200, headers: secureHeaders });
                                         new Uint8Array(buffer).fill(0);
                                         if (decrypted instanceof ArrayBuffer) new Uint8Array(decrypted).fill(0);
                                         decrypted = null;
@@ -2238,7 +2246,11 @@ self.addEventListener('fetch', (event) => {
 			                        let decrypted = await decryptBuffer(buffer);
 			                        
 	                            if (decrypted && decrypted.byteLength > 0) {
-	                                globalPlaceholderBlob = new Blob([decrypted], { type: placeholder.headers.get('Content-Type') || 'image/png' });
+	                                const exactBufferP = decrypted.buffer.slice(
+                                            decrypted.byteOffset, 
+                                            decrypted.byteOffset + decrypted.byteLength
+                                        );
+	                                globalPlaceholderBlob = new Blob([exactBufferP], { type: placeholder.headers.get('Content-Type') || 'image/png' });
 	                                new Uint8Array(buffer).fill(0);
 	                                decrypted = null;
 	                            }
@@ -2252,7 +2264,7 @@ self.addEventListener('fetch', (event) => {
 								status: 200,
 			                    headers: {
 			                        'Content-Type': placeholder.headers.get('Content-Type') || 'image/png',
-			                        'Content-Length': placeholder.headers.get('Content-Length'),
+			                        'Content-Length': exactBufferP.byteLength.toString(),
 			                        'X-PWA-Source': 'Bunker-Placeholder'
 			                    }
 			                });
