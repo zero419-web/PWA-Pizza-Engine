@@ -95,7 +95,7 @@
        - 🌐 **NetWorkFirst**
        - 🚀 **SWR - `Stale-While-Revalidate`**
        - 🔀🎭 **Regolatore di Flusso Polimorfo**
-       - 🖼️🩹 **Placeholder, non Ritorna per una risorsa Immagine su una richiesta HEAD, ma restituisce 404 erorr**
+       - 🖼️🩹 **Placeholder, non Ritorna per una risorsa Immagine su una richiesta HEAD, ma restituisce un `404 Error` ❌**
        - 🧠 **Universal-Scan, Fix bug's**
     
     - ➕ **🧭 `Safari`, Supporto in sperimentazione ...**
