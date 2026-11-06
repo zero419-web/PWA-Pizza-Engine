@@ -12,24 +12,31 @@
 > ⚙️📦 **SDK_BETA : NOVITÀ, BUG Fix & Altro...**
 > - **📣 NOVITÀ v2.1 :** <br> `🐛 BUG Fix`
 >    - **🪳 BUG Fix :**
->       - **📜 ServiceWorker.js**
+>       - 📜 `ServiceWorker.js`
 >       - **🔒👁️‍🗨️ Sandbox Visore ❌💾**
 >       - **🛡️🗄️ Sync Stiva Bunker.**
 > 
 >    - **🔄📊 Aggiornamento GUI DashBoard**
->       - **File :** `app.js`
+>       - **📜 File :** `app.js`
 >
 > ***
-> - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo `Xsec`, minimo o Massimo personalizzato, Time-out per dichiarare lo stato **🕵️ Incognito del Browser!**
+> - **🐺 Watchdog Anti-Incognito** ❌🕵️ Pre requisiti Install `PWA` & il timeout adattivo dopo `Xsec`, *Minimo / Massimo* personalizzato, ⏱️ Time-out per dichiarare lo stato **🕵️ Incognito del Browser! ✅**
 > 
 > - **📊 Dashboard :**  
-> **🌀 PoC per la PA 🏛️** <br> Un esempio pratico di dashboard sviluppata per la Pubblica Amministrazione orientata alla consultazione sicura in modalità `🛡️ Bunker`.
->    - **📄 File:** <br>
-> `index.html, app.js, PA_PWA.webmanifest, Res-PA-manifest.json, icon.png`.
->    - **📂 Dir Resouces del comune:** `RES_DATAS`.
+> **🌀 PoC per la PA 🏛️** <br> Un esempio pratico di dashboard sviluppata per la **Pubblica Amministrazione** orientata alla consultazione sicura in modalità *🛡️ Bunker.*
+>   
+> - **📂 Dir : `SDK_BETA`**
+>    - **📄 File :**
+> `index.html, PA_PWA.webmanifest, Res-PA-manifest.json, icon.png, ServiceWorker.js`.
+>    - **📂 Dir : `js`**
+>       - **📄 File :** `SDK.js, app.js, pdf_min.js, pdf_worker_min.js`.
 > 
-> - ⚙️📜 **Framework Core Panzer v7.x+**
->    - **📄 File:** <br> `ServiceWorker.js ⚙️🪖`, versione modificata per adattarla al `SDK.js` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
+>    - **📂 Dir Resouces del Comune:**
+> `RES_DATAS`.
+> 
+> - ⚙️📜 **Framework :** </br> ⚙️🪖 *Core Panzer v7.x+*
+>    - **📄 File :**
+> `ServiceWorker.js`, versione Modificata per adattarla al `SDK.js` per la gestione della Stiva resiliente e della **Cache cifrata. 🔐**
 >
 <h2 align="center">
  <a href="https://zero419-web.github.io/PWA-Pizza-Engine/SDK_BETA/">
@@ -54,12 +61,13 @@
 | 🦊 FireFox | **Non supportato** ❌ |
 
 > [!TIP]
-> 💡 **Nota:** Progetto pienamente compatibile con altri Browser :
+> 💡 **Nota:** Progetto pienamente compatibile con altri `Browser` :
 > 
-> ⚙️🌐 Motore di **Chromium : js V8 ⚡**
+> ⚙️🌐 Motore di **Chromium : `js V8` ⚡**
 >
 > `Es. Edge, Brave, Opera, Vivaldi, Arc `.
-> - Supporto 🐺 Watchdog Anti-Incognito ❌🕵️
+> - ✅ **Supporto :**
+>    - 🐺 *Watchdog Anti-Incognito* ❌🕵️
 
 ***
 # 🍕 PIZZA ENGINE <br> PWA Resiliente ad Alta Sicurezza <br> ( ⚙️🪖 **Motore Panzer v7.x+** )
