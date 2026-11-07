@@ -12,7 +12,8 @@
 > ⚙️📦 **SDK_BETA : NOVITÀ, BUG Fix & Altro...**
 > - **📣 NOVITÀ v2.1 :** <br> `🐛 BUG Fix`
 >    - **🪳 BUG Fix :**
->       - 📜 `ServiceWorker.js`
+>       - 📜 **`SDK.js`**
+>       - 📜 **`ServiceWorker.js` fix adattamento al `SDK.js`.**
 >       - **🔒👁️‍🗨️ Sandbox Visore ❌💾**
 >       - **🛡️🗄️ Sync Stiva Bunker.**
 > 
