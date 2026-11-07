@@ -1,5 +1,5 @@
 /**
- * 🛡️ PanzerSDK - v2.0.2
+ * 🛡️ PanzerSDK - v2.1.0
  * 
  *
  * * 👤 Autore: Valentino Aglianó
@@ -113,7 +113,9 @@ export class PanzerSDK {
 
                 case 'SYNC_PROGRESS':
                     if (data.details) {
-                        this.onProgress(data.details);
+                        requestAnimationFrame(() => {
+                            this.onProgress(data.details);
+                        });
                     }
                     break;
 
