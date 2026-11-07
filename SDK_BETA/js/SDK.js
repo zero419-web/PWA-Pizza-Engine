@@ -9,6 +9,8 @@
  */
 export class PanzerSDK {
     constructor(options = {}) {
+        this.lastUiUpdate = 0;
+        
         this.swPath = options.swPath || './ServiceWorker.js';
         this.scope = options.scope || '/';
         this.coreAssets = options.coreAssets || [
@@ -113,20 +115,27 @@ export class PanzerSDK {
 
                 case 'SYNC_PROGRESS':
                     if (data.details) {
-                        requestAnimationFrame(() => {
+                    const percent = data.details.percent || 0;
+                    const now = performance.now();
+
+                    // Aggiorna se siamo al 100% o se sono passati almeno 25ms dall'ultimo update
+                        if (percent === 100 || (now - this.lastUiUpdate >= 25)) {
+                            this.lastUiUpdate = now;
                             this.onProgress(data.details);
-                        });
+                        }
                     }
                     break;
 
                 case 'SYNC_END':
                     this.onLogMessage('success', '✅ Sincronizzazione e cifratura Bunker completate dal Service Worker!');
                     this.onComplete(data.details || {});
+                    this.lastUiUpdate = 0;
                     break;
 
                 case 'SYNC_RETRY':
                     this.onSyncRetry(data);
                     this.onLogMessage('warn', '⚠️ SW: Rete assente o instabile. In attesa di riconnessione...');
+                    this.lastUiUpdate = 0;
                     break;
 
                 case 'CORE_UPDATE_RELOAD':
