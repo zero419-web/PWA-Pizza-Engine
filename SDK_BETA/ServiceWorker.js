@@ -1342,40 +1342,49 @@ self.addEventListener('message', (event) => {
 				const isCacheEmpty = cacheKeys.length === 0;
 
 				let IsCFUD = false;
-				const mainEntry = activeCoreAssets.find(a => a.toLowerCase().includes('.html'));
-				if (mainEntry && !isNewInstallation && !isCacheEmpty) {
-					try {
+const jsonAssets = activeCoreAssets.filter(a => a.toLowerCase().includes('.json'));
+if (jsonAssets.length > 0 && !isNewInstallation && !isCacheEmpty) {
+    let radarSuccess = false;
 
-						const radarRes = await fetch(mainEntry + '?t=' + Date.now(), {
-								cache: 'no-store',
-								signal: syncAbortController?.signal
-							});
-						if (radarRes.ok && radarRes.status === 200) {
-							const radarText = await radarRes.text();
-							const match = radarText.match(/ver_site\s*:\s*['"]([^'"]+)['"]/i);
-							const serverV = match ? match[1] : null;
-							if (serverV && serverV !== currentVersion) {
-								const vServer = serverV.split('.');
-								const vLocal = currentVersion.split('.');
+    for (const mainEntry of jsonAssets) {
+        try {
+            const radarRes = await fetch(mainEntry + '?t=' + Date.now(), {
+                cache: 'no-store',
+                signal: syncAbortController?.signal
+            });
 
-								if (vServer[0] !== vLocal[0] || vServer[1] !== vLocal[1]) {
-									console.info(`💥 SW Radar: Rilevato Major Update (${currentVersion} -> ${serverV}). Tabula Rasa Core File !`);
-									CoreAssets_Destroy_Caches(serverV);
-									return;
-								}
+            if (radarRes.ok && radarRes.status === 200) {
+                const radarText = await radarRes.text();
+                const match = radarText.match(/"version"\s*:\s*['"]([^'"]+)['"]/i);
+                const serverV = match ? match[1] : null;
 
-								console.info(`⚙️🎯 SW Radar: Patch rilevata (${serverV})`);
-								realServerVersion = serverV;
-								IsCFUD = true;
-								hasActuallyChanged = true;
-							}
-						}
-					} catch (e) {
-						// 🏴‍☠️ ANTI-PROFILING:
-						console.warn("⚠️ SW: Fallimento..., procedo con Sync standard.", createCleanError("CoreFileError","Procedura di sincronizzazione degradata a standard"));
-					}
-				}
+                if (serverV) {
+                    radarSuccess = true;
+                    if (serverV !== currentVersion) {
+                        const vServer = serverV.split('.');
+                        const vLocal = currentVersion.split('.');
 
+                        if (vServer[0] !== vLocal[0] || vServer[1] !== vLocal[1]) {
+                            console.info(`💥 SW Radar: Rilevato Major Update (${currentVersion} -> ${serverV}). Tabula Rasa Core File !`);
+                            CoreAssets_Destroy_Caches(serverV);
+                            return;
+                        }
+
+                        console.info(`⚙️🎯 SW Radar: Patch rilevata (${serverV})`);
+                        realServerVersion = serverV;
+                        IsCFUD = true;
+                        hasActuallyChanged = true;
+                    }
+                    // 🎯 Trovato il file JSON con la versione corretta, interrompiamo il ciclo
+                    break;
+                }
+            }
+        } catch (e) {
+            // 🏴‍☠️ ANTI-PROFILING:
+            console.warn("⚠️ SW: Fallimento sul file JSON corrente, proseguo con il successivo.", createCleanError("CoreFileError","Procedura di sincronizzazione degradata"));
+        }
+    }
+}
 				console.info(`⚙️📥 SW: Avvio download file core...`);
 				broadcast({ type: 'SYNC_PROGRESS' });
 				const coreResults = [];
