@@ -1,7 +1,7 @@
 /**
  * ⚙️⚡ App Controller 
  * Dashboard PA & Gestione UI
- * v2.1
+ * v2.1.0
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -354,18 +354,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         onProgress: (details) => {
             if (details) {
-                const coreCount = getDefinedCoreAssets().length;
-                const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : (coreCount + (details.total || 0));
-                const completedTotal = coreCount + (details.current || 0);
-                const pct = grandTotal > 0 ? Math.min(100, Math.round((completedTotal / grandTotal) * 100)) : (details.percent ? Math.round(details.percent) : 0);
+                requestAnimationFrame(() => {
+                      const coreCount = getDefinedCoreAssets().length;
+                      const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : (coreCount + (details.total || 0));
+                      const completedTotal = coreCount + (details.current || 0);
+                      const pct = grandTotal > 0 ? Math.min(100, Math.round((completedTotal / grandTotal) * 100)) : (details.percent ? Math.round(details.percent) : 0);
 
-                progressBar.value = pct;
-                progressText.textContent = `${pct}% ( ${completedTotal} / ${grandTotal} )`;
+                      progressBar.value = pct;
+                      progressText.textContent = `${pct}% ( ${completedTotal} / ${grandTotal} )`;
 
-                metricCompleted.textContent = completedTotal;
-                metricTotal.textContent = grandTotal;
-                metricFailed.textContent = details.request_failed || 0;
-                metricRetries.textContent = details.retries || 0;
+                      metricCompleted.textContent = completedTotal;
+                      metricTotal.textContent = grandTotal;
+                      metricFailed.textContent = details.request_failed || 0;
+                      metricRetries.textContent = details.retries || 0;
+                });
             }
         },
         onSyncRetry: (details) => {
