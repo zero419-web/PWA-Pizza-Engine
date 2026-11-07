@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         logToTerminal('sync', '🚀 Avvio sincronizzazione ( ⚙️📄 Core-File + Manifesto Assets 🛒📄 ) ...');
-        sdk.initDB(manifestCache.version, manifestCache, getDefinedCoreAssets());
+        sdk.initDB(manifestCache?.version, manifestCache, getDefinedCoreAssets());
       }, 666);
     });
 
