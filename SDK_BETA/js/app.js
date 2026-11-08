@@ -1,7 +1,7 @@
 /**
  * ⚙️⚡ App Controller 
  * Dashboard PA & Gestione UI
- * v2.1.0
+ * v2.1.1
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         './icon.png',
         './Res-PA-manifest.json'
     ];
+    // 📜🛒 il file del manifesto delle risorse...
+    const getDefined_Manifest_Assets = './Res-PA-manifest.json';
+    // 🎯 definisci i percorsi per lo scope e il Service-Worker.
     const getDefined_scope = '/PWA-Pizza-Engine/SDK_BETA/';
     const getDefined_swPath = './ServiceWorker.js';
     
@@ -344,9 +347,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         onLogMessage: (level, msg) => logToTerminal(level, msg),
         onSyncStart: () => {
-            setStatusBadge('📡⚡ Sincronizzazione...', 'badge-sync');
-            const coreCount = getDefinedCoreAssets().length;
-            const totalFiles = totalCombinedCount > 0 ? totalCombinedCount : coreCount;
+            setStatusBadge('📡📥⚡ Sincronizzazione...', 'badge-sync');
+            const includeCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
+            const coreCount = includeCore ? getDefinedCoreAssets().length : 0;
+            const manifestCount = manifestCache && manifestCache.assets ? manifestCache.assets.length : 0;
+            const totalFiles = includeCore ? totalCombinedCount : manifestCount;
+            
             metricTotal.textContent = totalFiles;
             metricCompleted.textContent = '0';
             progressBar.value = 0;
@@ -354,24 +360,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         onProgress: (details) => {
             if (details) {
-                requestAnimationFrame(() => {
-                      const coreCount = getDefinedCoreAssets().length;
-                      const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : (coreCount + (details.total || 0));
-                      const completedTotal = coreCount + (details.current || 0);
-                      const pct = grandTotal > 0 ? Math.min(100, Math.round((completedTotal / grandTotal) * 100)) : (details.percent ? Math.round(details.percent) : 0);
+                const includeCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
+                const coreCount = includeCore ? getDefinedCoreAssets().length : 0;
+                const grandTotal = includeCore ? (totalCombinedCount > 0 ? totalCombinedCount : (coreCount + (details.total || 0))) : (manifestCache?.assets?.length || details.total || 0);
+                const completedTotal = (includeCore ? coreCount : 0) + (details.current || 0);
+                const pct = grandTotal > 0 ? Math.min(100, Math.round((completedTotal / grandTotal) * 100)) : (details.percent ? Math.round(details.percent) : 0);
 
-                      progressBar.value = pct;
-                      progressText.textContent = `${pct}% ( ${completedTotal} / ${grandTotal} )`;
+                progressBar.value = pct;
+                progressText.textContent = `${pct}% ( ${completedTotal} / ${grandTotal} )`;
 
-                      metricCompleted.textContent = completedTotal;
-                      metricTotal.textContent = grandTotal;
-                      metricFailed.textContent = details.request_failed || 0;
-                      metricRetries.textContent = details.retries || 0;
-                });
-            }
+                metricCompleted.textContent = completedTotal;
+                metricTotal.textContent = grandTotal;
+                metricFailed.textContent = details.request_failed || 0;
+                metricRetries.textContent = details.retries || 0;
         },
         onSyncRetry: (details) => {
-            setStatusBadge('📡🔄 Retry Rete...', 'badge-warn');
+            setStatusBadge('📡📥🔄 Retry Rete...', 'badge-warn');
             if (details) {
                 if (details.retries !== undefined) metricRetries.textContent = details.retries;
                 if (details.request_failed !== undefined) metricFailed.textContent = details.request_failed;
@@ -381,7 +385,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             progressBar.value = 100;
             progressText.textContent = '100% ( Completato )';
             setStatusBadge('🛡️🗄️ Stiva Pronta', 'badge-ready');
-            const grandTotal = totalCombinedCount > 0 ? totalCombinedCount : getDefinedCoreAssets().length;
+            const includeCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
+            const grandTotal = includeCore ? totalCombinedCount : (manifestCache?.assets?.length || 0);
             metricCompleted.textContent = grandTotal;
             metricTotal.textContent = grandTotal;
             if (data) {
@@ -401,11 +406,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderStorageTable();
         },
         onError: (err) => {
-            setStatusBadge('🚨📡 Errore Sync', 'badge-error');
+            setStatusBadge('🚨📡📥 Errore Sync', 'badge-error');
         }
     });
 
-    // 📂 Rendering Tabella Ispezione Stiva (Senza tasto "Apri" insicuro)
+    // 📊🔎🗄️ Rendering Tabella Ispezione Stiva.
     const renderStorageTable = async () => {
         const showCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
 
@@ -493,17 +498,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        logToTerminal('vault', `📂 Ispezione stiva aggiornata: ${filteredAssets.length} risorse visualizzate.`);
+        logToTerminal('vault', `🔎🗄️ Ispezione stiva aggiornata: ${filteredAssets.length} risorse visualizzate.`);
     };
 
-    // 📦 Caricamento Manifesto
+    // 📥📜🛒 Scaricamento del Manifesto dele risorse...
     try {
-        logToTerminal('info', '📦 Recupero file [ ./Res-PA-manifest.json ] ...');
-        const res = await fetch('./Res-PA-manifest.json');
+        logToTerminal('info', `📥📜🛒 Recupero file [ ${getDefined_Manifest_Assets} ] ...`);
+        const res = await fetch(getDefined_Manifest_Assets);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         manifestCache = await res.json();
-        logToTerminal('success', `✅📜 Manifesto caricato: ${manifestCache.ente} (v${manifestCache.version})`);
+        logToTerminal('success', `✅📜🛒 Manifesto caricato: ${manifestCache.ente} (v${manifestCache.version})`);
         
         totalCombinedCount = new Set([...getDefinedCoreAssets(), ...manifestCache.assets.map(a => a.url)]).size;
         metricTotal.textContent = totalCombinedCount;
@@ -511,19 +516,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderStorageTable();
 
     } catch (err) {
-        logToTerminal('error', `❌ Errore caricamento, 📜 Res-PA-manifest.json: ${err.message}`);
-        setStatusBadge('🚨📜 Errore Manifesto', 'badge-error');
+        logToTerminal('error', `❌ Errore caricamento, 📜🛒 ${getDefined_Manifest_Assets} : ${err.message}`);
+        setStatusBadge('🚨📜🛒 Errore Manifesto', 'badge-error');
     }
 
     // 🎮 Event Handlers
     btnSync.addEventListener('click', () => {
       setTimeout(() => {
         if (!manifestCache) {
-            logToTerminal('error', '❌ 🛒 Manifesto asset non disponibile !');
+            logToTerminal('error', '❌📜🛒 Manifesto assets non disponibile !');
             return;
         }
 
-        logToTerminal('sync', '🚀 Avvio sincronizzazione ( ⚙️📄 Core-File + Manifesto Assets 🛒📄 ) ...');
+        logToTerminal('sync', '🚀 Avvio sincronizzazione ( ⚙️📄 Core-File + Manifesto Assets 📜🛒 ) ...');
         sdk.initDB(manifestCache?.version, manifestCache, getDefinedCoreAssets());
       }, 666);
     });
@@ -547,12 +552,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderStorageTable();
     });
 
-    if (toggleCoreAssets) {
+        if (toggleCoreAssets) {
         toggleCoreAssets.addEventListener('change', () => {
             renderStorageTable();
+            // 📊🔄 Aggiorna metriche a schermo in base allo stato attuale
+            if (manifestCache) {
+                const includeCore = toggleCoreAssets.checked;
+                const grandTotal = includeCore ? totalCombinedCount : (manifestCache.assets ? manifestCache.assets.length : 0);
+                metricTotal.textContent = grandTotal;
+                if (parseInt(metricCompleted.textContent) > grandTotal) {
+                    metricCompleted.textContent = grandTotal;
+                }
+            }
         });
     }
+
+    // ⚙️ Sincronizazzazione automatica con ritardo di 2.5s Avvio della PWA
+    /*
     setTimeout(() => {
         btnSync.click();
     }, 2500);
+    */
 });
