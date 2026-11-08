@@ -1,5 +1,5 @@
 /**
- * 🛡️ PanzerSDK - v2.1.0
+ * ⚙️🪖🛡️ PanzerSDK - v2.1.1
  * 
  *
  * * 👤 Autore: Valentino Aglianó
@@ -142,9 +142,11 @@ export class PanzerSDK {
                     this.onLogMessage('warn', '🔄 SW: Aggiornamento critico Core rilevato. Ricaricamento in corso...');
                     if (data.msg === 'DESTROY_ALL_CACHE') {
                         this.onError(new Error("Vault compromesso - Tabula rasa eseguita"));
-                    } else {
-                        window.location.reload();
+                        
                     }
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 5000); // 5s
                     break;
 
                 default:
@@ -197,13 +199,13 @@ export class PanzerSDK {
     async purgeVault() {
         if (!('caches' in window)) return;
         try {
-            this.onLogMessage('warn', '🚨🗑️ Avvio purga diretta di tutti i bunker Cache Storage...');
+            this.onLogMessage('warn', '🚨🗑️ Avvio purga diretta di tutti i bunker Cache Storage... 🗄️');
             const keys = await caches.keys();
             await Promise.all(keys.map(key => caches.delete(key)));
-            this.onLogMessage('success', '🚨✅ Purga totale della stiva completata con successo.');
+            this.onLogMessage('success', '🗑 Purga totale della stiva 🗄️ completata con successo. ✅');
             this.onPurgeComplete();
         } catch (err) {
-            this.onLogMessage('error', `❌ Errore durante la purga: ${err.message}`);
+            this.onLogMessage('error', `❌🗑️ Errore durante la purga: ${err.message}`);
         }
     }
 

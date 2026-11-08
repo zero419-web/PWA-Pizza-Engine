@@ -1,7 +1,7 @@
 /**
  * ⚙️⚡ App Controller 
  * Dashboard PA & Gestione UI
- * v2.1.1
+ * v2.1.2
  *
  * * 👤 Autore: Valentino Aglianó
  * Perito Informatico / Idoneo ASMEL 2025
@@ -346,6 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             buttonTextCol: "#ffffff"
         },
         onLogMessage: (level, msg) => logToTerminal(level, msg),
+        
         onSyncStart: () => {
             setStatusBadge('📡📥⚡ Sincronizzazione...', 'badge-sync');
             const includeCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
@@ -514,7 +515,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         totalCombinedCount = new Set([...getDefinedCoreAssets(), ...manifestCache.assets.map(a => a.url)]).size;
         const includeCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
         const grandTotal = includeCore ? totalCombinedCount : (manifestCache?.assets?.length || 0);
-        metricCompleted.textContent = grandTotal;
+        metricTotal.textContent = grandTotal;
         setStatusBadge('⚡🪫 Inattivo', 'badge-init');
         renderStorageTable();
 
