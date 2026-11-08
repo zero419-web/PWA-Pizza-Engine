@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             progressBar.value = 0;
             progressText.textContent = '0% ( 0 / 0 )';
             metricCompleted.textContent = '0';
-            metricTotal.textContent = '0';
+            // metricTotal.textContent = '0';
             metricFailed.textContent = '0';
             metricRetries.textContent = '0';
             setStatusBadge('🗑️⚡ Purgato', 'badge-init');
@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         for (const { asset, isCached } of assetsWithCacheState) {
             const tr = document.createElement('tr');
-            const sizeFormatted = asset.size ? (asset.size / 1024).toFixed(1) + ' KB' : 'N/A (Core)';
+            const sizeFormatted = asset.size ? (asset.size / 1024).toFixed(1) + ' KB' : 'N/A ( Core ⚙️📄 )';
             const cacheBadge = isCached
                 ? `<span style="color: var(--accent-green); font-weight: bold;">🟢🗄️ Cifrato</span>`
                 : `<span style="color: var(--text-muted);">🔴🗄️ Non Presente</span>`;
@@ -512,7 +512,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         logToTerminal('success', `✅📜🛒 Manifesto caricato: ${manifestCache.ente} (v${manifestCache.version})`);
         
         totalCombinedCount = new Set([...getDefinedCoreAssets(), ...manifestCache.assets.map(a => a.url)]).size;
-        metricTotal.textContent = totalCombinedCount;
+        const includeCore = toggleCoreAssets ? toggleCoreAssets.checked : true;
+        const grandTotal = includeCore ? totalCombinedCount : (manifestCache?.assets?.length || 0);
+        metricCompleted.textContent = grandTotal;
         setStatusBadge('⚡🪫 Inattivo', 'badge-init');
         renderStorageTable();
 
