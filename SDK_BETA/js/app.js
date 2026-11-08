@@ -373,6 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 metricTotal.textContent = grandTotal;
                 metricFailed.textContent = details.request_failed || 0;
                 metricRetries.textContent = details.retries || 0;
+            }
         },
         onSyncRetry: (details) => {
             setStatusBadge('📡📥🔄 Retry Rete...', 'badge-warn');
